@@ -6,17 +6,8 @@ require('functions/optimizations.php');
 
 require('inc/widgets.php');
 require('inc/ads/ad-slots.php');
-
-/**
- * Returns the AeroPaywall "My Account" page URL (set by the site admin under
- * Settings > AeroPaywall), falling back to a conventional /my-account/ page
- * if the option hasn't been configured yet. Used by header.php in place of
- * the old Magnaquest login/sign-up/my-account/change-password links.
- */
-function bd_get_aero_account_url() {
-    $url = get_option( 'aero_paywall_account_page_url' );
-    return $url ? $url : home_url( '/my-account/' );
-}
+require('inc/nav-menus.php');
+require('inc/staff.php');
 
 
 function bday_theme(){
@@ -236,6 +227,20 @@ function bday_get_cached_posts( string $cache_key, array $args, int $ttl = 1800 
 	return $posts;
 }
 
+/**
+ * FIX (2026-07-22): retrofitted to route through bday_get_cached_posts().
+ *
+ * This is the homepage's primary data-fetch function — templates/
+ * masterpage.php calls it 6 separate times per page load (top stories,
+ * recent, other-news x2, columnists, opinion). It was calling get_posts()
+ * directly with no caching, the exact same anti-pattern that caused the
+ * documented RDS CPU spikes bday_get_cached_posts() (above) was written to
+ * fix on the related-posts block — just on the homepage's own query path
+ * instead. A 5-minute TTL (shorter than bday_get_cached_posts()'s 30-minute
+ * default) keeps homepage sections feeling timely while still eliminating
+ * the uncached-burst-query problem; pass 'cache_ttl' in $args to override
+ * per call site.
+ */
 function custom_get_posts( array $args = array() ): array {
 	// Set default filters for get_posts() to avoid issues.
 	$defaults = array(
@@ -254,12 +259,12 @@ function custom_get_posts( array $args = array() ): array {
 	// Adjust WP posts query.
 	$args = wp_parse_args( $args, $defaults );
 
-	$posts = get_posts( $args );
-	if ( ! empty( $posts ) ) {
-		return $posts;
-	}
+	$ttl = isset( $args['cache_ttl'] ) ? (int) $args['cache_ttl'] : 300;
+	unset( $args['cache_ttl'] );
 
-	return array();
+	$cache_key = 'bday_cgp_' . md5( wp_json_encode( $args ) );
+
+	return bday_get_cached_posts( $cache_key, $args, $ttl );
 }
 
 
@@ -970,113 +975,6 @@ class FluentCRM_Remote_Manager {
     }
 }
 FluentCRM_Remote_Manager::get_instance();
-
-/** Custom Code Start **/
-
-/**
- * Shows/hides "Login" / "Sign Up" / "Subscribe to our Premium" nav items
- * based on authentication state. Kept because it's a generic, title-matching
- * filter with no third-party coupling — it now applies to whatever nav items
- * point at the AeroPaywall account page (see header.php).
- */
-function bd_custom_menu_visibility($items, $args) {
-    foreach ($items as $key => $item) {
-        /* Logged IN user */
-        if (is_user_logged_in()) {
-            // Hide Sign In
-            if ($item->title == 'Login') {
-                unset($items[$key]);
-            }
-            // Hide Sign Up
-            if ($item->title == 'SignUp') {
-                unset($items[$key]);
-            }
-        }
-        /* Logged OUT user */
-        else {
-            // Hide Subscribe
-            if (strpos(trim(strip_tags($item->title)), 'Subscribe to our Premium') !== false) {
-    		unset($items[$key]);
-	    }
-        }
-    }
-    return $items;
-}
-add_filter('wp_nav_menu_objects', 'bd_custom_menu_visibility', 10, 2);
-
-/**
- * Hides the page title on WP Page templates (not needed there — pages carry
- * their own heading in content) while leaving article/post titles alone.
- */
-add_action('wp_head', 'bd_hide_page_titles');
-
-function bd_hide_page_titles() {
-    // FIX (2026-07-17): skip single posts — articles render their headline as
-    // h1.post-title too (see template-parts/single-default.php). Without this
-    // check, article titles were hidden site-wide.
-    if ( is_singular( 'post' ) ) {
-        return;
-    }
-    ?>
-    <style>
-        .page-title,
-        .entry-title,
-        .single-post-title,
-        h1.post-title {
-            display: none !important;
-        }
-    </style>
-    <?php
-}
-
-/**
- * ADDED (2026-07-17): Hide the WordPress admin toolbar on the front end for
- * subscriber/customer accounts — they should get the normal reader
- * experience, not the wp-admin toolbar. Implemented as a hardcoded staff
- * allowlist rather than a subscriber/customer blocklist, so any role not
- * explicitly listed as staff is treated as a reader and has the toolbar
- * hidden by default.
- */
-add_filter('show_admin_bar', 'bd_hide_admin_bar_for_non_staff');
-function bd_hide_admin_bar_for_non_staff($show) {
-    if (!is_user_logged_in()) {
-        return $show;
-    }
-
-    $user = wp_get_current_user();
-    $staff_roles = ['administrator', 'editor', 'author', 'wpseo_manager', 'bddraft', 'bdeditor', 'wpseo_editor'];
-
-    if (array_intersect($staff_roles, (array) $user->roles)) {
-        return $show; // Staff — leave the toolbar behavior as WordPress normally decides
-    }
-
-    return false; // Everyone else (subscriber, customer, etc.) — no toolbar
-}
-
-/**
- * Direct logout handler — bypasses WordPress's built-in logout confirmation page.
- * Triggered via a nonce-signed custom URL generated in header.php.
- */
-function bd_direct_logout_handler() {
-    if ( isset( $_GET['bd_action'] ) && $_GET['bd_action'] === 'logout' ) {
-
-        if (
-            isset( $_GET['_wpnonce'] ) &&
-            wp_verify_nonce(
-                sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ),
-                'bd-direct-logout'
-            )
-        ) {
-            wp_logout();
-            wp_safe_redirect( home_url() );
-            exit;
-        }
-    }
-}
-add_action( 'init', 'bd_direct_logout_handler', 1 );
-
-/** Custom Code End **/
-
 
 // ADDED (2026-07-18): World Cup Prediction AJAX Handler — powers the
 // bracket-predictor submission form on templates/page-worldcup.php.

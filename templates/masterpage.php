@@ -640,16 +640,6 @@
     ?>
 </div>
 
-<!-- Mobile Banner Ad -->
-<!-- <div class="container my-4">
-    <div class="d-flex justify-content-around">
-        <a href="https://bit.ly/3XeoH02" target="_blank">
-            <img src="https://cdn.businessday.ng/wp-content/uploads/2024/06/Business-Day-500X250.jpg" 
-                 class="d-block d-md-none w-100" alt="">
-        </a>
-    </div>                        
-</div> -->
-
 <!-- Events Widget -->
 <?= do_shortcode('[events_widget]') ?>
 

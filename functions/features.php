@@ -388,13 +388,17 @@ function post_type_cartoon() {
 add_action('init', 'post_type_cartoon');
 
 
-  
-function add_my_post_types_to_query( $query ) {
-    if ( is_home() && $query->is_main_query() )
-        $query->set( 'post_type', array( 'post', 'cartoons' ) );
-    return $query;
-}
-add_action( 'pre_get_posts', 'add_my_post_types_to_query' );
+/*
+ * REMOVED (2026-07-22): add_my_post_types_to_query() used to unconditionally
+ * merge the 'cartoons' post type into any is_home() main query — a silent,
+ * unscoped main-query mutation (the exact anti-pattern the resource-
+ * constraints rules for this restructure call out to avoid). The live
+ * homepage (templates/masterpage.php) never actually relied on this — it
+ * builds its own sections via custom_get_posts() — so this only ever
+ * affected a separate WP "posts page" context, if one were ever configured.
+ * Cartoon inclusion on the homepage is now an explicit, opt-in part of a
+ * homepage variant instead (see the homepage-variant-switching system).
+ */
 
 /* Markup builded for the settings panel main page.
  *

@@ -1,52 +1,31 @@
+<?php
+/**
+ * "Weekender" category archive.
+ *
+ * FIX (2026-07-22): this file, category-womens-hub.php, and
+ * category-reports.php used to be byte-for-byte identical copies of a bare
+ * PDF-thumbnail-grid layout (the pattern meant for e-edition/cartoon image
+ * galleries) — a copy-paste starting point that was never finished into a
+ * real article listing, so these three text-article categories rendered as
+ * an unlabeled grid of linked thumbnails with no headline, author, or
+ * excerpt. Now uses the same shared article-listing partial as every other
+ * category archive. See archive.php's docblock for the pattern.
+ */
+get_header();
 
-<?php 
-	get_header(); 
-	$term = get_queried_object();
-	$args = array(
-		'category_name'=> $term->slug,
-		'post_type'         => 'post',
-		'posts_per_page'    => 15,
-		'paged'             => $paged,
-		'orderby'           => 'date',
-		'order'             => 'DESC'
-	);
-	$data = new WP_Query($args);
-	$posts = $data->posts;
-?>
-<div id="show-ads"> </div>
-	<section id="category-page">
-        <div class="breadcrumb">
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li>></li>
-                <li> <?= get_the_archive_title() ?> </li>
-            </ul>
-        </div>
-        <div class="category-upper">
+$term = get_queried_object();
 
-        </div>
+$archive_query_args = array(
+	'category_name'   => $term->slug,
+	'post_type'       => 'post',
+	'posts_per_page'  => 15,
+	'orderby'         => 'date',
+	'order'           => 'DESC',
+);
+$archive_heading       = 'Browsing Category';
+$archive_title         = get_the_archive_title();
+$archive_show_featured = false;
 
-        <header>
-            <h1> <?= get_the_archive_title(); ?> </h1>
-        </header>
-       
-        <div class="news">
-			
-		<div class="row">
-			<?php
-				foreach ($posts as $post): 
-				?>
-			<div class="col-sm-3"> <a href="<?= get_the_permalink( $post->ID ); ?>"> <?= get_thumbnail(['post_id'=>$post->ID, 'size'=>'pdf_thumbnail']) ?> </a> </div>
-			<?php endforeach; ?>
-		</div>
-			
-            <div class="pagination">
-                <?php echo paginate_links(['mid_size'=>2, 'total' => $data->max_num_pages, 'next_text'=>'»', 'prev_text'=>'«' ]); ?>
-                <!-- <a href=""><i class="fa fa-angle-double-left"></i> Older Posts</a> -->
-            </div>
-        </div>
-    </section>
+require get_template_directory() . '/template-parts/archive/archive-listing.php';
 
-<?php 
-	get_footer();
-?>
+get_footer();
