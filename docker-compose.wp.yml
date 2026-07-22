@@ -1,0 +1,49 @@
+services:
+  wp-mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - bday_wp_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  wordpress:
+    image: wordpress:php8.2-apache
+    restart: unless-stopped
+    depends_on:
+      wp-mysql:
+        condition: service_healthy
+    ports:
+      # 8080/8082 are already used by the aero-paywall stack on this
+      # machine — kept on a different port so both stacks can run at once.
+      - '8083:80'
+    environment:
+      WORDPRESS_DB_HOST: wp-mysql
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME', 'http://localhost:8083');
+        define('WP_SITEURL', 'http://localhost:8083');
+        define('WP_DEBUG', true);
+        define('WP_DEBUG_LOG', true);
+        define('WP_DEBUG_DISPLAY', false);
+    volumes:
+      - bday_wp_data:/var/www/html
+      # Theme under active development — bind-mounted (not baked into the
+      # image) so edits on the host are reflected immediately. Deliberately
+      # self-contained to this folder only — no mounts from sibling repos,
+      # since this theme is being spun out into its own git repo.
+      - .:/var/www/html/wp-content/themes/bday_ng_remastered
+
+volumes:
+  bday_wp_data:
+  bday_wp_mysql_data:

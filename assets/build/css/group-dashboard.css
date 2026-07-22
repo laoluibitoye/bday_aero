@@ -1,0 +1,127 @@
+/* Main Dashboard Container */
+.group-dashboard-wrapper{
+    max-width:1200px;
+    margin:30px auto;
+    padding:30px;
+    background:#ffffff;
+    border-radius:12px;
+    box-shadow:0 4px 20px rgba(0,0,0,.08);
+}
+
+/* Status Message */
+.leaky-paywall-success-message{
+    background:#ecfdf3 !important;
+    border:1px solid #86efac !important;
+    color:#166534 !important;
+    border-radius:8px !important;
+    padding:15px !important;
+    margin-bottom:25px !important;
+}
+
+/* Group Status */
+.group-dashboard-wrapper p strong{
+    color:#111827;
+    font-weight:600;
+}
+
+/* Section Forms */
+#leaky-paywall-add-group-members,
+#leaky-paywall-update-group-settings{
+    background:#f9fafb;
+    padding:25px;
+    border-radius:10px;
+    border:1px solid #e5e7eb;
+    margin-bottom:25px;
+}
+
+/* Form Labels */
+.group-dashboard-wrapper label{
+    display:block;
+    margin-bottom:6px;
+    font-weight:600;
+    color:#374151;
+}
+
+/* Inputs */
+.group-dashboard-wrapper input,
+.group-dashboard-wrapper select{
+    width:100%;
+    padding:12px 14px;
+    border:1px solid #d1d5db;
+    border-radius:8px;
+    margin-bottom:15px;
+    transition:.2s ease;
+}
+
+.group-dashboard-wrapper input:focus,
+.group-dashboard-wrapper select:focus{
+    outline:none;
+    border-color:#1d4ed8;
+    box-shadow:0 0 0 3px rgba(29,78,216,.15);
+}
+
+/* Buttons */
+.group-dashboard-wrapper input[type="submit"],
+.group-dashboard-wrapper button{
+    background:#003366;
+    color:#fff;
+    border:none;
+    padding:12px 24px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+    transition:.2s ease;
+}
+
+.group-dashboard-wrapper input[type="submit"]:hover,
+.group-dashboard-wrapper button:hover{
+    background:#00509e;
+    transform:translateY(-1px);
+}
+
+/* Members Table */
+.leaky-paywall-group-member-details{
+    width:100%;
+    border-collapse:collapse;
+    background:#fff;
+    overflow:hidden;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+
+.leaky-paywall-group-member-details thead{
+    background:#003366;
+    color:#fff;
+}
+
+.leaky-paywall-group-member-details th{
+    padding:14px;
+    text-align:left;
+    font-weight:600;
+}
+
+.leaky-paywall-group-member-details td{
+    padding:14px;
+    border-bottom:1px solid #e5e7eb;
+}
+
+.leaky-paywall-group-member-details tr:hover{
+    background:#f8fafc;
+}
+
+.leaky-paywall-group-member-details tr:last-child td{
+    border-bottom:none;
+}
+
+@media(max-width:768px){
+
+    .group-dashboard-wrapper{
+        padding:15px;
+    }
+
+    .leaky-paywall-group-member-details{
+        display:block;
+        overflow-x:auto;
+        white-space:nowrap;
+    }
+}

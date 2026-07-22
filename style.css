@@ -1,0 +1,98 @@
+/*
+ * Theme Name: BusinessDayNG Refresh
+ * Theme URI: https://businessday.ng
+ * Author: BusinessDay Technologies
+ * Author URI: https://businessday.ng
+ * Description: A premium, high-density editorial theme crafted specifically for BusinessDay Nigeria. Designed to deliver a state-of-the-art news reading experience, this theme integrates dynamic layouts, advanced typography, and optimal performance for modern digital publishing. Lead Developer: Laolu Ibitoye. Contributors: Nduka Asoh, Ifeanyi Udebu.
+ * Version: 3.0
+ * License: GNU General Public License v2 or later
+ * License URI: http://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: businessday
+ * Tags: editorial, news, magazine, high-density, premium, modern-publishing, customizable, news-portal
+ * 
+ * Changelog:
+ * 3.0: Removed the Magnaquest subscriber-authentication integration entirely (login/sign-up/my-account/change-password/reset-password forms, JWT localStorage sync, selfcare iframe bridge, custom authenticate filter). Theme's "My Account"/login/sign-up nav links now point at the AeroPaywall connector plugin's account page. Removed a hardcoded third-party WordPress application password from the Leaky Paywall group-invite REST proxy in favor of wp-config.php constants.
+ * 2.9: Added the 'Legacy Premium Redirect' WordPress Dashboard settings page. Allows turning on/off the premium redirection category template routing and setting a global fallback URL for premium posts if their per-post PRO URL is empty.
+ * 2.8: Added authenticated User Menu to the navigation bar with click-triggered dropdown. Shows Login/Signup for guests and the user's name (pulled from Magnaquest JWT session) for logged-in users. Dropdown includes Profile, Change Password, and Log Out links. Implemented direct logout handler (bd_direct_logout_handler) via WordPress init hook with nonce validation, bypassing WordPress's built-in logout confirmation page. JWT token cleared from localStorage on logout. User names are displayed in proper title case (ucwords). Fixed dropdown padding and spacing (Welcome label, user name, divider gap). Removed Subscription link from user menu.
+ * 2.6: Merged v2.7 Magnaquest updates: lowercase login payload, FindAppuser & SelfcareResetPassword APIs, Change Password storage update, duplicate user notices prevention, and password reset staging simulation fallback. Fixed signup failure by resolving optimizations.php deprecated warning, implemented output buffering defense in AJAX handlers, and added global login interception hook.
+ * 2.5: Integrated Magnaquest subscriber authentication API suite (Create Customer, Login, Change Password, Forgot/Reset Password) and safety validation safeguards.
+ * 2.4: Clean base theme upgrade.
+ * 2.3: Reverted navigation arrows to header and optimized z-index to prevent header overlap during scroll.
+ * 2.2: Redesigned News Carousel navigation with floating side arrows and drag-to-scroll support.
+ * 2.1: Added infinite loop navigation, active column highlighting (red border), elevation shadow effects, and layout spacing refinements to the News Carousel.
+ * 2.0: Modernized News Carousel with native CSS scroll-snap, autoscroll speed controls, and interactive pagination dots.
+ */
+/* LPW Group Dashboard Styling */
+
+/* ==========================
+   LPW Group Dashboard
+   ========================== */
+   
+ body {
+    background: pink !important;
+}
+
+.bd-group-dashboard {
+    background: #fff;
+    padding: 30px;
+    margin: 20px auto;
+    max-width: 1000px;
+    font-family: Arial, Helvetica, sans-serif !important;
+}
+
+/* Headings */
+.bd-group-dashboard h2 {
+    font-size: 30px !important;
+    font-weight: 700 !important;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* Table */
+.bd-group-dashboard .leaky-paywall-group-member-details {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+
+.bd-group-dashboard .leaky-paywall-group-member-details th {
+    background: #f5f5f5;
+    padding: 12px;
+    text-align: left;
+}
+
+.bd-group-dashboard .leaky-paywall-group-member-details td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Forms */
+.bd-group-dashboard .leaky-paywall-group-accounts-form {
+    background: #fafafa;
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.bd-group-dashboard .leaky-paywall-group-accounts-form label {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.bd-group-dashboard .leaky-paywall-group-accounts-form input[type="text"],
+.bd-group-dashboard .leaky-paywall-group-accounts-form input[type="email"],
+.bd-group-dashboard .leaky-paywall-group-accounts-form textarea {
+    width: 100% !important;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+.bd-group-dashboard .leaky-paywall-group-accounts-form input[type="submit"] {
+    background: #d71920;
+    color: #fff;
+    border: none;
+    padding: 12px 20px;
+    cursor: pointer;
+}
+
