@@ -299,36 +299,8 @@ function insert_after_paragraph( $insertion, $content ) {
 	return implode( '', $paragraphs );
 }
 
-// add_theme_support('post-formats', array(
-// 		'aside',
-// 		'image',
-// 		'video',
-// 		// 'quote',
-// 		// 'link',
-// 		// 'audio',
-// 		'pdf'
-// 	));
-
 	/* Custom Post Type Start */
 
-function create_cartoon_post_type() {
-	register_post_type( 'cartoons',
-	// CPT Options
-	
-	array(
-	  'labels' => array(
-	   'name' => __( 'Cartoons' ),
-	   'singular_name' => __( 'Cartoons' )
-	  ),
-	  'public' => true,
-	  'has_archive' => false,
-	  'rewrite' => array('slug' => 'cartoons'),
-	 )
-	);
-}
-	// Hooking up our function to theme setup
-add_action( 'init', 'create_cartoon_post_type' );
-	
 /*Custom Post type for cartoon and Events*/
 
 function post_type_event() {

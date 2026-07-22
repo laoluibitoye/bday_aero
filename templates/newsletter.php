@@ -80,7 +80,6 @@
                         <!-- <figure>
                             <?= get_thumbnail(['post_id'=> get_the_ID(), 'size'=>'featured', 'classes' => "post-thumbnail" ]) ?>
                         </figure> -->
-                        <!-- <?= get_social_share_icons() ?> -->
                         
                         <div class="post-content">
 
@@ -176,8 +175,7 @@
                         </form>
 
 
-                            <!-- <?= get_social_share_icons() ?> -->
-
+    
                         </div>
                     </article>
                 </main>

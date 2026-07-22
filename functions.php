@@ -340,13 +340,6 @@ function go_yoast() {
  * Send telegram message to telegram when post is published
  */
 function sendTelegramNotification( $post_id ) {
-	// $post_time = strtotime( get_the_date($post_id) );
-	// $cats = wp_get_post_categories($post_id, array( 'fields' => 'slugs' ) );
-// 	if( in_array('sponsored', $cats) ) {
-// 		return false;
-// 	}
-
-	// $current_time = strtotime( $p );
 	if ( count(wp_get_post_revisions( $post_id )) > 1 ) {
 		return false;
 	}

@@ -63,7 +63,6 @@
 							
 						
 						
-                            <!-- <?= get_social_share_icons() ?> -->
                         </div>
                     </article>
                 </main>
