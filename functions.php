@@ -8,6 +8,9 @@ require('inc/widgets.php');
 require('inc/ads/ad-slots.php');
 require('inc/nav-menus.php');
 require('inc/staff.php');
+require('template-parts/homepage/partials/data.php');
+require('inc/homepage/homepage-variants.php');
+require('inc/admin/settings-page.php');
 
 
 function bday_theme(){
