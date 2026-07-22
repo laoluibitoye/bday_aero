@@ -15,7 +15,7 @@
  */
 get_header();
 ?>
-<section id="cartoon-archive">
+<section id="cartoon-archive" class="container">
 	<div class="breadcrumb">
 		<ul>
 			<li><a href="<?= esc_url( home_url( '/' ) ) ?>">Home</a></li>

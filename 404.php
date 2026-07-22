@@ -27,7 +27,7 @@ get_header(); ?>
                 <li>404 Not Found</li>
             </ul>
         </div>
-        <div class="page-not-found">
+        <div class="page-not-found text-center mx-auto">
             <h1>404</h1>
             <h2>Page Not Found!</h2>
             <p>We're sorry, but we can't find the page you were looking for. It's probably some thing we've done wrong but now we know about it and we'll try to fix it. In the meantime, try one of these options:</p>

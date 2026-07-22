@@ -1,0 +1,14 @@
+// 404.php had a .container wrapper already (responsive width via
+// Bootstrap) but no constraint on the actual message block, so its
+// centered content stretched full-width on desktop. Constrained here.
+
+.page-not-found {
+	max-width: 500px;
+	padding: 3em 1em;
+
+	.search {
+		max-width: 320px;
+		margin-left: auto;
+		margin-right: auto;
+	}
+}

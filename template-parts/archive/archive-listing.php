@@ -76,10 +76,7 @@ if ( ! function_exists( 'bd_archive_post_category_pill' ) ) {
 	}
 }
 ?>
-<?php if ( bd_page_allows_ads() ) : ?>
-	<?php // ads render inline below, every 5 posts — see the loop ?>
-<?php endif; ?>
-<section id="category-page">
+<section id="category-page" class="container">
 	<div class="breadcrumb">
 		<ul>
 			<li><a href="<?= esc_url( home_url( '/' ) ) ?>">Home</a></li>
@@ -93,9 +90,9 @@ if ( ! function_exists( 'bd_archive_post_category_pill' ) ) {
 	<?php endif; ?>
 
 	<?php if ( $archive_show_featured && ! empty( $archive_upper_feature ) ) : ?>
-	<div class="category-upper">
+	<div class="category-upper row">
 		<?php foreach ( $archive_upper_feature as $post ) : ?>
-		<div class="featured">
+		<div class="featured col-12">
 			<article>
 				<figure>
 					<?php bd_archive_post_category_pill( $post ); ?>
@@ -112,9 +109,9 @@ if ( ! function_exists( 'bd_archive_post_category_pill' ) ) {
 		</div>
 		<?php endforeach; ?>
 
-		<div class="thumbanils">
+		<div class="thumbanils row">
 			<?php foreach ( $archive_upper_others as $post ) : ?>
-			<article>
+			<article class="col-lg-3 col-md-6 col-6 mb-3">
 				<figure>
 					<?php bd_archive_post_category_pill( $post ); ?>
 					<a href="<?= get_the_permalink( $post->ID ); ?>"> <?= get_thumbnail( [ 'post_id' => $post->ID, 'size' => 'medium_rectangle' ] ) ?> </a>
@@ -141,12 +138,12 @@ if ( ! function_exists( 'bd_archive_post_category_pill' ) ) {
 		<h1><?= esc_html( $archive_title ) ?></h1>
 	</header>
 
-	<div class="news">
+	<div class="news row">
 		<?php
 		$i = $j = 1;
 		foreach ( $archive_posts as $post ) :
 			?>
-			<article>
+			<article class="col-lg-4 col-md-6 mb-4">
 				<figure>
 					<?php bd_archive_post_category_pill( $post ); ?>
 					<a href="<?= get_the_permalink( $post->ID ); ?>">

@@ -21,7 +21,7 @@ if ( have_posts() ) :
 	$prev_cartoon = get_previous_post();
 	$next_cartoon = get_next_post();
 	?>
-	<section id="cartoon-single">
+	<section id="cartoon-single" class="container">
 		<div class="breadcrumb">
 			<ul>
 				<li><a href="<?= esc_url( home_url( '/' ) ) ?>">Home</a></li>
