@@ -244,9 +244,26 @@ function homepage_widget_custom($atts){
                                     <span>TOON OF THE DAY</span>
                             </div>
                             <article>
-                                <figure><?php echo get_thumbnail(['post_id'=>$post->ID, 'size'=>'top_story']); ?></figure>
+                                <?php
+                                /*
+                                 * FIX (2026-07-22): the figure used to render a bare, unlinked
+                                 * thumbnail — clicking today's cartoon did nothing. Now links to
+                                 * its single-cartoons.php view. "See Past Editions" used to point
+                                 * at get_category_link(get_category_by_slug('cartoon')) — a
+                                 * WordPress *category* taxonomy term named "cartoon" that has
+                                 * nothing to do with the 'cartoons' CPT this widget is about;
+                                 * that term likely doesn't even exist, which would have made
+                                 * get_category_link(false) produce a broken link. Points at the
+                                 * CPT's own archive (archive-cartoons.php) now.
+                                 */
+                                ?>
+                                <figure>
+                                    <a href="<?php echo get_the_permalink( $post->ID ); ?>">
+                                        <?php echo get_thumbnail(['post_id'=>$post->ID, 'size'=>'top_story']); ?>
+                                    </a>
+                                </figure>
                             </article>
-                            <a href="<?php echo get_category_link(get_category_by_slug('cartoon')); ?>" class="widget-btn"> See Past Editions </a>
+                            <a href="<?php echo get_post_type_archive_link( 'cartoons' ); ?>" class="widget-btn"> See Past Editions </a>
                         </div>
                     <?php endforeach; ?>
                     <div class="col-lg-6" id="podcast">

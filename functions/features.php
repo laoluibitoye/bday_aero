@@ -363,7 +363,7 @@ function post_type_cartoon() {
 	'name' => _x('Cartoons', 'plural'),
 	'singular_name' => _x('Cartoon', 'singular'),
 	'menu_name' => _x('Cartoons', 'admin menu'),
-	'name_admin_bar' => _x('Cartoonss', 'admin bar'),
+	'name_admin_bar' => _x('Cartoons', 'admin bar'),
 	'add_new' => _x('Add New Cartoon', 'add new'),
 	'add_new_item' => __('Add New Cartoon'),
 	'new_item' => __('New Cartoon'),
