@@ -77,14 +77,23 @@
                         </iframe>
                         <!--To ensure accurate tracking it is essential that you replace [CACHEBUSTER] in the tag below with a random number or timestamp.-->
 
-                        <!--Dochase Start-->
-                            <!-- /23043164651/businessday_body3 -->
-                            <div id='div-gpt-ad-1770204845954-0' style='min-width: 300px; min-height: 250px;'>
-                                <script>
-                                    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1770204845954-0'); });
-                                </script>
-                                </div>
-                            <!--Docahse Ends-->
+                        <?php
+                        /*
+                         * FLAGGED (2026-07-22): div-gpt-ad-1770204845954-0 has no matching
+                         * googletag.defineSlot() call anywhere in this theme — grepped the
+                         * whole codebase, zero hits. Its own comment claims it maps to
+                         * /23043164651/businessday_body3, but that slot was re-registered
+                         * under a different div id (div-gpt-ad-1783098103568-0, already
+                         * displayed once via templates/masterpage.php) during the 2026-07-18
+                         * Dochase migration — this one instance was missed and has been
+                         * silently rendering nothing on every single article page since.
+                         * Not auto-fixed here: registering a slot needs the real GAM ad-unit
+                         * path from BusinessDay's ad ops team, not a guess. bd_gam_slot()
+                         * still renders it (harmless no-op today) so it's ready the moment
+                         * a real slot gets registered for it in header.php.
+                         */
+                        bd_gam_slot( 'div-gpt-ad-1770204845954-0', 300, 250 );
+                        ?>
                         <?php
                         function insert_read_also($content)
                         {

@@ -665,6 +665,24 @@ if (interstitialSlot) interstitialSlot.addService(googletag.pubads());
   });
 
   /* =========================
+     EMPTY-SLOT COLLAPSE (FIX 2026-07-22)
+     Registered once here on the shared googletag.pubads() singleton, so it
+     catches every slot on the page — both the ones this engine registers
+     above AND the separate static bd_desktop_*/bd_mobile_* block further
+     down in this file. Toggles .filled on the ad's nearest .ad-container
+     ancestor so the CSS above only reserves space/shows the "advertisement"
+     label once a slot actually has creative — see the .ad-container rules.
+  ========================== */
+
+  googletag.pubads().addEventListener('slotRenderEnded', function (event) {
+    var el = document.getElementById(event.slot.getSlotElementId());
+    if (!el) return;
+
+    var container = el.closest('.ad-container') || el;
+    container.classList.toggle('filled', !event.isEmpty);
+  });
+
+  /* =========================
      INTERSECTION OBSERVER (TRIGGER LAYER)
   ========================== */
 
@@ -788,8 +806,23 @@ if (interstitialSlot) interstitialSlot.addService(googletag.pubads());
             margin-bottom: 1em;
         }
 
+        /*
+         * FIX (2026-07-22): .ad-container used to reserve min-height: 250px
+         * and show an "ADVERTISEMENT" label unconditionally, regardless of
+         * whether the GAM slot inside it actually rendered creative — the
+         * literal source of the "weird empty gaps between content" bug.
+         * It now reserves nothing by default; header.php's slotRenderEnded
+         * listener below adds .filled to the container only once GAM
+         * confirms a slot rendered, which is what restores the reserved
+         * space + label. Direct-sold ad iframes (bd_direct_ad_slot()) are
+         * unaffected either way since they carry their own explicit
+         * width/height and were never depending on this min-height.
+         */
         .ad-container {
-             align-items: center;
+            align-items: center;
+        }
+
+        .ad-container.filled {
             /* UPDATED (2026-07-18): background-color #FFF1E0 -> #F8F9FA, missed in the
                earlier design-refresh pass (masterpage.php/widgets.php already had it) */
             background-color: #F8F9FA;
@@ -798,17 +831,8 @@ if (interstitialSlot) interstitialSlot.addService(googletag.pubads());
             min-height: 250px;
         }
 
-        .ad-container-silent {
-            align-items: center;
-            /* background-color: #f0f0f0; */
-            /* padding-top: 0.5em; */
-            /* padding-bottom: 1em; */
-            /* min-height: 250px; */
-        }
-
-        .ad-container::before {
+        .ad-container.filled::before {
             content: 'advertisement';
-            /* text-transform: uppercase; */
             font-size: 9px;
             font-style: normal;
             font-weight: 314;
@@ -1283,71 +1307,7 @@ if (interstitialSlot) interstitialSlot.addService(googletag.pubads());
 <?php wp_body_open(); ?>
 
     <header>
-        <?php
-        $premiums = [];
-        $premium_urls = [];
-        $max_premium = 0;
-        $slider_speed = 20000;
-
-        // Custom direct premium programmatic protection for staging
-        if (is_front_page()) {
-            $premium_lead = get_option('premium_leaderboard');
-            $count = isset($premium_lead['leaderboard_count']) && $premium_lead['leaderboard_count'] !== '' ? intval($premium_lead['leaderboard_count']) : 4;
-            $slider_speed = isset($premium_lead['slider_speed']) && $premium_lead['slider_speed'] !== '' ? intval($premium_lead['slider_speed']) : 20000;
-
-            if (is_array($premium_lead)) {
-                for ($i = 1; $i <= $count; $i++) {
-                    $img = $premium_lead['image' . $i] ?? '';
-                    $url = $premium_lead['url' . $i] ?? '';
-                    if (!empty($img)) {
-                        $premiums[] = $img;
-                        $premium_urls[] = $url;
-                        $max_premium++;
-                    }
-                }
-            }
-
-            if ($max_premium > 0) {
-                $rand_index = rand(0, $max_premium - 1);
-                $selected_image = $premiums[$rand_index];
-                $selected_url = $premium_urls[$rand_index];
-                echo '<a id="premium_lederboard_url" href="' . esc_url($selected_url) . '" target="_blank"> <img id="premium_leaderboard" class="premium_leaderboard" src="' . esc_url($selected_image) . '" alt="premium_leaderboard_ads" max-width="100%" height="auto"/> </a>';
-            }
-        }
-        ?>
-        <?php if (is_front_page()) : ?>
-        <script>
-            var premiums = <?= json_encode($premiums) ?>;
-            var premium_urls = <?= json_encode($premium_urls) ?>;
-            var slider_speed = <?= $slider_speed ?>;
-            console.log('image rand length ' + premiums.length);
-            if (premiums.length === 0) {
-
-            } else {
-                var max_premium = <?= $max_premium ?>;
-                console.log(premiums);
-                // console.log('image rand is '+max_premium);
-                var img = document.getElementById("premium_leaderboard");
-                var timer = setInterval(function() {
-
-
-                    var premium_rand = Math.floor(Math.random() * max_premium);
-                    img.src = premiums[premium_rand];
-                    // console.log('image rand src'+premiums[premium_rand] );
-                    // console.log('image rand is '+premium_rand);
-                    var href = document.getElementById('premium_lederboard_url');
-                    // console.log('href_ '+ href);
-                    // console.log('newhref_ '+ premium_urls[premium_rand]);
-
-                    href.onclick = function(event) {
-                        event.preventDefault();
-                        window.location.href = premium_urls[premium_rand];
-                    };
-
-                }, slider_speed);
-            }
-        </script>
-        <?php endif; ?>
+        <?php get_template_part( 'template-parts/ads/premium-leaderboard' ); ?>
         <section class="top-header">
             <div class="container">
                 <ul>

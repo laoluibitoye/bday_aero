@@ -77,7 +77,7 @@
 ?>
 
 <!-- Main News Section -->
-<section class="news-block-1" id="show-ads">
+<section class="news-block-1">
     <div class="container">
         <div class="col-lg-12">
             <div class="row">
@@ -204,33 +204,8 @@
                             
                             <!-- Mobile Ad -->
                             <div class="ad-container mobile-only d-sm-block d-md-none">
-                                <?php
-                        // Configuration
-                        $ad_url   = "https://bit.ly/3PgGCB7";
-                        $img_src  = "https://cdn.businessday.ng/wp-content/uploads/2026/03/Mixta.jpg";
-                        $ad_title = "MIXTA Africa";
-                        ?>
-
-                        <div class="ad-container" style="text-align: center; line-height: 0; width: 100%;">
-                            <p style="font-size: 10px; color: #999; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 5px 0; line-height: 1.2;">
-                                
-                            </p>
-                            
-                            <iframe 
-                                srcdoc="<style>body{margin:0;padding:0;overflow:hidden;} img{display:block;width:100%;height:auto;border:0;}</style><a href='<?php echo $ad_url; ?>' target='_parent'><img src='<?php echo $img_src; ?>' alt='<?php echo $ad_title; ?>'></a>"
-                                width="970" 
-                                height="250" 
-                                frameborder="0" 
-                                scrolling="no" 
-                                style="display: block; margin: 0 auto; border: none; max-width: 100%; vertical-align: bottom;"
-                                title="<?php echo $ad_title; ?>">
-                            </iframe>
-                        </div> 
-                                <div id='div-gpt-ad-1731239712211-0' style='min-width: 300px; min-height: 50px;'>
-                                    <script>
-                                        googletag.cmd.push(function() { googletag.display('div-gpt-ad-1731239712211-0'); });
-                                    </script>
-                                </div>
+                                <?php bd_direct_ad_slot( 'https://bit.ly/3PgGCB7', 'https://cdn.businessday.ng/wp-content/uploads/2026/03/Mixta.jpg', 'MIXTA Africa', 970, 250 ); ?>
+                                <?php bd_gam_slot( 'div-gpt-ad-1731239712211-0', 300, 50 ); ?>
                             </div>
                             
                             <div class="section-heading">
@@ -278,62 +253,23 @@
 
 <!-- Desktop Ad -->
 <div class="container ad-container desktop-only d-none d-md-block">
-      <?php
-                        // Configuration
-                        $ad_url   = "https://bit.ly/47LzvXF";
-                        $img_src  = "https://cdn.businessday.ng/wp-content/uploads/2026/03/728-x-90.png";
-                        $ad_title = "IDICE";
-                        ?>
+      <?php bd_direct_ad_slot( 'https://bit.ly/47LzvXF', 'https://cdn.businessday.ng/wp-content/uploads/2026/03/728-x-90.png', 'IDICE', 728, 90 ); ?>
 
-                        <div class="ad-container" style="text-align: center; line-height: 0; width: 100%;">
-                            <p style="font-size: 10px; color: #999; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 5px 0; line-height: 1.2;">
-                                
-                            </p>
-                            
-                            <iframe 
-                                srcdoc="<style>body{margin:0;padding:0;overflow:hidden;} img{display:block;width:100%;height:auto;border:0;}</style><a href='<?php echo $ad_url; ?>' target='_parent'><img src='<?php echo $img_src; ?>' alt='<?php echo $ad_title; ?>'></a>"
-                                width="728" 
-                                height="90" 
-                                frameborder="0" 
-                                scrolling="no" 
-                                style="display: block; margin: 0 auto; border: none; max-width: 100%; vertical-align: bottom;"
-                                title="<?php echo $ad_title; ?>">
-                            </iframe>
-                        </div> 
-
-<!--Dochase-->
-
-<!-- UPDATED (2026-07-18): slot id updated to match header.php's new Dochase registration -->
-<!-- /23043164651,21781351181/businessday_top -->
-<div id='div-gpt-ad-1783084250687-0' style='min-width: 300px; min-height: 50px;'>
-  <script>
-    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1783084250687-0'); });
-  </script>
-</div>
+<?php // Dochase slot — /23043164651,21781351181/businessday_top ?>
+<?php bd_gam_slot( 'div-gpt-ad-1783084250687-0', 300, 50 ); ?>
 
 </div>
 
 <!-- Mobile Ad -->
 <div class="container ad-container mobile-only d-sm-block d-md-none mt-3 mb-3">
-    <div id='div-gpt-ad-1731239615531-0' style='min-width: 300px; min-height: 50px;'>
-        <script>
-            googletag.cmd.push(function() { googletag.display('div-gpt-ad-1731239615531-0'); });
-        </script>
-    </div>
+    <?php bd_gam_slot( 'div-gpt-ad-1731239615531-0', 300, 50 ); ?>
 
-    <!-- FIX (2026-07-18): old businessday_mid2 slot no longer exists after the
-         Dochase engine update — remapped to the unused businessday_body1 slot
-         instead of silently rendering nothing. -->
-    <!-- /23043164651,21781351181/businessday_body1 -->
-<div id='div-gpt-ad-1783096747143-0' style='min-width: 300px; min-height: 60px;'>
-  <script>
-    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1783096747143-0'); });
-  </script>
-</div>
+    <?php // FIX (2026-07-18): remapped to the unused businessday_body1 slot — /23043164651,21781351181/businessday_body1 ?>
+    <?php bd_gam_slot( 'div-gpt-ad-1783096747143-0', 300, 60 ); ?>
 </div>
 
 <!-- Secondary News Section -->
-<section class="news-block-1" id="show-ads">
+<section class="news-block-1">
     <div class="container">
         <div class="col-lg-12">
             <div class="row">
@@ -454,42 +390,20 @@
                 <div class="col-lg-9">
                     <!-- Desktop Ad -->
                     <div class="ad-container desktop-only d-none d-md-block">
-                        <div id='div-gpt-ad-1731238848673-0' class="d-flex justify-content-around" style='min-width: 300px; min-height: 50px;'>
-                            <script>
-                                googletag.cmd.push(function() { googletag.display('div-gpt-ad-1731238848673-0'); });
-                            </script>
-                        </div>
-                         <?php
-                        // Configuration
-                        $ad_url   = "https://www.flyaero.com/";
-                        $img_src  = "https://cdn.businessday.ng/wp-content/uploads/2025/11/Aero.jpg";
-                        $ad_title = "Aero Contractors";
-                        ?>
-
-                        <div class="ad-container" style="text-align: center; line-height: 0; width: 100%;">
-                            <p style="font-size: 10px; color: #999; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 5px 0; line-height: 1.2;">
-                                
-                            </p>
-                            
-                            <iframe 
-                                srcdoc="<style>body{margin:0;padding:0;overflow:hidden;} img{display:block;width:100%;height:auto;border:0;}</style><a href='<?php echo $ad_url; ?>' target='_parent'><img src='<?php echo $img_src; ?>' alt='<?php echo $ad_title; ?>'></a>"
-                                width="970" 
-                                height="250" 
-                                frameborder="0" 
-                                scrolling="no" 
-                                style="display: block; margin: 0 auto; border: none; max-width: 100%; vertical-align: bottom;"
-                                title="<?php echo $ad_title; ?>">
-                            </iframe>
-                        </div>
+                        <?php bd_gam_slot( 'div-gpt-ad-1731238848673-0', 300, 50, 'd-flex justify-content-around' ); ?>
+                        <?php bd_direct_ad_slot( 'https://www.flyaero.com/', 'https://cdn.businessday.ng/wp-content/uploads/2025/11/Aero.jpg', 'Aero Contractors', 970, 250 ); ?>
                     </div>
 
                     <!-- Mobile Ad -->
                     <div class="ad-container mobile-only d-sm-block d-md-none">
-                        <div id='div-gpt-ad-1731239712211-0' style='min-width: 300px; min-height: 50px;'>
-                            <script>
-                                googletag.cmd.push(function() { googletag.display('div-gpt-ad-1731239712211-0'); });
-                            </script>
-                        </div>
+                        <?php
+                        // NOTE: div-gpt-ad-1731239712211-0 is also rendered above (line ~206)
+                        // for the same page load — a pre-existing duplicate DOM id from before
+                        // this consolidation. Left as-is (not reassigned to a different slot)
+                        // since guessing a replacement mapping risks misattributing ad revenue;
+                        // flagging for whoever owns the GAM slot inventory to resolve.
+                        bd_gam_slot( 'div-gpt-ad-1731239712211-0', 300, 50 );
+                        ?>
                     </div>
 
                     <!-- Other News Section -->
@@ -546,43 +460,22 @@
 
                     <!-- Desktop Ad -->
                     <div class="ad-container desktop-only d-none d-md-block">
-                    <!-- UPDATED (2026-07-18): slot id updated to match header.php's new Dochase registration -->
-                    <!-- /23043164651,21781351181/businessday_top2 -->
-                        <div id='div-gpt-ad-1783084673395-0' style='min-width: 300px; min-height: 50px;'>
-                        <script>
-                            googletag.cmd.push(function() { googletag.display('div-gpt-ad-1783084673395-0'); });
-                        </script>
-                        </div>
-                    <!--Docahse Ends-->
-                    <!-- FIX (2026-07-18): this was a leftover duplicate of the old businessday_body2
-                         div above (same dead id) — remapped to the unused businessday_body2 slot
-                         instead of silently rendering nothing. -->
-                        <div id='div-gpt-ad-1783097109737-0' style='min-width: 250px; min-height: 50px;'>
-                            <script>
-                                googletag.cmd.push(function() { googletag.display('div-gpt-ad-1783097109737-0'); });
-                            </script>
-                            </div>
-                        </div>
+                        <?php // Dochase slot — /23043164651,21781351181/businessday_top2 ?>
+                        <?php bd_gam_slot( 'div-gpt-ad-1783084673395-0', 300, 50 ); ?>
+                        <?php // FIX (2026-07-18): remapped to the unused businessday_body2 slot ?>
+                        <?php bd_gam_slot( 'div-gpt-ad-1783097109737-0', 250, 50 ); ?>
+                    </div>
 
                     <!-- Mobile Ad -->
                     <div class="ad-container mobile-only d-sm-block d-md-none">
-                        <!-- FIX (2026-07-18): old businessday_mid1 slot no longer exists after
-                             the Dochase engine update — remapped to the unused
-                             businessday_body3 slot instead of silently rendering nothing. -->
-                        <!-- /23043164651,21781351181/businessday_body3 Dochase-->
-                            <div id='div-gpt-ad-1783098103568-0' style='min-width: 300px; min-height: 60px;'>
-                            <script>
-                                googletag.cmd.push(function() { googletag.display('div-gpt-ad-1783098103568-0'); });
-                            </script>
-                            </div>
-                        <div id='div-gpt-ad-1731239786872-0' style='min-width: 300px; min-height: 50px;'>
-                            <script>
-                                googletag.cmd.push(function() { googletag.display('div-gpt-ad-1731239786872-0'); });
-                            </script>
-                        </div>
+                        <?php // FIX (2026-07-18): remapped to the unused businessday_body3 slot — /23043164651,21781351181/businessday_body3 ?>
+                        <?php bd_gam_slot( 'div-gpt-ad-1783098103568-0', 300, 60 ); ?>
+                        <?php bd_gam_slot( 'div-gpt-ad-1731239786872-0', 300, 50 ); ?>
                     </div>
 
-                    <?= do_shortcode('[admanager ad_id="mobile_tenancy_1" placement="mobile" lazy="false" ]'); ?>
+                    <?php if ( bd_page_allows_ads() ) : ?>
+                        <?= do_shortcode('[admanager ad_id="mobile_tenancy_1" placement="mobile" lazy="false" ]'); ?>
+                    <?php endif; ?>
 
                     <!-- Columnists and Opinion Section -->
                     <div class="col-lg-12">
@@ -681,7 +574,9 @@
                         ?>
                     </div>
                     <aside class="desktop-only">
-                        <?= do_shortcode('[admanager ad_id="sidebar_1" placement="desktop" lazy="false"]'); ?>
+                        <?php if ( bd_page_allows_ads() ) : ?>
+                            <?= do_shortcode('[admanager ad_id="sidebar_1" placement="desktop" lazy="false"]'); ?>
+                        <?php endif; ?>
                         <?php
                             if (is_active_sidebar('homepage_sidebar')) {
                                 dynamic_sidebar('homepage_sidebar'); 
@@ -704,12 +599,8 @@
 </div>
 
 <div class="container ad-container mobile-only d-sm-block d-md-none">
-        <!-- /21781351181/bd_mobile_4 -->
-    <div id='div-gpt-ad-1731239857708-0' style='min-width: 300px; min-height: 50px;'>
-        <script>
-            googletag.cmd.push(function() { googletag.display('div-gpt-ad-1731239857708-0'); });
-        </script>
-    </div>
+    <?php // /21781351181/bd_mobile_4 ?>
+    <?php bd_gam_slot( 'div-gpt-ad-1731239857708-0', 300, 50 ); ?>
 </div>
 
 <!-- Video Widget -->
@@ -724,13 +615,8 @@
 </div>
 <!-- New Ad-->
 <div class="ad-container desktop-only d-none d-md-block">
-                    
-                        <div id='div-gpt-ad-1731239152173-0' class="d-flex justify-content-around" style='min-width: 300px; min-height: 90px;'>
-                            <script>
-                                googletag.cmd.push(function() { googletag.display('div-gpt-ad-1731239152173-0'); });
-                            </script>
-                        </div>
-                    </div>
+    <?php bd_gam_slot( 'div-gpt-ad-1731239152173-0', 300, 90, 'd-flex justify-content-around' ); ?>
+</div>
 
 <!-- Magazine Widget -->
 <?php echo do_shortcode('[homepage_magazine_widget]'); ?>

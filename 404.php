@@ -9,7 +9,17 @@
  */
 
 get_header(); ?>
-	<section class="container" id="no-ads">
+	<?php
+	/*
+	 * This page never calls any ad slot to begin with, so there's nothing
+	 * to gate here — bd_page_allows_ads() (inc/ads/ad-slots.php) returns
+	 * false for is_404() regardless, for any ad markup added here later.
+	 * The old id="no-ads" marker was read by assets/src/js/ads.js, itself
+	 * dead code (never enqueued, registered GAM slots absent from every
+	 * current template) — removed along with that file.
+	 */
+	?>
+	<section class="container">
         <div class="breadcrumb">
             <ul>
                 <li><a href="<?= get_site_url() ?>">Home </a></li>

@@ -29,7 +29,6 @@
         color: #ba141a;
     }
 </style>
-<!-- <div id="show-ads"> </div> -->
 <?php
     
 

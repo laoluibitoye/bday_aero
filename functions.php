@@ -5,6 +5,7 @@ require('functions/features.php');
 require('functions/optimizations.php');
 
 require('inc/widgets.php');
+require('inc/ads/ad-slots.php');
 
 /**
  * Returns the AeroPaywall "My Account" page URL (set by the site admin under
