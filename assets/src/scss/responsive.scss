@@ -1,4 +1,9 @@
-@media only screen and (min-width: 769px) and (max-width: 1024px) {
+// FIX (2026-07-22): the 3 breakpoints in this file used to be hand-typed
+// magic numbers (769px, 1024px, 428px) with no shared source of truth —
+// now sourced from abstracts/_breakpoints.scss (imported by main.scss
+// before this file). Change a breakpoint in one place, not three.
+
+@include bd-between($bp-tablet, $bp-desktop) {
 
     header nav.main-menu ul.navbar-nav {
         width: unset;
@@ -58,7 +63,7 @@
 
 
 
-@media only screen and (max-width: 769px) {
+@include bd-down($bp-tablet) {
     .navbar-toggler {
         display: none;
     }
@@ -896,7 +901,7 @@
 }
 
 
-@media only screen and (max-width: 428px) {
+@include bd-down($bp-mobile) {
 
     footer {
         .footer-bottom {

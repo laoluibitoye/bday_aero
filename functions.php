@@ -11,6 +11,7 @@ require('inc/staff.php');
 require('template-parts/homepage/partials/data.php');
 require('inc/homepage/homepage-variants.php');
 require('inc/admin/settings-page.php');
+require('inc/enqueue.php');
 
 
 function bday_theme(){

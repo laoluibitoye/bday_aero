@@ -137,17 +137,16 @@
     </script>
     <?php endif; ?>
 
-    <script>
-        <?php include('assets/jquery.php'); ?>
-        <?php include('assets/build/js/script.php'); ?>
-    </script>
-
-    <style>
-        <?php echo require_once('assets/build/css/style.php'); ?>
-    </style>
-    <style>
-        <?php echo require_once('assets/build/css/responsive.php'); ?>
-    </style>
+    <?php
+    // FIX (2026-07-22): the theme's CSS and JS used to be wrapped in .php
+    // files and include()'d/require_once()'d directly here — meaning the
+    // full stylesheet + script + a hand-vendored copy of jQuery were
+    // re-sent as part of every single page's HTML response, with no HTTP
+    // caching whatsoever (no browser cache, no CDN cache, no 304s, ever).
+    // Now enqueued as real external files via inc/enqueue.php, hashed by
+    // Vite's build (assets/build/.vite/manifest.json) so a new deploy
+    // still busts stale browser caches correctly.
+    ?>
     <?php
     $typography = get_option('bday_typography_meta');
     if (is_array($typography) && !empty($typography)) {

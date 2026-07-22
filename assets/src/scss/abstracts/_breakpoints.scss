@@ -1,0 +1,26 @@
+// Breakpoint variables + mixins — a single source of truth replacing the
+// magic-number media queries scattered through responsive.scss (428px,
+// 769px, 769–1024px, each hand-typed independently with no shared value).
+// Usage: @include bd-up($bp-tablet) { ... } / @include bd-down($bp-mobile) { ... }
+
+$bp-mobile: 428px;
+$bp-tablet: 769px;
+$bp-desktop: 1024px;
+
+@mixin bd-up($breakpoint) {
+	@media (min-width: $breakpoint) {
+		@content;
+	}
+}
+
+@mixin bd-down($breakpoint) {
+	@media (max-width: $breakpoint - 1) {
+		@content;
+	}
+}
+
+@mixin bd-between($min, $max) {
+	@media (min-width: $min) and (max-width: $max - 1) {
+		@content;
+	}
+}

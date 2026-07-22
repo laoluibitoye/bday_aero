@@ -1,0 +1,17 @@
+// Single compiled-CSS entry point for the whole theme, replacing the old
+// gulp pipeline's two separately-compiled, separately-inlined files
+// (style.scss -> style.php, responsive.scss -> responsive.php, each its
+// own <style> block in every page's <head>). Combined into one real,
+// externally-cacheable stylesheet via inc/enqueue.php.
+//
+// Classic @import (not @use/@forward) on purpose: style.scss and
+// responsive.scss assume global, un-namespaced access to $businessday_red
+// and now the breakpoint abstracts below — converting ~4,800 lines of
+// existing, unlabeled rules to @use's namespaced-by-default model is a
+// separate, much riskier undertaking (needs every variable/mixin reference
+// updated) than this pipeline rebuild, and isn't attempted here.
+
+@import 'abstracts/breakpoints';
+@import 'style';
+@import 'responsive';
+@import 'lightbox';
