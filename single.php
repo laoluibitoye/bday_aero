@@ -37,15 +37,12 @@
     if(in_array('e-edition', $cats)){
         get_template_part( 'template-parts/single', 'edition', $args = [] );
     }
-    $legacy_premium_options = get_option('bday_legacy_premium');
-    $legacy_premium_enabled = isset($legacy_premium_options['legacy_premium_enabled']) && $legacy_premium_options['legacy_premium_enabled'] == '1';
-
-    if(in_array('pro', $cats) && $legacy_premium_enabled){
-        get_template_part( 'template-parts/single', 'pro', $args = [] );
-    }
-    else{
-        get_template_part( 'template-parts/single', 'default', $args = [] );
-    }
+    // The 'pro' category used to branch into template-parts/single-pro.php
+    // under the "Legacy Premium Redirect" system (a theme-level content
+    // gate that redirected 'pro'-category posts to premium.businessday.ng).
+    // Removed: AeroPaywall is now the sole system responsible for gating —
+    // every post renders through the same template regardless of category.
+    get_template_part( 'template-parts/single', 'default', $args = [] );
 
 ?>
   

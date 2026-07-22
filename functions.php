@@ -1011,8 +1011,8 @@ add_action('wp_head', 'bd_hide_page_titles');
 
 function bd_hide_page_titles() {
     // FIX (2026-07-17): skip single posts — articles render their headline as
-    // h1.post-title too (see template-parts/single-default.php / single-pro.php).
-    // Without this check, article titles were hidden site-wide.
+    // h1.post-title too (see template-parts/single-default.php). Without this
+    // check, article titles were hidden site-wide.
     if ( is_singular( 'post' ) ) {
         return;
     }
@@ -1076,110 +1076,6 @@ add_action( 'init', 'bd_direct_logout_handler', 1 );
 
 /** Custom Code End **/
 
-
-/**
- * BusinessDay proxy endpoint to fetch LPW group invite details.
- * Frontend calls this endpoint. Basic Auth stays on server side only.
- */
-add_action( 'rest_api_init', function () {
-
-	register_rest_route( 'businessday/v1', '/group-invite', array(
-		'methods'             => 'GET',
-		'callback'            => 'bd_get_group_invite_details',
-		'permission_callback' => '__return_true',
-	) );
-
-} );
-
-function bd_get_group_invite_details( WP_REST_Request $request ) {
-
-	$invite_key = sanitize_text_field( $request->get_param( 'invite_key' ) );
-
-	if ( empty( $invite_key ) ) {
-		return new WP_REST_Response( array(
-			'success' => false,
-			'message' => 'Invite key is required.',
-		), 400 );
-	}
-
-	$url = home_url( '/wp-json/leaky-paywall/v1/group-invites/' . rawurlencode( $invite_key ) );
-
-	// Credentials for the Leaky Paywall REST API must be set as wp-config.php
-	// constants (BD_LPW_APP_USERNAME / BD_LPW_APP_PASSWORD), not hardcoded in
-	// theme source — a plaintext WordPress application password used to live
-	// here in source control.
-	if ( ! defined( 'BD_LPW_APP_USERNAME' ) || ! defined( 'BD_LPW_APP_PASSWORD' ) ) {
-		return new WP_REST_Response( array(
-			'success' => false,
-			'message' => 'Leaky Paywall API credentials are not configured.',
-		), 500 );
-	}
-
-	$response = wp_remote_get( $url, array(
-		'headers' => array(
-			'Authorization' => 'Basic ' . base64_encode( BD_LPW_APP_USERNAME . ':' . BD_LPW_APP_PASSWORD ),
-		),
-		'timeout' => 20,
-	) );
-
-	if ( is_wp_error( $response ) ) {
-		return new WP_REST_Response( array(
-			'success' => false,
-			'message' => $response->get_error_message(),
-		), 500 );
-	}
-
-	$status_code = wp_remote_retrieve_response_code( $response );
-	$body        = json_decode( wp_remote_retrieve_body( $response ), true );
-
-	if ( $status_code !== 200 ) {
-		return new WP_REST_Response( array(
-			'success' => false,
-			'message' => 'Unable to fetch invite details.',
-			'data'    => $body,
-		), $status_code );
-	}
-
-	return new WP_REST_Response( array(
-		'success'    => true,
-		'invite_key' => $body['invite_key'] ?? '',
-		'email'      => $body['email'] ?? '',
-		'first_name' => $body['first_name'] ?? '',
-		'last_name'  => $body['last_name'] ?? '',
-		'status'     => $body['status'] ?? '',
-		'group_id'   => $body['group']['id'] ?? '',
-		'group_name' => $body['group']['name'] ?? '',
-		'level_id'   => $body['group']['level_id'] ?? '',
-	), 200 );
-}
-
-
-/**
- * Rewrite the LP group invitation email's link to point at the external signup app.
- * The app receives only the invite_key; it derives email, name, and group_id by
- * calling GET /leaky-paywall/v1/group-invites/{invite_key}.
- */
-add_filter( 'wp_mail', function ( $args ) {
-
-	if ( strpos( $args['message'], 'lp_group_invite_key=' ) === false ) {
-		return $args;
-	}
-
-	if ( ! preg_match( '/lp_group_invite_key=([A-Za-z0-9_]+)/', $args['message'], $m ) ) {
-		return $args;
-	}
-
-	$invite_key = $m[1];
-	$new_url    = 'https://businessday.ng/sign-up/?invite_key=' . rawurlencode( $invite_key );
-
-	$args['message'] = preg_replace(
-		'#https?://\S+?lp_group_invite_key=[^\s<>"]+#',
-		$new_url,
-		$args['message']
-	);
-
-	return $args;
-}, 10 );
 
 // ADDED (2026-07-18): World Cup Prediction AJAX Handler — powers the
 // bracket-predictor submission form on templates/page-worldcup.php.

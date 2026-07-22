@@ -11,6 +11,13 @@
  * Tags: editorial, news, magazine, high-density, premium, modern-publishing, customizable, news-portal
  * 
  * Changelog:
+ * 3.2: Removed the Leaky Paywall REST bridge (/businessday/v1/group-invite
+ *      proxy + invite-email link rewriting) and the "Legacy Premium
+ *      Redirect" system (settings page, admin menu, and single.php's
+ *      'pro'-category template branch) entirely. AeroPaywall is now the
+ *      only content-gating system this theme integrates with; every post
+ *      renders through the same template-parts/single-default.php.
+ *      template-parts/single-pro.php kept but moved to _archive/, unwired.
  * 3.1: Root style.css stripped down to just this required WP theme header —
  *      it is never enqueued by the theme, so it must not carry real rules.
  *      Removed a dead Leaky Paywall group-dashboard styling block that

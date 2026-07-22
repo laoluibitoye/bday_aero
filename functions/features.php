@@ -428,10 +428,6 @@ function bd_register_general_settings(): void
 		'bday_live_meta',
 		'bday_live_meta'
    );
-   register_setting(
-		'bday_legacy_premium',
-		'bday_legacy_premium'
-   );
 }
 add_action('admin_init', 'bd_register_general_settings');
 
@@ -457,15 +453,6 @@ function bd_settings_panel()
 		4
 	);
 
-	add_menu_page(
-		__('Legacy Premium Redirect', 'bday_legacy_premium'),
-		__('Legacy Premium Redirect', 'bday_legacy_premium'),
-		'manage_options',
-		'bday_legacy_premium_setup',
-		'bday_legacy_premium_setup_main_page',
-		'dashicons-lock',
-		7
-	);
 }
 add_action('admin_menu', 'bd_settings_panel');
 
@@ -1107,80 +1094,6 @@ function bd_news_carousel_fields(){
             array('field_name' => 'col_slug_' . $i, 'option_name' => 'bd_news_carousel_meta')
         );
     }
-}
-
-function bday_legacy_premium_setup_main_page(): void
-{
-    ?>
-    <div class="wrap">
-        <h1>Legacy Premium Redirect Settings</h1>
-        <p>Configure the site-wide settings for premium (PRO) posts blocking and redirection behavior.</p>
-        <form action="options.php" method="post">
-            <?php
-            settings_fields('bday_legacy_premium');
-            do_settings_sections('bday_legacy_premium');
-            ?>
-            <input type="submit" name="submit" class="button button-primary" value="<?php esc_attr_e('Save Changes'); ?>" />
-        </form>
-    </div>
-    <?php
-}
-
-add_action('admin_init', 'bday_legacy_premium_fields');
-function bday_legacy_premium_fields() {
-    $section_id = 'bday_legacy_premium_section';
-
-    add_settings_section(
-        $section_id,
-        'Settings',
-        '',
-        'bday_legacy_premium'
-    );
-
-    add_settings_field(
-        'legacy_premium_enabled',
-        'Enable Legacy Premium Redirect:',
-        'bd_settings_checkbox_fields',
-        'bday_legacy_premium',
-        $section_id,
-        array(
-            'field_name' => 'legacy_premium_enabled',
-            'option_name' => 'bday_legacy_premium',
-        )
-    );
-
-    add_settings_field(
-        'legacy_premium_redirect_url',
-        'Global Redirect URL:',
-        'bday_legacy_premium_url_field',
-        'bday_legacy_premium',
-        $section_id,
-        array(
-            'field_name' => 'legacy_premium_redirect_url',
-            'option_name' => 'bday_legacy_premium',
-            'default' => 'https://premium.businessday.ng'
-        )
-    );
-}
-
-function bday_legacy_premium_url_field(array $args = array()) {
-    $field_name = $args['field_name'] ?? '';
-    $option_name = $args['option_name'] ?? '';
-    $default_val = $args['default'] ?? '';
-
-    if ('' === $field_name || '' === $option_name) {
-        return;
-    }
-
-    $options = get_option($option_name);
-    $val = isset($options[$field_name]) && $options[$field_name] !== '' ? $options[$field_name] : $default_val;
-
-    printf(
-        '<input type="text" name="%s" value="%s" size="75" placeholder="%s" />',
-        esc_attr($option_name . '[' . $field_name . ']'),
-        esc_attr($val),
-        esc_attr($default_val)
-    );
 }
 
 ?>
