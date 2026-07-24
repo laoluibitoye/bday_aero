@@ -2,15 +2,13 @@
 /**
  * Template Name: masterpage
  *
- * The theme's one fixed homepage template — WordPress's Settings > Reading
- * front-page assignment always points here and never needs to change.
- * What changes is which layout this dispatches to internally: see
- * inc/homepage/homepage-variants.php for the registry/resolver (admin
- * override -> day-of-week -> default) and Appearance > BusinessDay Theme
- * for the override control.
+ * Kept as the exact same template name/slug as before so the live front
+ * page's existing Page-template assignment in the database keeps working
+ * unchanged — WordPress's Settings > Reading front-page assignment always
+ * points here. What changes is which variant this dispatches to
+ * internally (see core/homepage/class-variant-registry.php and
+ * Appearance > BusinessDay Theme > Homepage Variants for the override).
  */
 get_header();
-
-bd_render_active_homepage_variant();
-
+Bday_Variant_Registry::render_active();
 get_footer();

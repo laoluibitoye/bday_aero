@@ -22,9 +22,19 @@ services:
       wp-mysql:
         condition: service_healthy
     ports:
-      # 8080/8082 are already used by the aero-paywall stack on this
-      # machine — kept on a different port so both stacks can run at once.
+      # This is now the single local WP instance used for both this theme
+      # and the AeroPaywall connector plugin (more real content here than
+      # aero-paywall's own bare dev site made it the better shared test
+      # bed) — the standalone aero-paywall/docker-compose.wp.yml stack on
+      # 8080 has been decommissioned in favor of this one.
       - '8083:80'
+    # Docker Desktop (Mac/Windows) resolves host.docker.internal from
+    # inside a container automatically — native Docker Engine on Linux
+    # does not, unless explicitly added like this. Server-side PHP calls
+    # the connector plugin makes to subscription-service (running
+    # directly on the host, not in this compose file) depend on this.
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     environment:
       WORDPRESS_DB_HOST: wp-mysql
       WORDPRESS_DB_NAME: wordpress
@@ -36,13 +46,25 @@ services:
         define('WP_DEBUG', true);
         define('WP_DEBUG_LOG', true);
         define('WP_DEBUG_DISPLAY', false);
+        // Bypasses AeroPaywall license enforcement for local dev — same
+        // constant aero-paywall's own docker-compose.wp.yml defines, see
+        // class-license-client.php's is_dev_mode_bypass_active(). No real
+        // license key needed for local testing.
+        define('AERO_PAYWALL_DEV_MODE', true);
     volumes:
       - bday_wp_data:/var/www/html
       # Theme under active development — bind-mounted (not baked into the
-      # image) so edits on the host are reflected immediately. Deliberately
-      # self-contained to this folder only — no mounts from sibling repos,
-      # since this theme is being spun out into its own git repo.
+      # image) so edits on the host are reflected immediately.
       - .:/var/www/html/wp-content/themes/bday_ng_remastered
+      # AeroPaywall connector plugin + SDK, live-mounted from the sibling
+      # aero-paywall repo (this is a local-testing-only convenience, not a
+      # code dependency — nothing from that repo is copied into or
+      # committed to this one; this compose file just also stands up the
+      # plugin's dev topology so one WP instance covers both projects).
+      # Mirrors aero-paywall/docker-compose.wp.yml's own mounts exactly.
+      - ../aero-paywall/connector-plugin:/var/www/html/wp-content/plugins/aero-paywall
+      - ../aero-paywall/sdk/dist:/var/www/html/wp-content/uploads/sdk/latest
+      - ../aero-paywall/docker/wp-mu-plugins:/var/www/html/wp-content/mu-plugins
 
 volumes:
   bday_wp_data:

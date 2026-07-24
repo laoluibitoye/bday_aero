@@ -1,7 +1,7 @@
 {
-  "name": "bday-ng-remastered",
-  "version": "4.0.0",
-  "description": "BusinessDay Nigeria WordPress theme — build tooling",
+  "name": "businessday-premium",
+  "version": "1.0.0",
+  "description": "BusinessDay Premium WordPress theme — build tooling",
   "private": true,
   "type": "module",
   "scripts": {

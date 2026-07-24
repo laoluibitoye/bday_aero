@@ -1,265 +1,107 @@
-<?php $category = get_the_category(); ?>
-<style>
-    .image-caption {
-        margin-top: -1em;
-        margin-bottom: 1em;
-        font-size: 0.8em;
-    }
+<?php
+/**
+ * Standard article template. The previous version had a hardcoded, broken
+ * FlashTalking iframe (unfilled ${GDPR}/[CACHEBUSTER] macros) and an
+ * orphaned GAM div with no matching slot registration anywhere — neither
+ * is carried forward. In-article ad placement now goes through the
+ * ads-sharing-matrix's zone system instead of being hardcoded here.
+ */
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
-    .author-bio {
-        background-color: #fdedd7;
-        border-top: 1px solid red;
-        padding: 1em 1em 0.5em 1em;
-        margin-bottom: 1em;
-        margin-top: 1em;
+$post_id    = get_the_ID();
+$categories = get_the_category( $post_id );
+$primary_category = $categories[0] ?? null;
+?>
+<section id="article-page" class="bday-container bday-two-col">
+	<main class="bday-article-main">
+		<h1 class="post-title"><?php the_title(); ?></h1>
+		<div class="bday-byline">
+			<span><?php the_author_posts_link(); ?></span>
+			<span><?php the_date(); ?></span>
+		</div>
 
-        p {
-            font: icon;
-            /* font-size: 1em; */
-            /* line-height: 1em; */
-        }
-    }
-</style>
-<section id="article-page">
-    <div class="breadcrumb">
-        <ul>
-            <li><a href="/">Home </a></li>
-            <li>></li>
-            <li><a href="<?= get_category_link(get_cat_ID($category[0]->cat_name)) ?>"><?= $category[0]->cat_name ?></a></li>
-            <li>></li>
-            <li> <?php the_title(); ?> </li>
-        </ul>
-    </div>
-    <div class="row">
-        <div class="col-sm-9">
-            <main>
-                <?php $spost_id = get_the_ID(); ?>
-                <h1 class="post-title"> <?php the_title(); ?> </h1>
-                <div class="post-meta">
-                    <!-- <?php $author_name = get_the_author_meta('display_name', get_post_field('post_author', get_the_ID())) ?> -->
+		<article>
+			<?php if ( has_post_format( 'video' ) ) : ?>
+				<div class="bday-video-embed">
+					<iframe src="https://www.youtube.com/embed/<?php echo esc_attr( get_post_meta( $post_id, '_youtube_id', true ) ); ?>" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+				</div>
+			<?php else : ?>
+				<figure><?php echo bday_get_thumbnail( $post_id, 'featured', 'post-thumbnail' ); ?></figure>
+			<?php endif; ?>
 
-                    <img src="<?= get_the_author_meta('custom_author_dp', get_post_field('post_author', get_the_ID())) ?>" class="author" height="32" width="32" />
+			<?php echo bday_social_share_html( $post_id ); ?>
+			<?php bday_ad_zone( 'in_article_after_p2', get_post() ); ?>
 
-                    <!-- <?= get_avatar(get_the_author_meta(), 32, '', $author_name, ['class' => 'author']);  ?> -->
-                    <!-- <?= get_avatar(get_the_author_meta('ID', get_post_field('post_author', get_the_ID())), 32, '', $author_name, ['class' => 'author']); ?> -->
+			<div class="post-content">
+				<?php the_content(); ?>
 
-                    <!-- <p class="author-name"><a href="<?= get_author_posts_url(get_the_author_meta('ID', get_post_field('post_author', get_the_ID()))) ?>"> <?= $author_name ?> </a></p> -->
-                    <p class="author-name"> <?= the_author_posts_link() ?> </p>
-                    <p class="post-date"><?php the_date(); ?></p>
-                </div>
-                <article>
-                    <?php
-                    if (has_post_format('video')) {
-                        $youtube_id = get_post_meta(get_the_ID(), '_youtube_id', true);
-                        echo '<div class="video-container" style="margin-bottom: 1em;">
-                                    <iframe style="width: 100%; height: 500px;" src="https://www.youtube.com/embed/' . $youtube_id . '" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                                </div>';
-                    } else { ?>
-                        <figure>
-                            <?= get_thumbnail(['post_id' => get_the_ID(), 'size' => 'featured', 'classes' => "post-thumbnail"]) ?>
-                        </figure>
-                        <?php
-                        if (get_the_post_thumbnail_caption() != "") {
-                            echo '<p class="image-caption">' . get_the_post_thumbnail_caption() . '</p>';
-                        }
-                        ?>
-                    <?php } ?>
+				<?php if ( $primary_category ) :
+					$tags = get_the_tags( $post_id );
+					if ( ! empty( $tags ) ) :
+						$tag_ids   = wp_list_pluck( $tags, 'term_id' );
+						$read_also = bday_get_posts( array( 'tag__in' => $tag_ids, 'post__not_in' => array( $post_id ), 'numberposts' => 3, 'cache_namespace' => 'article' ) );
+						if ( ! empty( $read_also ) ) :
+							?>
+							<div class="bday-read-also">
+								<h4>Related News</h4>
+								<ul>
+									<?php foreach ( $read_also as $rp ) : ?>
+										<li><a href="<?php echo esc_url( get_permalink( $rp ) ); ?>"><?php echo esc_html( get_the_title( $rp ) ); ?></a></li>
+									<?php endforeach; ?>
+								</ul>
+							</div>
+						<?php endif;
+					endif;
+				endif;
+				?>
 
-                    <?= get_social_share_icons() ?>
+				<?php
+				$author_bio = get_the_author_meta( 'description', get_post_field( 'post_author', $post_id ) );
+				if ( $author_bio ) :
+					?>
+					<div class="bday-author-bio">
+						<strong><?php the_author_posts_link(); ?></strong>
+						<p><?php echo esc_html( $author_bio ); ?></p>
+					</div>
+				<?php endif; ?>
 
-                    <div class="post-content">
+				<?php bday_ad_zone( 'below_share_buttons', get_post() ); ?>
+				<?php echo bday_social_share_html( $post_id ); ?>
 
-                        <!--To ensure accurate tracking it is essential that you replace [CACHEBUSTER] in the tag below with a random number or timestamp.-->
+				<?php if ( is_active_sidebar( 'article_page_text_link' ) ) : ?>
+					<?php dynamic_sidebar( 'article_page_text_link' ); ?>
+				<?php endif; ?>
+			</div>
 
-                        <iframe src="https://servedby.flashtalking.com/imp/7/249648;8674159;201;jsiframe;BusinessDayNetwork;ZohoBusinessdayNG300x250/?ft_custom=&imageType=gif&ftDestID=39713871&ft_width=300&ft_height=250&click=&ftOBA=1&ftExpTrack=&gdpr=${GDPR}&gdpr_consent=${GDPR_CONSENT_78}&cachebuster=[BDAY]" allowFullScreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" topmargin="0" leftmargin="0" allowtransparency="true" width="300" height="250">
-                        <a href="https://servedby.flashtalking.com/click/7/249648;8674159;0;209;0/?gdpr=${GDPR}&gdpr_consent=${GDPR_CONSENT_78}&ft_width=300&ft_height=250&url=39713871" target="_blank">
-                        <img border="0" src="https://servedby.flashtalking.com/imp/7/249648;8674159;205;gif;BusinessDayNetwork;ZohoBusinessdayNG300x250/?gdpr=${GDPR}&gdpr_consent=${GDPR_CONSENT_78}"></a>
-                        </iframe>
-                        <!--To ensure accurate tracking it is essential that you replace [CACHEBUSTER] in the tag below with a random number or timestamp.-->
+			<?php if ( $primary_category ) :
+				$ymal = bday_get_posts( array( 'category_name' => $primary_category->slug, 'post__not_in' => array( $post_id ), 'numberposts' => 3, 'cache_namespace' => 'article' ) );
+				if ( ! empty( $ymal ) ) :
+					?>
+					<div class="bday-ymal">
+						<h2 class="bday-section-heading">You Might Also Like</h2>
+						<div class="bday-card-grid">
+							<?php foreach ( $ymal as $rp ) : ?>
+								<article class="bday-card">
+									<a href="<?php echo esc_url( get_permalink( $rp ) ); ?>" class="bday-card__media"><?php echo bday_get_thumbnail( $rp->ID, 'medium_rectangle' ); ?></a>
+									<h3 class="bday-card__title"><a href="<?php echo esc_url( get_permalink( $rp ) ); ?>"><?php echo esc_html( get_the_title( $rp ) ); ?></a></h3>
+								</article>
+							<?php endforeach; ?>
+						</div>
+					</div>
+				<?php endif;
+			endif;
+			?>
 
-                        <?php
-                        /*
-                         * FLAGGED (2026-07-22): div-gpt-ad-1770204845954-0 has no matching
-                         * googletag.defineSlot() call anywhere in this theme — grepped the
-                         * whole codebase, zero hits. Its own comment claims it maps to
-                         * /23043164651/businessday_body3, but that slot was re-registered
-                         * under a different div id (div-gpt-ad-1783098103568-0, already
-                         * displayed once via templates/masterpage.php) during the 2026-07-18
-                         * Dochase migration — this one instance was missed and has been
-                         * silently rendering nothing on every single article page since.
-                         * Not auto-fixed here: registering a slot needs the real GAM ad-unit
-                         * path from BusinessDay's ad ops team, not a guess. bd_gam_slot()
-                         * still renders it (harmless no-op today) so it's ready the moment
-                         * a real slot gets registered for it in header.php.
-                         */
-                        bd_gam_slot( 'div-gpt-ad-1770204845954-0', 300, 250 );
-                        ?>
-                        <?php
-                        function insert_read_also($content)
-                        {
-                            $tags = get_the_tags();
-                            if (!empty($tags)) {
-                                foreach ($tags as $individual_tag) $tag_ids[] = $individual_tag->term_id;
-                                // FIX (2026-07-18): was custom_get_posts() (uncached), re-running an
-                                // expensive tag join on every single pageview — main driver of the
-                                // RDS CPU spikes. Now cached per-post via bday_get_cached_posts().
-                                $read_also = bday_get_cached_posts(
-                                    'bday_read_also_' . get_the_ID(),
-                                    array(
-                                        'tag__in' => $tag_ids,
-                                        'post__not_in' => array(get_the_ID()),
-                                        'numberposts'   => 3,
-                                        'suppress_filters' => true,
-                                    )
-                                );
-                                $read_also_content = ' <div class="read-also"> <header>Related News</header> <ul> ';
-                                foreach ($read_also as $post) {
-                                    $read_also_content .= '<li><a href="' . get_the_permalink($post->ID) . '?utm_source=auto-read-also&utm_medium=web"> ' . $post->post_title . ' </a></li>';
-                                    // $read_also_content .= '<li><a href="'.get_the_permalink( $post->ID ).'?utm_source=auto-read-also&utm_medium=web">'.$post->post_title.'</a></li>';
-                                }
-                                $read_also_content .= ' </ul> </div>';
-                                return insert_after_paragraph($read_also_content, $content);
-                            }
-                            return $content;
-                        }
-                        add_filter('the_content', 'insert_read_also');
-                        the_content();                            
-                            
-                        $author_detials = get_the_author_meta("description", get_post_field("post_author", $post->ID));
-                            
-                        if ($author_detials != ""):
-                        ?>
+			<?php bday_ad_zone( 'below_article_recirculation', get_post() ); ?>
+		</article>
+	</main>
 
-                            <div class="author-bio">
-                                <b> <?= the_author_posts_link() ?> </b>
-                                <p> <?= get_the_author_meta("description", get_post_field("post_author", $post->ID)) ?> </p>
-                            </div>
-                        <?php endif; ?>
-                        <!-- <img src="https://i0.wp.com/businessday.ng/wp-content/uploads/2023/07/Newsletter-webBanner2.jpg?w=1170&ssl=1" class="newsletter-banner"> -->
-                         <img src="https://cdn.businessday.ng/wp-content/uploads/2026/02/BDWhatApp3.jpg" class="newsletter-banner">
-                        <?= get_social_share_icons() ?>
-                            
-                        <div class="join-whatsapp">
-                            <p> Join BusinessDay whatsapp Channel, to stay up to date </p>
-                            <a href="https://whatsapp.com/channel/0029VaKVPxMLo4hZVRqYXy2b" target="_blank"> <i class="bi bi-whatsapp"></i> Open In Whatsapp </a>
-                        </div>
-
-                        <?php
-                        if (is_active_sidebar('article_page_text_link')) {
-                            dynamic_sidebar('article_page_text_link');
-                        }
-                        ?>
-                    </div>
-                    <!-- AD NOW -->
-                    <!-- <div id="SC_TBlock_882015"></div>
-                        <script type="text/javascript">
-                            (sc_adv_out = window.sc_adv_out || []).push({
-                                id : "882015",
-                                domain : "n.ads1-adnow.com",
-                                no_div: false
-                            });
-                        </script> -->
-                    <!-- AD NOW -->
-                    <?php
-                    // FIX (2026-07-18): was query_posts() (uncached, and clobbers the main
-                    // query global — a WordPress anti-pattern), re-run every pageview.
-                    // Now cached per-post via bday_get_cached_posts(), using get_posts()
-                    // instead so it can't interfere with the main query.
-                    $ymal = bday_get_cached_posts(
-                        'bday_ymal_' . get_the_ID(),
-                        array(
-                            'category_name' => $category[0]->slug,
-                            'post__not_in' => array(get_the_ID()),
-                            'numberposts' => 3,
-                            'suppress_filters' => true,
-                        )
-                    );
-                    ?>
-                    <div class="related-author-news">
-                        <div class="section-heading">
-                            <!-- <a href=""> -->
-                            <span>YOU MIGHT ALSO LIKE</span>
-                            <!-- </a> -->
-                        </div>
-                        <div class="row">
-                            <?php
-                            if (! empty($ymal)) :
-                                foreach ($ymal as $post) :
-                            ?>
-                                    <div class="col-lg-4">
-                                        <article>
-                                            <figure>
-                                                <span class="post-category"><a href="<?= get_category_link(get_cat_ID($category[0]->cat_name)) ?>"> <?= $category[0]->cat_name ?></a></span>
-                                                <a href="<?= get_the_permalink($post->ID); ?>"> <?= get_thumbnail(['post_id' => $post->ID, 'size' => 'medium_rectangle']) ?> </a>
-                                            </figure>
-                                            <h2><a href="<?= get_the_permalink($post->ID); ?>"> <?= $post->post_title; ?> </a></h2>
-                                        </article>
-                                    </div>
-                            <?php
-                                endforeach;
-                            endif;
-                            ?>
-                        </div>
-                        <!-- <div class="pagination">
-                                <a href=""><i class="fa fa-angle-left" aria-hidden="true"></i> Prev</a>
-                                <a href="">Next <i class="fa fa-angle-right" aria-hidden="true"></i></a>
-                            </div> -->
-                    </div>
-                    
-                    <!-- TABOOLA --body-- below article -->
-                    <div id="taboola-below-article-thumbnails"></div>
-                    <script type="text/javascript">
-                        window._taboola = window._taboola || [];
-                        _taboola.push({
-                            mode: 'alternating-thumbnails-a',
-                            container: 'taboola-below-article-thumbnails',
-                            placement: 'Below Article Thumbnails',
-                            target_type: 'mix'
-                          });
-                    </script>
-		
-
-                    <?php if (comments_open()) : ?>
-                        <!-- <div class="comment-box"> -->
-                        <!-- <div style="margin-top: 2em;" id="disqus_thread"></div>
-                                    <script>
-                                        var disqus_config = function () {
-                                            this.page.url = "<?= get_the_permalink(); ?>";  // Replace PAGE_URL with your page's canonical URL variable
-                                            this.page.identifier = <?= get_the_ID(); ?>; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
-                                        };
-                                                        
-                                    </script>
-                                    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript> -->
-                        <!-- </div>  -->
-                    <?php endif; ?>
-
-                </article>
-            </main>
-            <div>
-
-                <amp-embed width=100 height=100
-                    type='taboola'
-                    layout='responsive'
-                    data-publisher='businessdaynigeria'
-                    data-mode='alternating-thumbnails-a'
-                    data-placement='Below Article Thumbnails AMP'
-                    data-target_type='mix'
-                    data-article='auto'
-                    data-url=''>
-                </amp-embed>
-            </div>
-        </div>
-        <div class="col-sm-3">
-            <aside class="desktop-only">
-                <?php
-                if (is_active_sidebar('page_sidebar')) {
-                    dynamic_sidebar('page_sidebar');
-                }
-                ?>
-                <div class="top-sticky">
-                    <?= do_shortcode('[admanager ad_id="sidebar_1" placement="desktop" lazy="false"]'); ?>
-                </div>
-            </aside>
-        </div>
-    </div>
+	<aside class="bday-sidebar desktop-only">
+		<?php if ( is_active_sidebar( 'page_sidebar' ) ) : ?>
+			<?php dynamic_sidebar( 'page_sidebar' ); ?>
+		<?php endif; ?>
+		<?php bday_ad_zone( 'sidebar', get_post() ); ?>
+	</aside>
 </section>
