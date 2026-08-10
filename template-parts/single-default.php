@@ -35,9 +35,21 @@ $primary_category = $categories[0] ?? null;
 			<?php bday_ad_zone( 'in_article_after_p2', get_post() ); ?>
 
 			<div class="post-content">
-				<?php the_content(); ?>
+				<?php
+				/**
+				 * Explicit call, not a the_content filter — the native
+				 * AeroPaywall add-on (addons/aero-paywall) truncates/locks
+				 * this on a gated post; the related-content block right
+				 * below is then also skipped, since splicing "Related
+				 * News" into a 120-word teaser is exactly the layout
+				 * hazard the old connector-plugin's own docs warned about.
+				 * No-ops (returns $content unchanged) if the add-on isn't
+				 * active for this request.
+				 */
+				echo bday_aero_gate_content( $post_id, apply_filters( 'the_content', get_the_content() ) );
+				?>
 
-				<?php if ( $primary_category ) :
+				<?php if ( $primary_category && ! bday_aero_is_post_gated( $post_id ) ) :
 					$tags = get_the_tags( $post_id );
 					if ( ! empty( $tags ) ) :
 						$tag_ids   = wp_list_pluck( $tags, 'term_id' );

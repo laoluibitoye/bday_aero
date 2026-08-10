@@ -1,12 +1,19 @@
 <?php
-/** Other-news grid + columnists/opinion row. Pure data-receiving partial. */
+/**
+ * Other-news grid + columnists/opinion row. Pure data-receiving partial —
+ * the post lists themselves still come from core/homepage/data.php's
+ * tag/category fetch (that's curated content, unrelated to this), but the
+ * headings and their links now come from the Sections registry
+ * (addons/sections) instead of a hardcoded label + bday_category_url()
+ * slug, so an admin can rename/repoint them from the dashboard.
+ */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 ?>
 <section class="bday-rail">
 	<div class="bday-container">
-		<h2 class="bday-section-heading"><a href="<?php echo esc_url( bday_category_url( 'news' ) ); ?>">In Other News</a></h2>
+		<h2 class="bday-section-heading"><a href="<?php echo esc_url( bday_section_url( 'news' ) ); ?>"><?php echo esc_html( bday_section_label( 'news' ) ); ?></a></h2>
 		<div class="bday-card-grid">
 			<?php foreach ( $data['other_news'] as $post ) : ?>
 				<article class="bday-card">
@@ -22,7 +29,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 		<div class="bday-columnists-row">
 			<div class="bday-columnists">
-				<h2 class="bday-section-heading"><a href="<?php echo esc_url( bday_category_url( 'columnist' ) ); ?>">Columnists</a></h2>
+				<h2 class="bday-section-heading"><a href="<?php echo esc_url( bday_section_url( 'columnist' ) ); ?>"><?php echo esc_html( bday_section_label( 'columnist' ) ); ?></a></h2>
 				<div class="bday-columnists__grid">
 					<?php foreach ( $data['columnists'] as $post ) : ?>
 						<div class="bday-columnist">
@@ -36,7 +43,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</div>
 			</div>
 			<div class="bday-opinion">
-				<h2 class="bday-section-heading"><a href="<?php echo esc_url( bday_category_url( 'opinion' ) ); ?>">Opinion</a></h2>
+				<h2 class="bday-section-heading"><a href="<?php echo esc_url( bday_section_url( 'opinion' ) ); ?>"><?php echo esc_html( bday_section_label( 'opinion' ) ); ?></a></h2>
 				<ul class="bday-list">
 					<?php foreach ( $data['opinion'] as $post ) : ?>
 						<li><a href="<?php echo esc_url( get_permalink( $post ) ); ?>"><?php echo esc_html( get_the_title( $post ) ); ?></a></li>

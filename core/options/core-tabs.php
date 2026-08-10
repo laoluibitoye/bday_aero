@@ -34,6 +34,27 @@ add_filter(
 			),
 		);
 
+		$schema['masthead'] = array(
+			'tab_label' => 'Masthead',
+			'option'    => 'bday_masthead',
+			'fields'    => array(
+				array(
+					'key'         => 'cta_label',
+					'type'        => 'text',
+					'label'       => 'CTA button label',
+					'description' => 'Shown in the site header next to the account menu. Leave blank to hide the button entirely.',
+					'default'     => 'Subscribe',
+				),
+				array(
+					'key'         => 'cta_url',
+					'type'        => 'url',
+					'label'       => 'CTA button URL',
+					'description' => 'Where the header CTA button links to.',
+					'default'     => '',
+				),
+			),
+		);
+
 		$schema['custom-code'] = array(
 			'tab_label' => 'Custom Code',
 			'option'    => 'bday_custom_code',

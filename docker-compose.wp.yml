@@ -65,6 +65,11 @@ services:
       - ../aero-paywall/connector-plugin:/var/www/html/wp-content/plugins/aero-paywall
       - ../aero-paywall/sdk/dist:/var/www/html/wp-content/uploads/sdk/latest
       - ../aero-paywall/docker/wp-mu-plugins:/var/www/html/wp-content/mu-plugins
+      # BusinessDay_Web_Theme (client theme, deep AeroPaywall integration
+      # work) — mounted alongside bday_ng_remastered, not replacing it.
+      # Neither theme is active by default; switch with
+      # `wp theme activate <slug>` inside the container as needed.
+      - ../BusinessDay_Web_Theme:/var/www/html/wp-content/themes/BusinessDay_Web_Theme
 
 volumes:
   bday_wp_data:

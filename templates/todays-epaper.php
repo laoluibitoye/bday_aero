@@ -12,7 +12,6 @@ foreach ( $e_paper as $post ) :
 	<section id="article-page" class="bday-container">
 		<h1 class="post-title"><?php echo esc_html( get_the_title( $post ) ); ?></h1>
 		<article>
-			<?php echo bday_social_share_html( $post->ID ); ?>
 			<div class="post-content">
 				<?php bday_render_pdf_viewer( get_post_meta( $post->ID, '_bday_pdf_preview_link', true ) ); ?>
 			</div>

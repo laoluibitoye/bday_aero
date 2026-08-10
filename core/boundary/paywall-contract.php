@@ -16,9 +16,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * The plugin already exposes this via AeroPaywall_Settings::ACCOUNT_PAGE_URL
- * (option: aero_paywall_account_page_url) — this is a read of that value,
- * not a second copy of it.
+ * Reads the account-page URL option directly — not a second copy of it,
+ * since both the retired connector-plugin AND the native
+ * addons/aero-paywall add-on read/write this exact same option key
+ * (aero_paywall_account_page_url). Works identically regardless of which
+ * of the two (plugin or native add-on) is actually active, since it never
+ * touches either one's code, only the option they share.
  */
 function bday_paywall_login_url(): string {
 	$configured = get_option( 'aero_paywall_account_page_url', '' );

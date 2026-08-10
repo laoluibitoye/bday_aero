@@ -63,7 +63,18 @@ function bday_format_date( string $datetime ): string {
 	return date_i18n( 'M d, Y', strtotime( $datetime ) );
 }
 
+/**
+ * Same "not on a Page, except the front page" policy as
+ * addons/vendors/addon.php's bday_page_allows_ads() — kept as an
+ * independent check here (rather than a shared cross-addon call) since
+ * social-share has no dependency on the ads/vendors addon at all, and
+ * disabling that addon shouldn't silently change sharing behavior too.
+ */
 function bday_social_share_html( int $post_id ): string {
+	if ( is_page() && ! is_front_page() ) {
+		return '';
+	}
+
 	$url   = get_permalink( $post_id );
 	$title = get_the_title( $post_id );
 

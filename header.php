@@ -26,7 +26,10 @@
 	<?php do_action( 'bday_homepage_leaderboard_zone' ); ?>
 
 	<section class="bday-topbar">
-		<div class="bday-container"><span><?php echo esc_html( date_i18n( 'l, F d, Y' ) ); ?></span></div>
+		<div class="bday-container">
+			<span><?php echo esc_html( date_i18n( 'l, F d, Y' ) ); ?></span>
+			<span class="bday-topbar__clock" data-bday-clock aria-live="off"></span>
+		</div>
 	</section>
 
 	<section class="bday-masthead desktop-only">
@@ -62,6 +65,16 @@
 
 			<div class="menu-action">
 				<ul>
+					<?php
+					$bday_masthead   = get_option( 'bday_masthead', array() );
+					$bday_cta_label  = is_array( $bday_masthead ) ? ( $bday_masthead['cta_label'] ?? '' ) : '';
+					$bday_cta_url    = is_array( $bday_masthead ) ? ( $bday_masthead['cta_url'] ?? '' ) : '';
+					if ( '' !== $bday_cta_label && '' !== $bday_cta_url ) :
+						?>
+						<li class="menu-cta-item">
+							<a class="bday-header-cta" href="<?php echo esc_url( $bday_cta_url ); ?>"><?php echo esc_html( $bday_cta_label ); ?></a>
+						</li>
+					<?php endif; ?>
 					<li>
 						<a href="<?php echo esc_url( home_url( '/search-page/' ) ); ?>" aria-label="Search">
 							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
@@ -144,3 +157,19 @@ if ( $bday_tradingview instanceof Bday_Vendor_Tradingview ) {
 // enabled (its code is then never even loaded, let alone queried).
 do_action( 'bday_header_ticker_zone' );
 ?>
+<script>
+// Topbar live-local-time clock — dependency-free, matches the theme's
+// existing no-jQuery convention. Ticks client-side only; the server-
+// rendered date next to it is what search engines/no-JS visitors see.
+(function () {
+	var el = document.querySelector( '[data-bday-clock]' );
+	if ( ! el ) {
+		return;
+	}
+	function tick() {
+		el.textContent = new Date().toLocaleTimeString( [], { hour: '2-digit', minute: '2-digit' } );
+	}
+	tick();
+	setInterval( tick, 30000 );
+})();
+</script>

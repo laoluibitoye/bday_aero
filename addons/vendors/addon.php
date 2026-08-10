@@ -55,7 +55,15 @@ function bday_ads_allowed(): bool {
 	return $allowed;
 }
 
-/** Deny-list ad policy: ads run everywhere except 404s and transactional pages that compete with the one task a reader is there to complete. */
+/**
+ * Ads run on posts, archives/search (post listings), and the front page —
+ * never on a WordPress Page, since a Page is as likely to be a sales-funnel
+ * or account/transactional screen as an article, and those shouldn't
+ * compete with ads for the one task a reader is there to complete. The
+ * front page is its own exception even when it's a static Page (it is
+ * here — templates/masterpage.php) because it's still the main editorial
+ * surface, not a transactional one.
+ */
 function bday_page_allows_ads(): bool {
 	if ( ! bday_ads_allowed() ) {
 		return false;
@@ -63,11 +71,8 @@ function bday_page_allows_ads(): bool {
 	if ( is_404() ) {
 		return false;
 	}
-	if ( is_singular( 'page' ) ) {
-		global $post;
-		if ( $post && has_shortcode( $post->post_content, 'aeropaywall_account' ) ) {
-			return false;
-		}
+	if ( is_page() && ! is_front_page() ) {
+		return false;
 	}
 	return true;
 }

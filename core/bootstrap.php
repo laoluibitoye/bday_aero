@@ -21,6 +21,7 @@ require_once BDAY_THEME_DIR . 'core/addons/class-addon-loader.php';
 require_once BDAY_THEME_DIR . 'core/homepage/class-variant-registry.php';
 require_once BDAY_THEME_DIR . 'core/homepage/data.php';
 require_once BDAY_THEME_DIR . 'core/boundary/paywall-contract.php';
+require_once BDAY_THEME_DIR . 'core/boundary/aero-paywall-bridge.php';
 require_once BDAY_THEME_DIR . 'core/options/field-types/render.php';
 require_once BDAY_THEME_DIR . 'core/options/class-options-framework.php';
 require_once BDAY_THEME_DIR . 'core/options/core-tabs.php';
