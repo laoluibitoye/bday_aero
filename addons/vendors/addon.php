@@ -2,6 +2,7 @@
 /**
  * Addon Name: Vendors & Integrations
  * Addon Slug: vendors
+ * Description: Third-party integrations: GAM, GA4, Chartbeat, Matomo, Taboola, TradingView, and more.
  * Cache Namespace: vendors
  * Settings Tab: Integrations
  * Default: on
@@ -149,6 +150,28 @@ add_action(
 	}
 );
 
+/**
+ * Phase 5 of the roadmap: the connecting piece. ads-sharing-matrix's
+ * bday_ad_zone() (addons/ads-sharing-matrix/includes/data.php) already does
+ * real gating and fires bday_render_ad_zone — nothing in the theme ever
+ * listened for it. Same dispatch shape as the wp_head/wp_footer loops
+ * above: every configured driver gets a chance to render, and every
+ * driver except GAM's render_zone() override is a no-op, so this is safe
+ * to leave unconditional.
+ */
+add_action(
+	'bday_render_ad_zone',
+	static function ( string $zone, ?WP_Post $post ): void {
+		foreach ( bday_vendor_drivers() as $driver ) {
+			if ( $driver->is_configured() ) {
+				$driver->render_zone( $zone, $post );
+			}
+		}
+	},
+	10,
+	2
+);
+
 // Settings tab: one collapsible section per driver, plus the ads master switch.
 add_filter(
 	'bday_settings_schema',
@@ -167,6 +190,8 @@ add_filter(
 			'tab_label' => 'Integrations',
 			'option'    => 'bday_addon_vendors_flat',
 			'render'    => 'bday_render_vendors_tab',
+			'intro'     => 'Every third-party script this site loads — analytics, ad serving, content recommendations, on-site widgets — in one place, each independently on/off with its own account credentials. Each collapsible section below is a separate vendor; a vendor left disabled never loads its script at all, so it can\'t affect page speed or fire any tracking for that vendor.',
+			'about'     => '<p>These are the actual third-party integrations running on the live site — real account IDs, not placeholders. Changing an ID here redirects that vendor\'s data collection to a different account immediately; double-check before saving.</p>',
 		);
 		return $schema;
 	}

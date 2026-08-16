@@ -16,8 +16,8 @@ class Bday_Vendor_Taboola extends Bday_Vendor_Driver {
 
 	public function settings_fields(): array {
 		return array(
-			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable Taboola', 'default' => true ),
-			array( 'key' => 'account', 'type' => 'text', 'label' => 'Account name', 'default' => 'businessdaynigeria' ),
+			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable Taboola', 'default' => true, 'description' => 'Content-recommendation widget ("You may also like...") — a revenue source separate from display ads, typically shown at the bottom of an article.' ),
+			array( 'key' => 'account', 'type' => 'text', 'label' => 'Account name', 'default' => 'businessdaynigeria', 'description' => 'Your Taboola publisher account name, as provided by Taboola.' ),
 		);
 	}
 

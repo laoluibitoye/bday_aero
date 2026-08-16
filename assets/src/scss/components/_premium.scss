@@ -1,12 +1,23 @@
 // BusinessDay Premium v1.0 — styling for the rebuilt homepage variants,
 // shared partials, and add-on components (all bday-* prefixed classes).
 // Every newly-built feature styles itself here rather than inline in PHP.
-
-$bday-red: #ba141a;
-$bday-ink: #121111;
-$bday-muted: #64748b;
-$bday-surface: #f8f9fa;
-$bday-border: #e2e5ea;
+//
+// Reader-reported bug fix: these 5 variables were hardcoded hex values,
+// meaning every single rule in this file (which is most of the site's
+// actual visible card/heading/list/byline styling — this is the primary
+// component stylesheet, not the legacy style.scss) ignored the light/
+// warm/dark theme tokens entirely. Sass variables are a compile-time
+// substitution, not a real binding, but pointing them at the CSS custom
+// properties instead of literal hex works exactly the same way here:
+// every `color: $bday-ink` below compiles to `color: var(--color-ink-1)`,
+// so the whole file becomes theme-aware from this one change — this is
+// what actually fixes "the mode switch doesn't repaint the page" for
+// nearly everything below the header.
+$bday-red: var(--color-accent);
+$bday-ink: var(--color-ink-1);
+$bday-muted: var(--color-ink-3);
+$bday-surface: var(--color-bg-raised);
+$bday-border: var(--color-border);
 
 .bday-container {
 	max-width: 1350px;
@@ -22,7 +33,7 @@ $bday-border: #e2e5ea;
 	color: $bday-ink;
 	border-bottom: 2px solid $bday-ink;
 	padding-bottom: 6px;
-	margin-bottom: 12px;
+	margin: 0 0 12px;
 }
 
 .bday-section-heading {
@@ -115,7 +126,10 @@ $bday-border: #e2e5ea;
 	&__excerpt {
 		font-size: 15px;
 		line-height: 1.55;
-		color: #333;
+		// Was a hardcoded #333 — same dark-mode-invisible bug class fixed
+		// twice already this session, caught here while touching this
+		// component for the WSJ-layout hero changes.
+		color: $bday-muted;
 		margin-bottom: 8px;
 	}
 }
@@ -134,6 +148,7 @@ $bday-border: #e2e5ea;
 .bday-card {
 	&__media {
 		display: block;
+		position: relative;
 		overflow: hidden;
 		img { width: 100%; height: 200px; object-fit: cover; transition: transform 0.25s; }
 		&:hover img { transform: scale(1.03); }
@@ -150,6 +165,35 @@ $bday-border: #e2e5ea;
 	}
 
 	&__excerpt { font-size: 13px; color: $bday-muted; margin-top: 6px; }
+}
+
+// Video-format post badge (bday_get_card_media(), core/helpers.php) —
+// wherever a thumbnail renders, not just the card grid, so it needs its
+// own rule rather than living under .bday-card.
+.bday-media-badge {
+	position: absolute;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	border-radius: 50%;
+	background: rgba(10, 10, 10, 0.6);
+	color: #fff;
+	pointer-events: none;
+
+	svg { margin-left: 2px; } // optical centering — the triangle's own weight sits left of true-center
+
+	.bday-card__media & { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+	.bday-topic-list__media &,
+	.bday-news-carousel__thumb & {
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 20px;
+		height: 20px;
+		svg { width: 9px; height: 9px; }
+	}
 }
 
 /* ---- Two-column shells ---- */
@@ -192,6 +236,187 @@ $bday-border: #e2e5ea;
 	> div { margin-bottom: 28px; }
 }
 
+// Editor-uploaded promo/custom-ad slot (addons/sidebar-promo/) — plain
+// bordered card, a small uppercase sponsor label above the image when
+// the editor's filled one in, no styling assumptions about what the
+// creative itself looks like since that's entirely editor-supplied.
+.bday-sidebar-promo {
+	border: 1px solid $bday-border;
+	border-radius: var(--radius-md, 6px);
+	overflow: hidden;
+
+	&__label {
+		display: block;
+		padding: 8px 12px;
+		font-family: var(--font-ui);
+		font-size: 10.5px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: $bday-muted;
+		border-bottom: 1px solid $bday-border;
+	}
+
+	&__image {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+}
+
+/**
+ * Default WP widgets (search, recent posts, recent comments, archives,
+ * categories) — previously rendered as a completely unstyled markup dump
+ * (register_sidebar() wrapped each in a bare `<span>`, invalid nesting
+ * around block content that also gave this file nothing block-level to
+ * target — see core/theme-setup.php's $widget_wrapper_args). Every
+ * `.bday-sidebar` widget goes through this, on both the article page and
+ * the homepage right rail.
+ */
+.bday-sidebar-widgets {
+	display: flex;
+	flex-direction: column;
+	gap: 28px;
+}
+
+.bday-widget {
+	padding-bottom: 24px;
+	border-bottom: 1px solid $bday-border;
+
+	&:last-child { border-bottom: none; padding-bottom: 0; }
+
+	// `.widget-title` covers classic widgets (register_sidebar()'s
+	// before_title/after_title); a block-based widget (Gutenberg's Widgets
+	// screen — this sidebar's actual current content, wp-block-group +
+	// wp-block-heading/latest-posts) never passes through that at all, so
+	// every heading/list inside a widget is targeted generically instead
+	// of relying on a class WordPress won't consistently apply.
+	.widget-title,
+	> h2,
+	.wp-block-heading {
+		margin: 0 0 14px;
+		font-family: var(--font-headline, Georgia, serif);
+		font-size: 15px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		color: $bday-ink;
+		border-bottom: 2px solid $bday-red;
+		padding-bottom: 8px;
+	}
+
+	ul,
+	.wp-block-latest-posts__list,
+	.wp-block-latest-comments {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	li,
+	.wp-block-latest-comments__comment {
+		padding: 9px 0;
+		border-bottom: 1px solid $bday-border;
+		font-size: 13.5px;
+		line-height: 1.4;
+
+		&:last-child { border-bottom: none; }
+	}
+
+	a {
+		color: $bday-ink;
+		text-decoration: none;
+		&:hover { color: $bday-red; }
+	}
+
+	.wp-block-latest-posts__post-title,
+	.wp-block-latest-comments__comment-link {
+		font-weight: 600;
+	}
+
+	.wp-block-latest-posts__post-date,
+	.wp-block-latest-comments__comment-date {
+		display: block;
+		font-size: 11.5px;
+		color: $bday-muted;
+		margin-top: 2px;
+	}
+
+	select {
+		width: 100%;
+		padding: 8px 10px;
+		border: 1px solid $bday-border;
+		border-radius: 6px;
+		background: $bday-surface;
+		color: $bday-ink;
+		font-size: 13px;
+	}
+
+	// Classic search widget markup (.search-form) and the block-based
+	// Search widget (.wp-block-search) actually used by this sidebar's
+	// current content — both styled the same way.
+	//
+	// Found live: `label { flex: 1 }` sitting alongside
+	// `.wp-block-search__inside-wrapper { flex: 1 }` as two SIBLING flex
+	// items made them split the row's width 50/50 — the label's own text
+	// ("Search") only needs its content width, but claiming an equal flex
+	// share left the actual input squeezed into whatever fraction of the
+	// wrapper's own half remained. Trying `flex: 0 0 auto` on the label
+	// instead didn't fix it either — found live that Gutenberg's own
+	// block-library stylesheet sets `.wp-block-search__label { width:
+	// 100% }`, and `flex-basis: auto` resolves to that explicit width
+	// rather than shrinking to the text's actual content size, so the
+	// label still claimed the full row. Stacking label above the
+	// input+button row (column layout) sidesteps that width fight
+	// entirely — the label's width no longer competes with anything, and
+	// the wrapper below it is free to be 100% wide on its own row.
+	.wp-block-search {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+
+		label { margin: 0; font-size: 13px; font-weight: 600; }
+	}
+
+	.search-form {
+		display: flex;
+		gap: 8px;
+
+		label { flex: 1; margin: 0; }
+	}
+
+	.search-form,
+	.wp-block-search {
+		.wp-block-search__inside-wrapper { display: flex; flex: 1; gap: 8px; min-width: 0; }
+
+		.search-field,
+		.wp-block-search__input {
+			width: 100%;
+			min-width: 0;
+			padding: 9px 12px;
+			border: 1px solid $bday-border;
+			border-radius: 6px;
+			font-size: 13px;
+			background: $bday-surface;
+			color: $bday-ink;
+		}
+
+		.search-submit,
+		.wp-block-search__button {
+			padding: 9px 16px;
+			border: none;
+			border-radius: 6px;
+			background: $bday-red;
+			color: #fff;
+			font-size: 13px;
+			font-weight: 600;
+			cursor: pointer;
+			white-space: nowrap;
+			&:hover { opacity: 0.9; }
+		}
+	}
+}
+
 /* ---- Video row ---- */
 .bday-video-row {
 	background: $bday-ink;
@@ -219,13 +444,214 @@ $bday-border: #e2e5ea;
 	&:hover h4 { text-decoration: underline; }
 }
 
+/* ---- Briefing ---- */
+// Reader-reported: near-unreadable in dark mode. Root cause: $bday-ink
+// is an alias for var(--color-ink-1), a theme-*relative* token that
+// flips to near-white in dark mode (it's meant for text, not an "always
+// dark" surface) — so this background silently went from near-black to
+// near-white while the text next to it stayed a hardcoded #fff, i.e.
+// white-on-white. Same bug class as the utility bar/footer/subscribe-
+// banner fixes earlier this session; same fix — the fixed --bd-ink token,
+// which never changes with site theme, same as this section's own
+// deliberate "always dark, regardless of theme" design intent.
+.bday-briefing {
+	background: var(--bd-ink);
+	color: #fff;
+	padding: 28px 0;
+
+	.bday-eyebrow {
+		color: #fff;
+		border-bottom-color: rgba(255, 255, 255, 0.3);
+	}
+}
+
+.bday-briefing__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 4px 40px;
+	@media (max-width: 767px) { grid-template-columns: 1fr; }
+
+	li {
+		display: flex;
+		align-items: baseline;
+		gap: 12px;
+		padding: 10px 0;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+	}
+
+	a {
+		flex: 1;
+		color: #fff;
+		font-weight: 600;
+		font-size: 14.5px;
+		line-height: 1.35;
+		text-decoration: none;
+		&:hover { color: $bday-red; }
+	}
+}
+
+.bday-briefing__index {
+	flex-shrink: 0;
+	font-family: var(--font-mono, monospace);
+	font-size: 11px;
+	color: rgba(255, 255, 255, 0.45);
+}
+
+.bday-briefing__tag {
+	flex-shrink: 0;
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: rgba(255, 255, 255, 0.5);
+}
+
 /* ---- Toon + podcast ---- */
+// Reworked from a plain "thumbnail + static SoundCloud iframe" pair
+// (legacy carryover, hardcoded to one unrelated SoundCloud account) into
+// two purpose-built cards: a "pinned cartoon" frame and a Spotify-backed
+// episode card sourced dynamically from the `podcast` CPT.
 .bday-toon-podcast-row {
 	background: $bday-surface;
-	padding: 32px 0;
+	padding: 40px 0;
 	margin: 40px 0;
 
-	img { width: 100%; height: auto; }
+	.bday-two-col {
+		grid-template-columns: 1fr 1fr;
+		align-items: start;
+	}
+
+	img { width: 100%; height: auto; display: block; }
+}
+
+.bday-toon-card {
+	&__frame {
+		position: relative;
+		display: block;
+		background: #fff;
+		padding: 14px 14px 22px;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+		transform: rotate(-0.6deg);
+		transition: transform 0.2s ease;
+
+		&:hover { transform: rotate(0deg); }
+	}
+
+	&__pin {
+		position: absolute;
+		top: -8px;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 16px;
+		height: 16px;
+		border-radius: 50%;
+		background: radial-gradient(circle at 30% 30%, #ff6b5e, $bday-red);
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+	}
+
+	&__caption {
+		margin-top: 14px;
+
+		p {
+			font-family: var(--font-headline, Georgia, serif);
+			font-weight: 700;
+			font-size: 15px;
+			line-height: 1.3;
+			color: $bday-ink;
+			margin: 0;
+		}
+	}
+}
+
+.bday-podcast-card {
+	&__body {
+		display: flex;
+		gap: 16px;
+		align-items: flex-start;
+	}
+
+	&__art {
+		position: relative;
+		flex: 0 0 120px;
+		width: 120px;
+		height: 120px;
+		border-radius: 10px;
+		overflow: hidden;
+		background: var(--bd-ink);
+
+		img { width: 100%; height: 100%; object-fit: cover; }
+	}
+
+	&__play {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		height: 44px;
+		margin: auto;
+		padding: 0;
+		border: none;
+		border-radius: 50%;
+		background: rgba(29, 185, 84, 0.94); // Spotify green, deliberate here only
+		color: #fff;
+		cursor: pointer;
+		transition: transform 0.15s ease, background-color 0.15s ease;
+
+		svg { margin-left: 2px; }
+
+		&:hover, &:focus-visible {
+			transform: scale(1.08);
+			background: #1db954;
+		}
+	}
+
+	&__info {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+
+	&__title {
+		font-family: var(--font-headline, Georgia, serif);
+		font-weight: 700;
+		font-size: 16px;
+		line-height: 1.3;
+		color: $bday-ink;
+		text-decoration: none;
+		margin-bottom: 6px;
+
+		&:hover { color: $bday-red; }
+	}
+
+	&__meta {
+		display: flex;
+		gap: 8px;
+		font-size: 11.5px;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		color: $bday-muted;
+		margin-bottom: 10px;
+
+		span:not(:last-child)::after { content: '\2022'; margin-left: 8px; }
+	}
+
+	&__player {
+		margin-top: 16px;
+		border-radius: 10px;
+		overflow: hidden;
+
+		iframe { width: 100%; height: 152px; border: none; display: block; }
+	}
+
+	// Once the facade is activated, the static art/play button give way
+	// to the live embed — see script.js's bdayInitPodcastFacade().
+	&.is-active &__body { display: none; }
+	&.is-active &__player { display: block; }
 }
 
 .bday-btn-link {
@@ -253,25 +679,38 @@ $bday-border: #e2e5ea;
 }
 
 /* ---- News carousel ---- */
+// "Your News" multi-column carousel (addons/news-carousel/) — the
+// Bloomberg-style module from the legacy theme, rebuilt on this theme's
+// own token system and card language (bday-card-grid's border-radius/
+// shadow conventions) rather than the legacy flat grey box + hardcoded
+// hex colors, so it actually holds up in dark/warm mode instead of
+// staying a flat-grey-on-anything box regardless of site theme.
 .bday-news-carousel {
-	background: $bday-surface;
-	padding: 36px 0;
+	background: var(--color-bg-raised);
+	border-top: 1px solid $bday-border;
+	border-bottom: 1px solid $bday-border;
+	padding: 36px 0 44px;
 	margin: 48px 0;
+
+	.bday-section-heading { margin-bottom: 18px; }
 
 	&__nav {
 		display: flex;
 		justify-content: flex-end;
 		gap: 8px;
-		margin-bottom: 10px;
+		margin-bottom: 14px;
 
 		button {
 			width: 32px;
 			height: 32px;
 			border-radius: 50%;
-			border: 1px solid #ccc;
-			background: #fff;
+			border: 1px solid $bday-border;
+			background: var(--color-bg);
+			color: $bday-ink;
 			cursor: pointer;
 			font-size: 16px;
+			line-height: 1;
+			transition: border-color 0.15s ease, color 0.15s ease;
 			&:hover { border-color: $bday-red; color: $bday-red; }
 		}
 	}
@@ -282,6 +721,9 @@ $bday-border: #e2e5ea;
 		overflow-x: auto;
 		scroll-snap-type: x mandatory;
 		scrollbar-width: none;
+		padding-bottom: 4px;
+		cursor: grab;
+		&:active { cursor: grabbing; }
 		&::-webkit-scrollbar { display: none; }
 	}
 
@@ -294,32 +736,119 @@ $bday-border: #e2e5ea;
 	}
 
 	&__card {
-		background: #e7e7e7;
-		border: 1px solid #e0e0e0;
-		padding: 15px;
+		background: var(--color-bg);
+		border: 1px solid $bday-border;
+		border-radius: var(--radius-md, 6px);
+		padding: 18px;
 		height: 100%;
+		box-sizing: border-box;
+		transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
 		h3 {
-			font-size: 1.1rem;
-			font-weight: 900;
+			font-family: var(--font-ui);
+			font-size: 13px;
+			font-weight: 800;
 			text-transform: uppercase;
-			border-bottom: 2px solid $bday-ink;
-			padding-bottom: 8px;
-			margin-bottom: 12px;
+			letter-spacing: 0.04em;
+			color: $bday-ink;
+			border-bottom: 2px solid $bday-red;
+			padding-bottom: 10px;
+			margin: 0 0 12px;
+
+			a { color: inherit; text-decoration: none; }
 		}
 
 		ul { list-style: none; margin: 0; padding: 0; }
 
+		// Fixed row height (legacy's own bloomberg-post-item was 101px,
+		// matched here) rather than letting each row's height follow its
+		// title's own line count — a short headline and a long one sat at
+		// visibly different heights otherwise, which is also what made a
+		// 72px-wide thumbnail read as "too small, too much space beside
+		// it": the row itself was taller than the thumbnail needed to be,
+		// not that the thumbnail was actually undersized for a 101px row.
+		// The line-clamp is what makes a fixed height safe with any
+		// headline length — without it a long title would just overflow.
 		li {
 			display: flex;
 			justify-content: space-between;
-			gap: 12px;
 			align-items: center;
+			gap: 14px;
+			height: 104px;
 			padding: 10px 0;
-			border-bottom: 1px solid #f0f0f0;
+			box-sizing: border-box;
+			border-bottom: 1px solid $bday-border;
+			&:last-child { border-bottom: none; }
+		}
+	}
 
-			a { flex: 1; font-size: 0.9rem; font-weight: 700; line-height: 1.3; color: $bday-ink; text-decoration: none; &:hover { color: $bday-red; } }
-			img { width: 72px; height: 50px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+	// A dedicated class rather than a bare `a` element selector — both
+	// the title and the thumbnail below are literal <a> tags in the same
+	// row, so a generic `li a { flex: 1 }` rule was matching both of
+	// them. Its selector (.card li a, two element selectors) also beat
+	// &__thumb's own flex override on specificity despite &__thumb
+	// looking more specific by name — same class-count-ties-then-
+	// element-count-decides trap as an earlier bug this session — which
+	// is what stretched the thumbnail's own box wider than its 96px
+	// image and pushed it off-center, reading as "too much space after
+	// the image" versus the space before the title.
+	&__title {
+		flex: 1;
+		min-width: 0;
+		font-size: 0.9rem;
+		font-weight: 700;
+		line-height: 1.3;
+		color: $bday-ink;
+		text-decoration: none;
+		display: -webkit-box;
+		-webkit-line-clamp: 4;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		&:hover { color: $bday-red; }
+	}
+
+	// Bigger, legacy-matched thumbnail (100x68 there; 96x68 here to sit
+	// tidily against this card's own padding) — flush against the card's
+	// right edge via the row's own justify-content: space-between, not a
+	// separate alignment rule.
+	&__thumb {
+		position: relative;
+		flex: 0 0 auto;
+		display: block;
+
+		img { width: 96px; height: 68px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+	}
+
+	// Scroll-snapped "current" card gets a light lift, same idea as the
+	// legacy version's red-border active state but tokenized and subtler
+	// (a heavy red border on every scroll step reads as busier than this
+	// module needs to be).
+	&__item.is-active &__card {
+		border-color: $bday-red;
+		box-shadow: var(--shadow-sm, 0 2px 10px rgba(0,0,0,0.06));
+	}
+
+	&__dots {
+		display: flex;
+		justify-content: center;
+		gap: 8px;
+		margin-top: 16px;
+	}
+
+	&__dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		border: none;
+		padding: 0;
+		background: $bday-border;
+		cursor: pointer;
+		transition: background 0.15s ease, width 0.15s ease, height 0.15s ease;
+
+		&.is-active {
+			background: $bday-red;
+			width: 10px;
+			height: 10px;
 		}
 	}
 }
@@ -384,28 +913,281 @@ $bday-border: #e2e5ea;
 
 /* ---- Article page ---- */
 .bday-article-main {
-	.post-title { font-size: 2rem; line-height: 1.15; font-weight: 800; }
+	// WSJ-style redesign (reader-requested): headline stepped up from
+	// 2rem, eyebrow/dek added above/below it.
+	.post-title { font-size: 2.5rem; line-height: 1.1; font-weight: 800; margin-top: 10px; }
 
 	.bday-video-embed iframe { width: 100%; height: 480px; border: 0; }
 }
 
+.bday-article-eyebrow {
+	display: inline-block;
+	font-family: var(--font-ui, sans-serif);
+	font-size: 12.5px;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: $bday-red;
+	text-decoration: none;
+
+	&:hover { text-decoration: underline; }
+}
+
+.bday-article-dek {
+	font-family: var(--font-body, Georgia, serif);
+	font-size: 19px;
+	line-height: 1.45;
+	font-weight: 400;
+	color: $bday-muted;
+	margin: 10px 0 4px;
+}
+
+.bday-byline__avatar {
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+// Narrower prose measure than the article column's own full width — WSJ's
+// own body copy is materially narrower than its lead image/full-bleed
+// media, the deliberate "prose vs. media width" split serious editorial
+// sites use. Media (figure/video) inside .bday-article-main stays full
+// width; only the text itself is capped.
+.post-content {
+	max-width: 700px;
+
+	blockquote {
+		margin: 2em 0;
+		padding: 0 0 0 1.2em;
+		border-left: 3px solid $bday-red;
+		font-family: var(--font-headline, Georgia, serif);
+		font-size: 1.5rem;
+		line-height: 1.4;
+		font-style: italic;
+		color: $bday-ink;
+
+		p { margin: 0; }
+	}
+}
+
+/**
+ * Legacy style.scss's `.post-content` rule is nested three levels deep
+ * (`#article-page main article .post-content`, compiled from its own
+ * indentation — an ID plus two element selectors plus the class), which
+ * is *higher specificity* than a lone `.post-content { color: $bday-ink }`
+ * rule, even one that appears later in the cascade — the "same
+ * specificity, later import wins" fix used elsewhere in this file doesn't
+ * apply here, since the specificities were never actually equal. Reader-
+ * reported live: dark mode reads as near-invisible dark-gray-on-near-
+ * black text, because the legacy rule's hardcoded `#353535` was still the
+ * one winning regardless of theme. Fixed by matching the legacy
+ * selector's exact shape (so specificity is genuinely equal) rather than
+ * reaching for !important — same real fix, just the correct specificity
+ * this time.
+ */
+#article-page main article .post-content {
+	color: $bday-ink;
+}
+
+.bday-byline {
+	align-items: center;
+	font-size: 12.5px;
+	color: $bday-muted;
+	margin: 14px 0 20px;
+	padding-bottom: 16px;
+	border-bottom: 1px solid $bday-border;
+
+	span:not(:last-child)::after { content: '\2022'; margin-left: 10px; opacity: 0.6; }
+
+	a { color: $bday-ink; font-weight: 600; text-decoration: none; &:hover { color: $bday-red; } }
+
+	// Bookmark-button.ts mounts here (single-default.php) — pushed to the
+	// row's far end rather than crammed against "X min read".
+	.bday-byline__bookmark {
+		margin-left: auto;
+		&::after { content: none !important; }
+	}
+
+	// span:not(:last-child)::after above is a descendant selector, not a
+	// direct-child one — it was matching every nested <span> inside the
+	// multi-author byline too (each author name, each ", "/"and"
+	// separator), stacking a stray bullet after every single one of them
+	// on top of the real separators. Suppressed the same way the
+	// bookmark/TTS buttons above already suppress it for themselves.
+	.bday-byline__author,
+	.bday-byline__authors-sep {
+		&::after { content: none !important; }
+	}
+
+	// Text-to-speech, right next to the bookmark button — both sit at the
+	// byline's far end together (the bookmark mount's margin-left: auto
+	// above pushes everything after it there too).
+	.bday-byline__tts {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 12px;
+		border: 1px solid $bday-border;
+		border-radius: 999px;
+		background: none;
+		color: $bday-ink;
+		font-family: var(--font-ui);
+		font-size: 12px;
+		font-weight: 600;
+		cursor: pointer;
+		&::after { content: none !important; }
+
+		&:hover {
+			border-color: $bday-red;
+			color: $bday-red;
+		}
+
+		.bday-byline__tts-icon-pause { display: none; }
+
+		// 'speaking' and 'paused' were sharing one rule that always showed
+		// the pause glyph — reader-reported: clicking to resume still
+		// showed a pause icon, when a resumable/paused state should show
+		// play. Split so each state shows the icon for the action a click
+		// will actually perform next (pause glyph while speaking, since
+		// clicking pauses; play glyph while paused, since clicking resumes).
+		&[data-state='speaking'],
+		&[data-state='paused'] {
+			border-color: $bday-red;
+			color: $bday-red;
+		}
+
+		&[data-state='speaking'] {
+			.bday-byline__tts-icon-play { display: none; }
+			.bday-byline__tts-icon-pause { display: inline-block; }
+		}
+
+		&[data-state='paused'] {
+			.bday-byline__tts-icon-play { display: inline-block; }
+			.bday-byline__tts-icon-pause { display: none; }
+		}
+	}
+}
+
+/**
+ * bday_social_share_html()'s markup (core/helpers.php) — legacy
+ * style.scss's `.social-share .share` rules target a completely different
+ * markup shape (`.share` child spans that don't exist here) and never
+ * actually apply to this, leaving it on unstyled default link/icon-font
+ * rendering. Icons themselves come from the self-hosted bootstrap-icons
+ * @font-face already in style.scss, kept as-is — only the layout/color
+ * here is new.
+ */
+.social-share {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 20px 0;
+
+	&__label {
+		font-size: 12px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: $bday-muted;
+		margin-right: 4px;
+	}
+
+	&__item {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		background: $bday-surface;
+		border: 1px solid $bday-border;
+		color: $bday-ink;
+		font-size: 14px;
+		transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+		&:hover {
+			background: $bday-red;
+			border-color: $bday-red;
+			color: #fff;
+		}
+	}
+}
+
 .bday-read-also {
-	background: #fdedd7;
+	// Was a hardcoded #fdedd7 (light tan) — invisible/wrong-contrast in
+	// dark or warm mode, the exact class of bug already fixed once in
+	// this file's root variables; token-driven here for the same reason.
+	background: var(--color-accent-tint, #fdedd7);
 	border-top: 2px solid $bday-ink;
 	border-bottom: 1px solid $bday-ink;
-	padding: 1em;
-	margin: 1em 0;
+	padding: 1em 1.2em;
+	margin: 1.5em 0;
+	border-radius: var(--radius-md, 6px);
 
-	h4 { font-weight: 900; margin-bottom: 0.5em; }
-	li { list-style-type: circle; margin-bottom: 8px; }
-	a { color: $bday-ink; &:hover { color: $bday-red; } }
+	h4 {
+		font-weight: 800;
+		font-size: 12px;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		margin: 0 0 0.6em;
+		color: $bday-ink;
+	}
+	ul { margin: 0; padding: 0; list-style: none; }
+	li { margin-bottom: 8px; padding-left: 1.1em; position: relative; &:last-child { margin-bottom: 0; } }
+	li::before { content: '\2192'; position: absolute; left: 0; color: $bday-red; }
+	a { color: $bday-ink; font-weight: 600; font-size: 14px; text-decoration: none; &:hover { color: $bday-red; } }
 }
 
 .bday-author-bio {
-	background: #fdedd7;
-	border-top: 1px solid $bday-red;
-	padding: 1em;
-	margin: 1em 0;
+	display: flex;
+	gap: 14px;
+	background: var(--color-bg-raised, #fdedd7);
+	border-top: 3px solid $bday-red;
+	padding: 1.2em;
+	margin: 1.2em 0;
+	border-radius: 0 0 var(--radius-md, 6px) var(--radius-md, 6px);
+
+	&__avatar {
+		border-radius: 50%;
+		flex-shrink: 0;
+	}
+
+	strong {
+		display: block;
+		font-family: var(--font-headline, Georgia, serif);
+		font-size: 15px;
+		margin-bottom: 0.4em;
+
+		a { color: $bday-ink; text-decoration: none; &:hover { color: $bday-red; } }
+	}
+	p { margin: 0; font-size: 13.5px; color: $bday-muted; line-height: 1.5; }
+}
+
+// Multi-author byline (addons/author-profile/) — one avatar+linked-name
+// pair per credited writer, joined "X and Y" / "X, Y and Z" rather than a
+// plain comma list, matching how bylines actually read in print/online.
+.bday-byline__authors {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.bday-byline__author {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+
+	a { color: $bday-ink; font-weight: 600; text-decoration: none; &:hover { color: $bday-red; } }
+}
+
+.bday-byline__author-avatar {
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.bday-byline__authors-sep {
+	color: $bday-muted;
+	font-weight: 400;
 }
 
 /* ---- Newsletter ---- */
@@ -529,6 +1311,18 @@ $bday-border: #e2e5ea;
 
 .bday-archive-title { font-size: 1.8rem; font-weight: 800; margin: 24px 0; }
 
+.bday-archive-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+
+	.bday-archive-title {
+		margin: 24px 0;
+	}
+}
+
 .bday-search-form {
 	display: flex;
 	gap: 8px;
@@ -555,4 +1349,356 @@ $bday-border: #e2e5ea;
 	}
 
 	&__date { font-size: 12px; color: $bday-muted; }
+}
+
+/* ---- Newsletter opt-in page (templates/template-newsletter-opt-in.php) ---- */
+.bday-newsletter-opt-in {
+	padding: 48px 0 72px;
+
+	&__inner {
+		max-width: 860px;
+	}
+
+	&__header {
+		text-align: center;
+		margin-bottom: 40px;
+
+		h1 {
+			font-family: var(--font-headline, Georgia, serif);
+			font-size: clamp(2rem, 4vw, 2.75rem);
+			font-weight: 800;
+			margin: 12px 0 12px;
+			color: $bday-ink;
+		}
+	}
+
+	&__subhead {
+		max-width: 520px;
+		margin: 0 auto;
+		color: $bday-muted;
+		font-size: 1rem;
+		line-height: 1.5;
+	}
+
+	&__grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+		gap: 16px;
+		margin-bottom: 32px;
+	}
+
+	&__card {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 22px;
+		border: 1px solid $bday-border;
+		border-radius: 12px;
+		background: $bday-surface;
+		transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+		&:has(input:checked) {
+			border-color: $bday-red;
+			box-shadow: 0 0 0 1px $bday-red;
+		}
+
+		&--brief {
+			background: linear-gradient(160deg, rgba(227, 6, 19, 0.06), transparent 60%);
+			border-color: rgba(227, 6, 19, 0.25);
+		}
+	}
+
+	&__card-body {
+		h3 {
+			margin: 0 0 8px;
+			font-size: 1.05rem;
+			font-weight: 700;
+			color: $bday-ink;
+		}
+
+		p {
+			margin: 0;
+			font-size: 0.875rem;
+			line-height: 1.5;
+			color: $bday-muted;
+		}
+	}
+
+	&__no-desc {
+		font-style: italic;
+	}
+
+	&__card-action {
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	&__checkbox {
+		cursor: pointer;
+		align-self: flex-end;
+
+		input {
+			position: absolute;
+			opacity: 0;
+			width: 1px;
+			height: 1px;
+		}
+
+		span {
+			display: inline-flex;
+			width: 24px;
+			height: 24px;
+			border-radius: 7px;
+			border: 2px solid $bday-border;
+			position: relative;
+			transition: background-color 0.15s ease, border-color 0.15s ease;
+		}
+
+		input:checked + span {
+			background: $bday-red;
+			border-color: $bday-red;
+
+			&::after {
+				content: '';
+				position: absolute;
+				left: 7px;
+				top: 3px;
+				width: 6px;
+				height: 11px;
+				border: solid #fff;
+				border-width: 0 2px 2px 0;
+				transform: rotate(45deg);
+			}
+		}
+
+		input:focus-visible + span {
+			outline: 2px solid $bday-red;
+			outline-offset: 2px;
+		}
+	}
+
+	&__signin-link {
+		font-size: 0.8rem;
+		font-weight: 700;
+		color: $bday-red;
+		text-decoration: none;
+
+		&:hover { text-decoration: underline; }
+	}
+
+	&__identity {
+		max-width: 440px;
+		margin: 0 auto;
+		text-align: center;
+	}
+
+	&__identity-fields {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		margin-bottom: 16px;
+	}
+
+	&__row {
+		display: flex;
+		gap: 10px;
+
+		input { flex: 1; }
+	}
+
+	&__identity input[type='text'],
+	&__identity input[type='email'] {
+		width: 100%;
+		box-sizing: border-box;
+		padding: 11px 14px;
+		border: 1px solid $bday-border;
+		border-radius: 8px;
+		background: $bday-surface;
+		color: $bday-ink;
+		font-size: 0.9rem;
+	}
+
+	&__identity-signedin {
+		margin: 0 0 16px;
+		font-size: 0.9rem;
+		color: $bday-muted;
+
+		strong { color: $bday-ink; }
+	}
+
+	&__submit {
+		width: 100%;
+		padding: 13px 24px;
+		border: none;
+		border-radius: 999px;
+		background: $bday-red;
+		color: #fff;
+		font-size: 0.95rem;
+		font-weight: 700;
+		cursor: pointer;
+		transition: background-color 0.15s ease;
+
+		&:hover { background: var(--color-accent-strong); }
+	}
+
+	.bday-newsletter-form__message {
+		margin-top: 12px;
+		font-size: 0.85rem;
+
+		&.is-success { color: #1e7a3d; }
+		&.is-error { color: $bday-red; }
+	}
+}
+
+// The reused .aero-paywall-notif-toggle component (notification-
+// preferences.ts) brings its own <h3>Email brief</h3> heading, sized for
+// the roomier My Account Settings tab it was built for — redundant and
+// oversized crammed into this card's tight card-action slot (the card
+// itself already has its own "The Daily Brief" heading). Hidden here
+// rather than making the shared component itself context-aware for one
+// reuse site.
+#bday-newsletter-opt-in-brief-toggle-mount {
+	h3 { display: none; }
+
+	.aero-paywall-notif-toggle-label {
+		font-size: 0.8rem;
+		color: $bday-muted;
+	}
+}
+
+/* ---- Today's Paper masonry (templates/template-todays-paper.php) ----
+   Reader-requested: editors tag each marked post with a size tier
+   (addons/todays-paper/includes/metabox.php) and the page lays them out
+   as a masonry, the tagged tier controlling how much space a card gets —
+   `grid-auto-flow: dense` back-fills gaps left by taller/wider cards with
+   whatever comes next in source order, rather than leaving holes. */
+.bday-todays-paper-masonry {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	grid-auto-rows: minmax(70px, auto);
+	grid-auto-flow: dense;
+	gap: 20px;
+	margin-top: 4px;
+
+	@media (max-width: 767px) {
+		grid-template-columns: 1fr;
+	}
+}
+
+.bday-todays-paper-card {
+	display: flex;
+	flex-direction: column;
+
+	.bday-card__media { flex: 1; }
+	.bday-card__media img { width: 100%; height: 100%; object-fit: cover; }
+
+	&--large {
+		grid-column: span 4;
+		grid-row: span 3;
+
+		.bday-card__title { font-size: 1.6rem; line-height: 1.2; }
+	}
+
+	&--medium {
+		grid-column: span 3;
+		grid-row: span 2;
+
+		.bday-card__title { font-size: 1.2rem; }
+	}
+
+	&--small {
+		grid-column: span 2;
+		grid-row: span 2;
+	}
+
+	&--xsmall {
+		grid-column: span 2;
+		grid-row: span 1;
+
+		.bday-card__media { display: none; }
+		.bday-card__title { font-size: 0.85rem; margin: 0; }
+	}
+
+	&--no-image {
+		grid-column: span 2;
+		grid-row: span 1;
+		justify-content: center;
+
+		.bday-card__media { display: none; }
+		.bday-card__title {
+			font-size: 1rem;
+			padding-bottom: 12px;
+			border-bottom: 1px solid $bday-border;
+		}
+	}
+
+	@media (max-width: 767px) {
+		grid-column: span 1 !important;
+		grid-row: span 1 !important;
+
+		&--xsmall .bday-card__media,
+		&--no-image .bday-card__media {
+			display: none;
+		}
+	}
+}
+
+/* Account/auth pages (My Account, Log In, Create Account, Reset/Change
+   Password) now render inside the site's default full-chrome template
+   (page.php) rather than the minimal Funnel template — this caps and
+   centers the SDK-rendered mount so a narrow login form or a wide
+   Subscribe tab both sit centered under the full masthead/nav instead of
+   left-anchored against a mostly-empty wide container. */
+.bday-account-page-wrap {
+	max-width: 640px;
+	margin: 40px auto;
+	padding: 0 20px;
+}
+
+// Reader-reported: the signed-in Dashboard (sidebar + content columns,
+// initMyAccount()'s .aero-paywall-account-shell) was still capped at the
+// login form's own 640px — correct for a single narrow form, much too
+// narrow once there's a 220px sidebar plus a content column of its own
+// sitting beside it, leaving large empty margins either side that the
+// reader compared unfavorably against the reference layout they shared.
+// Only the signed-in shell gets the wider cap; the signed-out login/
+// register form (no .aero-paywall-account-shell present at all — see
+// renderSignedOut()) keeps the narrower 640px above, which is still the
+// right width for a single-column form.
+.bday-account-page-wrap:has(.aero-paywall-account-shell) {
+	max-width: 1100px;
+}
+
+// The SDK's own generic default (styles.ts) caps
+// #aero-paywall-account-mount at 720px — a sane fallback for a theme
+// with no dedicated account-page wrapper of its own, but redundant with
+// (and narrower than) .bday-account-page-wrap's own width control above
+// once this theme has one. Left as `none` rather than matching the
+// wrap's 1100px exactly, since the mount should simply fill whatever
+// width its wrapper already settled on.
+.bday-account-page-wrap #aero-paywall-account-mount {
+	max-width: none;
+}
+
+// .post-content's own 700px prose cap (above) is correct for a real
+// article, which has `.bday-sidebar` filling the space beside it — an
+// account page has no sidebar, so that same cap left the account form
+// flush against the left edge of #article-page's (already-centered)
+// 1130px column with a large empty void to its right where a sidebar
+// would normally sit. Resetting the cap only when .post-content wraps
+// the account mount lets .bday-account-page-wrap's own max-width+auto-
+// margin center correctly across the full column width instead.
+.post-content:has(.bday-account-page-wrap) {
+	max-width: none;
+}
+
+// Same reasoning, one rule up the tree: legacy style.scss's `#article-
+// page main { border-right: 1px solid #e6e6e6; padding-right: 1.5rem }`
+// reserves visual space for `.bday-sidebar` sitting beside `main` on a
+// real article page — reader-reported as a stray vertical line floating
+// with nothing beside it on account pages, which have no sidebar at all.
+#article-page main:has(.bday-account-page-wrap) {
+	border-right: none;
+	padding-right: 0;
 }

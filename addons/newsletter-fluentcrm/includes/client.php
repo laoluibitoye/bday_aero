@@ -45,6 +45,13 @@ function bday_newsletter_api_request( string $endpoint, string $method = 'GET', 
 	return $data;
 }
 
+/** Admin-entered one-liner for a list (FluentCRM's own API doesn't expose descriptions over this bridge) — see includes/settings.php. */
+function bday_newsletter_get_list_description( int $list_id ): string {
+	$settings     = get_option( 'bday_addon_newsletter', array() );
+	$descriptions = (array) ( $settings['list_descriptions'] ?? array() );
+	return (string) ( $descriptions[ $list_id ] ?? '' );
+}
+
 /** @return array<int, array<string, mixed>> */
 function bday_newsletter_get_lists(): array {
 	return Bday_Query_Cache::remember(

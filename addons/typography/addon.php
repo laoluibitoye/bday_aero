@@ -2,6 +2,7 @@
 /**
  * Addon Name: Typography
  * Addon Slug: typography
+ * Description: Site-wide font pairing and type-scale controls.
  * Cache Namespace: typography
  * Settings Tab: Typography
  * Default: on
@@ -84,14 +85,16 @@ add_filter(
 		$schema['typography'] = array(
 			'tab_label' => 'Typography',
 			'option'    => 'bday_addon_typography',
+			'intro'     => 'Overrides the theme\'s built-in type system with a different font pairing/scale, without editing any CSS. Leave a field blank to keep the theme\'s own default for it — these fields don\'t all need to be filled in together, and an empty option here changes nothing.',
+			'about'     => '<p>Fonts are loaded from Google Fonts by the exact family name typed below — the same name you\'d search for at fonts.google.com. A misspelled name silently falls back to the browser\'s default font rather than erroring, so double-check against the Google Fonts listing if a change doesn\'t seem to take.</p>',
 			'fields'    => array(
-				array( 'key' => 'header_font', 'type' => 'text', 'label' => 'Header font family', 'description' => 'Exact Google Fonts name, e.g. Montserrat.' ),
-				array( 'key' => 'header_weights', 'type' => 'text', 'label' => 'Header weights', 'description' => 'Comma-separated, e.g. 400,700.' ),
-				array( 'key' => 'body_font', 'type' => 'text', 'label' => 'Body font family' ),
-				array( 'key' => 'body_weights', 'type' => 'text', 'label' => 'Body weights' ),
-				array( 'key' => 'post_title_size', 'type' => 'text', 'label' => 'Post title size', 'description' => 'e.g. 2rem' ),
-				array( 'key' => 'header_line_height', 'type' => 'text', 'label' => 'Header line height' ),
-				array( 'key' => 'link_color', 'type' => 'text', 'label' => 'Link color', 'description' => 'e.g. #ba141a' ),
+				array( 'key' => 'header_font', 'type' => 'text', 'label' => 'Header font family', 'description' => 'Exact Google Fonts name, e.g. Montserrat. Used for headlines, nav, and section headings.' ),
+				array( 'key' => 'header_weights', 'type' => 'text', 'label' => 'Header weights', 'description' => 'Comma-separated font weights to load for the header font, e.g. 400,700 — only load the weights actually used elsewhere in the design to keep page load light.' ),
+				array( 'key' => 'body_font', 'type' => 'text', 'label' => 'Body font family', 'description' => 'Exact Google Fonts name for article body text and general paragraph copy.' ),
+				array( 'key' => 'body_weights', 'type' => 'text', 'label' => 'Body weights', 'description' => 'Comma-separated font weights to load for the body font.' ),
+				array( 'key' => 'post_title_size', 'type' => 'text', 'label' => 'Post title size', 'description' => 'A CSS size value, e.g. 2rem or 32px — controls the article headline size on the single-post page specifically.' ),
+				array( 'key' => 'header_line_height', 'type' => 'text', 'label' => 'Header line height', 'description' => 'A unitless CSS line-height value, e.g. 1.2 — tighter for large display headlines, looser for smaller heading sizes.' ),
+				array( 'key' => 'link_color', 'type' => 'text', 'label' => 'Link color', 'description' => 'A hex color, e.g. #ba141a — overrides the brand accent color used for in-content links specifically.' ),
 			),
 		);
 		return $schema;

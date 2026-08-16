@@ -36,11 +36,12 @@ final class Bday_Addon_Loader {
 			$headers = get_file_data(
 				$file,
 				array(
-					'name'      => 'Addon Name',
-					'slug'      => 'Addon Slug',
-					'namespace' => 'Cache Namespace',
-					'tab'       => 'Settings Tab',
-					'default'   => 'Default',
+					'name'        => 'Addon Name',
+					'slug'        => 'Addon Slug',
+					'namespace'   => 'Cache Namespace',
+					'tab'         => 'Settings Tab',
+					'default'     => 'Default',
+					'description' => 'Description',
 				)
 			);
 

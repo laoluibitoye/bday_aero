@@ -1,0 +1,736 @@
+// WSJ-layout homepage adoption — new modules introduced when the default
+// homepage variant's module mix was rebuilt around wsj.com's layout
+// patterns (reader-requested), mapped onto BusinessDay's real content.
+// Kept as its own partial rather than growing the already-large
+// components/_premium.scss further.
+//
+// Uses the same theme-token-backed Sass variables _premium.scss defines
+// ($bday-red/$bday-ink/$bday-muted/$bday-surface/$bday-border) — imported
+// after premium in main.scss so those variables are already in scope.
+
+/* ---- Hero's Opinion column (was "Recent") ---- */
+.bday-list--byline {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+
+	li {
+		display: flex;
+		gap: 10px;
+		align-items: flex-start;
+		padding: 10px 0;
+		border-bottom: 1px solid $bday-border;
+
+		&:last-child { border-bottom: none; }
+	}
+
+	img { border-radius: 50%; flex-shrink: 0; }
+
+	a {
+		display: block;
+		font-weight: 700;
+		font-size: 14px;
+		line-height: 1.35;
+		color: $bday-ink;
+		text-decoration: none;
+		&:hover { color: $bday-red; }
+	}
+
+	span { display: block; font-size: 11px; color: $bday-muted; margin-top: 2px; }
+}
+
+/* ---- "In Other News" section wrapper (card-grid itself already styled) ---- */
+.bday-other-news {
+	padding: 32px 0;
+}
+
+/* ---- Podcast carousel ---- */
+.bday-podcast-carousel {
+	padding: 32px 0;
+
+	&__card {
+		flex: 0 0 220px;
+		scroll-snap-align: start;
+	}
+
+	&__art {
+		position: relative;
+		border-radius: 8px;
+		overflow: hidden;
+		aspect-ratio: 16 / 9;
+		background: var(--bd-ink);
+		margin-bottom: 10px;
+
+		img { width: 100%; height: 100%; object-fit: cover; }
+	}
+
+	&__play {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		margin: auto;
+		padding: 0;
+		border: none;
+		border-radius: 50%;
+		background: rgba(29, 185, 84, 0.94);
+		color: #fff;
+		cursor: pointer;
+		transition: transform 0.15s ease, background-color 0.15s ease;
+
+		svg { margin-left: 2px; }
+
+		&:hover, &:focus-visible {
+			transform: scale(1.08);
+			background: #1db954;
+		}
+	}
+
+	&__title {
+		display: block;
+		font-family: var(--font-headline, Georgia, serif);
+		font-weight: 700;
+		font-size: 14px;
+		line-height: 1.35;
+		color: $bday-ink;
+		text-decoration: none;
+		margin-bottom: 6px;
+		&:hover { color: $bday-red; }
+	}
+
+	&__meta {
+		display: flex;
+		gap: 8px;
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		color: $bday-muted;
+
+		span:not(:last-child)::after { content: '\2022'; margin-left: 8px; }
+	}
+
+	&__player {
+		margin-top: 10px;
+		border-radius: 8px;
+		overflow: hidden;
+
+		iframe { width: 100%; height: 152px; border: none; display: block; }
+	}
+
+	// Once activated, the art/play affordance gives way to the live embed.
+	&__card.is-active &__art,
+	&__card.is-active &__title,
+	&__card.is-active &__meta { display: none; }
+	&__card.is-active &__player { display: block; }
+}
+
+/* ---- Today's Paper page (templates/template-todays-paper.php) ---- */
+.bday-todays-paper-page {
+	padding: 32px 0 56px;
+}
+
+.bday-todays-paper-page__header {
+	text-align: center;
+	margin-bottom: 32px;
+	padding-bottom: 24px;
+	border-bottom: 3px solid $bday-ink;
+
+	h1 {
+		font-family: var(--font-headline, Georgia, serif);
+		font-size: 30px;
+		font-weight: 700;
+		margin: 6px 0 0;
+		color: $bday-ink;
+	}
+}
+
+.bday-todays-paper-page__edition {
+	display: flex;
+	gap: 24px;
+	align-items: center;
+	padding: 24px;
+	margin-bottom: 40px;
+	background: $bday-surface;
+	border: 1px solid $bday-border;
+	border-radius: var(--radius-md, 8px);
+
+	@media (max-width: 600px) { flex-direction: column; align-items: flex-start; }
+}
+
+.bday-todays-paper-page__edition-media {
+	flex-shrink: 0;
+	width: 120px;
+
+	img { width: 100%; height: auto; box-shadow: var(--shadow-md); }
+}
+
+.bday-todays-paper-page__edition-body {
+	h2 {
+		font-family: var(--font-headline, Georgia, serif);
+		font-size: 20px;
+		font-weight: 700;
+		margin: 0 0 4px;
+		color: $bday-ink;
+	}
+
+	p { font-size: 13px; color: $bday-muted; margin: 0 0 12px; }
+}
+
+.bday-todays-paper-page__edition-status {
+	margin-top: 8px;
+	font-size: 12.5px;
+	color: $bday-muted;
+}
+
+.bday-todays-paper-page__section {
+	margin-bottom: 40px;
+}
+
+.bday-todays-paper-page__empty {
+	text-align: center;
+	color: $bday-muted;
+	padding: 40px 0;
+}
+
+/* ---- Subscribe landing page (templates/template-subscribe.php) ---- */
+// NYT-style subscription-page structure: hero, then a value-proposition
+// grid, then the plan picker (SDK-rendered, Individual/Corporate toggle
+// — see renderSubscribeTab()).
+.bday-subscribe-hero {
+	background: var(--bd-ink);
+	color: var(--bd-paper);
+	// Reader-reported: this section used to sit flush against the sticky
+	// header with no breathing room at all — a dark band starting exactly
+	// where the light masthead ends read as cramped/collided rather than
+	// like a deliberate section break.
+	margin-top: 32px;
+	padding: 56px 0 48px;
+	text-align: center;
+}
+
+.bday-subscribe-hero__inner {
+	max-width: 640px;
+	margin: 0 auto;
+	padding: 0 20px;
+}
+
+.bday-subscribe-hero__eyebrow {
+	display: inline-block;
+	font-size: 12px;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	color: $bday-red;
+	margin-bottom: 16px;
+}
+
+.bday-subscribe-hero__title {
+	font-family: var(--font-headline, Georgia, serif);
+	font-size: 34px;
+	line-height: 1.2;
+	font-weight: 700;
+	margin: 0 0 16px;
+}
+
+.bday-subscribe-hero__subtitle {
+	font-size: 16px;
+	line-height: 1.55;
+	color: rgba(255, 255, 255, 0.75);
+	margin: 0;
+}
+
+.bday-subscribe-trust {
+	padding: 18px 0;
+	text-align: center;
+	border-bottom: 1px solid $bday-border;
+}
+
+.bday-subscribe-trust__inner {
+	max-width: 900px;
+	margin: 0 auto;
+	padding: 0 20px;
+	font-size: 12.5px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: $bday-muted;
+
+	@media (max-width: 640px) {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+}
+
+.bday-subscribe-trust__dot {
+	margin: 0 10px;
+	color: $bday-border;
+
+	@media (max-width: 640px) { display: none; }
+}
+
+.bday-subscribe-values {
+	padding: 48px 0;
+	border-bottom: 1px solid $bday-border;
+}
+
+.bday-subscribe-values__inner {
+	max-width: 1100px;
+	margin: 0 auto;
+	padding: 0 20px;
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 32px;
+	@media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
+	@media (max-width: 540px) { grid-template-columns: 1fr; }
+}
+
+.bday-subscribe-value {
+	text-align: center;
+
+	&__icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 56px;
+		height: 56px;
+		margin-bottom: 16px;
+		border-radius: 50%;
+		background: var(--color-accent-tint);
+		color: $bday-red;
+	}
+
+	h3 {
+		font-family: var(--font-headline, Georgia, serif);
+		font-size: 17px;
+		font-weight: 700;
+		margin: 0 0 8px;
+		color: $bday-ink;
+	}
+
+	p {
+		font-size: 13.5px;
+		line-height: 1.55;
+		color: $bday-muted;
+		margin: 0;
+	}
+}
+
+.bday-subscribe-bundle {
+	padding: 56px 0;
+	background: var(--color-bg-raised);
+	border-bottom: 1px solid $bday-border;
+}
+
+.bday-subscribe-bundle__inner {
+	max-width: 1100px;
+	margin: 0 auto;
+	padding: 0 20px;
+	text-align: center;
+}
+
+.bday-subscribe-bundle__title {
+	font-family: var(--font-headline, Georgia, serif);
+	font-size: 28px;
+	font-weight: 700;
+	margin: 0 0 10px;
+	color: $bday-ink;
+}
+
+.bday-subscribe-bundle__subtitle {
+	font-size: 15px;
+	color: $bday-muted;
+	max-width: 46ch;
+	margin: 0 auto 36px;
+}
+
+.bday-subscribe-bundle__grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 20px;
+	text-align: left;
+	@media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
+	@media (max-width: 560px) { grid-template-columns: 1fr; }
+}
+
+.bday-subscribe-bundle__tile {
+	display: block;
+	padding: 22px 20px;
+	border: 1px solid $bday-border;
+	border-radius: 4px;
+	text-decoration: none;
+	background: var(--color-bg);
+	transition: border-color 0.15s ease, transform 0.15s ease;
+
+	&:hover {
+		border-color: $bday-red;
+		transform: translateY(-2px);
+	}
+
+	h3 {
+		font-family: var(--font-headline, Georgia, serif);
+		font-size: 16.5px;
+		font-weight: 700;
+		margin: 0 0 8px;
+		color: $bday-ink;
+	}
+
+	p {
+		font-size: 13px;
+		line-height: 1.5;
+		color: $bday-muted;
+		margin: 0;
+	}
+}
+
+.bday-subscribe-quote {
+	padding: 56px 0;
+	background: var(--color-accent-tint);
+}
+
+.bday-subscribe-quote__inner {
+	max-width: 720px;
+	margin: 0 auto;
+	padding: 0 20px;
+	text-align: center;
+
+	blockquote { margin: 0; }
+
+	p {
+		font-family: var(--font-headline, Georgia, serif);
+		font-style: italic;
+		font-size: 22px;
+		line-height: 1.45;
+		font-weight: 600;
+		color: $bday-ink;
+		margin: 0 0 16px;
+	}
+
+	cite {
+		display: block;
+		font-style: normal;
+		font-size: 13px;
+		font-weight: 700;
+		letter-spacing: 0.03em;
+		color: $bday-muted;
+	}
+}
+
+.bday-subscribe-plans {
+	padding: 48px 0 64px;
+}
+
+.bday-subscribe-plans__inner {
+	max-width: 960px;
+	margin: 0 auto;
+	padding: 0 20px;
+	text-align: center;
+}
+
+.bday-subscribe-plans__title {
+	font-family: var(--font-headline, Georgia, serif);
+	font-size: 26px;
+	font-weight: 700;
+	margin: 0 0 28px;
+	color: $bday-ink;
+}
+
+.bday-subscribe-faq {
+	padding: 8px 0 64px;
+}
+
+.bday-subscribe-faq__inner {
+	max-width: 760px;
+	margin: 0 auto;
+	padding: 0 20px;
+}
+
+.bday-subscribe-faq__title {
+	font-family: var(--font-headline, Georgia, serif);
+	font-size: 24px;
+	font-weight: 700;
+	margin: 0 0 8px;
+	color: $bday-ink;
+	text-align: center;
+}
+
+.bday-subscribe-faq__list {
+	margin-top: 24px;
+	border-top: 1px solid $bday-border;
+}
+
+.bday-subscribe-faq__item {
+	border-bottom: 1px solid $bday-border;
+	padding: 4px 0;
+
+	summary {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 16px 4px;
+		font-family: var(--font-headline, Georgia, serif);
+		font-size: 16px;
+		font-weight: 700;
+		color: $bday-ink;
+		cursor: pointer;
+		list-style: none;
+
+		&::-webkit-details-marker { display: none; }
+
+		&::after {
+			content: '+';
+			flex: none;
+			font-size: 20px;
+			font-weight: 400;
+			color: $bday-muted;
+			transition: transform 0.15s ease;
+		}
+	}
+
+	&[open] summary::after { transform: rotate(45deg); }
+
+	p {
+		margin: 0 4px 18px;
+		font-size: 14px;
+		line-height: 1.6;
+		color: $bday-muted;
+		max-width: 62ch;
+	}
+}
+
+/* ---- Subscribe banner ---- */
+// Fixed --bd-ink (never redefined per theme), not the theme-relative
+// $bday-ink (== --color-ink-1, the primary TEXT color — light in dark
+// mode, not a dark background) — same "always dark" posture as the
+// header utility bar and footer already use, and the same bug class
+// (theme-relative token used where a fixed one was meant) caught once
+// already this session in that same header work.
+.bday-subscribe-banner {
+	background: var(--bd-ink);
+	color: var(--bd-paper);
+	padding: 48px 0;
+	margin: 32px 0;
+	text-align: center;
+
+	&__inner {
+		max-width: 560px;
+		margin: 0 auto;
+	}
+
+	&__eyebrow {
+		display: inline-block;
+		font-size: 12px;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: $bday-red;
+		margin-bottom: 12px;
+	}
+
+	&__headline {
+		font-family: var(--font-headline, Georgia, serif);
+		font-size: 28px;
+		line-height: 1.25;
+		font-weight: 700;
+		margin: 0 0 12px;
+	}
+
+	&__subcopy {
+		font-size: 14px;
+		color: rgba(255, 255, 255, 0.7);
+		margin: 0 0 24px;
+	}
+
+	&__cta {
+		display: inline-block;
+		padding: 14px 32px;
+		background: $bday-red;
+		color: #fff;
+		font-weight: 700;
+		font-size: 15px;
+		text-decoration: none;
+		border-radius: 6px;
+		transition: opacity 0.15s ease;
+		&:hover { opacity: 0.9; }
+	}
+}
+
+/* ---- Feature spotlight ("Big Read") ---- */
+.bday-feature-spotlight {
+	padding: 32px 0;
+
+	&__inner {
+		display: grid;
+		grid-template-columns: 2fr 1fr;
+		gap: 32px;
+		@media (max-width: 900px) { grid-template-columns: 1fr; }
+	}
+
+	&__media img { width: 100%; height: auto; display: block; border-radius: 4px; }
+
+	&__title {
+		font-family: var(--font-headline, Georgia, serif);
+		font-size: 26px;
+		line-height: 1.2;
+		font-weight: 700;
+		margin: 14px 0 8px;
+
+		a { color: $bday-ink; text-decoration: none; &:hover { color: $bday-red; } }
+	}
+
+	&__excerpt {
+		font-size: 15px;
+		line-height: 1.55;
+		color: $bday-muted;
+	}
+
+	&__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		border-top: 3px solid $bday-red;
+
+		li {
+			display: flex;
+			gap: 12px;
+			align-items: center;
+			padding: 14px 0;
+			border-bottom: 1px solid $bday-border;
+			&:last-child { border-bottom: none; }
+		}
+	}
+
+	&__list-media {
+		flex-shrink: 0;
+		width: 64px;
+		height: 64px;
+		border-radius: 4px;
+		overflow: hidden;
+		img { width: 100%; height: 100%; object-fit: cover; }
+	}
+
+	&__list-title {
+		font-weight: 600;
+		font-size: 14px;
+		line-height: 1.35;
+		color: $bday-ink;
+		text-decoration: none;
+		&:hover { color: $bday-red; }
+	}
+}
+
+/* ---- Topic-list (headline + thumbnail rows, WSJ's dominant repeated pattern) ---- */
+.bday-topic-sections {
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+}
+
+.bday-topic-list {
+	&__items {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	li {
+		display: flex;
+		gap: 14px;
+		align-items: flex-start;
+		padding: 14px 0;
+		border-bottom: 1px solid $bday-border;
+		&:last-child { border-bottom: none; }
+	}
+
+	&__media {
+		position: relative;
+		flex-shrink: 0;
+		width: 84px;
+		height: 84px;
+		border-radius: 4px;
+		overflow: hidden;
+		img { width: 100%; height: 100%; object-fit: cover; }
+	}
+
+	&__body { min-width: 0; }
+
+	&__title {
+		display: block;
+		font-weight: 700;
+		font-size: 15px;
+		line-height: 1.35;
+		color: $bday-ink;
+		text-decoration: none;
+		margin-bottom: 4px;
+		&:hover { color: $bday-red; }
+	}
+
+	&__time {
+		font-size: 11.5px;
+		color: $bday-muted;
+	}
+
+	// Reader-requested homepage variety: a section with no thumbnails at
+	// all reads as denser/text-led rather than as a "list layout missing
+	// its images" — tighter row padding, a touch more headline weight to
+	// carry the row without a media anchor.
+	&--text li {
+		padding: 11px 0;
+	}
+	&--text &__title {
+		font-size: 15.5px;
+	}
+}
+
+.bday-two-col--topics {
+	display: grid;
+	grid-template-columns: 2.2fr 1fr;
+	gap: 40px;
+	padding: 32px 0;
+	@media (max-width: 991px) { grid-template-columns: 1fr; }
+}
+
+.bday-two-col--even {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 40px;
+	padding: 32px 0;
+	@media (max-width: 767px) { grid-template-columns: 1fr; }
+}
+
+/* ---- "Most Popular" / "Just In" sidebar ---- */
+.bday-list--numbered {
+	list-style: none;
+	counter-reset: bd-popular;
+	margin: 0;
+	padding: 0;
+
+	li {
+		counter-increment: bd-popular;
+		display: flex;
+		gap: 12px;
+		padding: 10px 0;
+		border-bottom: 1px solid $bday-border;
+		&:last-child { border-bottom: none; }
+
+		&::before {
+			content: counter(bd-popular);
+			flex-shrink: 0;
+			font-family: var(--font-headline, Georgia, serif);
+			font-size: 20px;
+			font-weight: 700;
+			color: $bday-border;
+			line-height: 1;
+		}
+	}
+
+	a { font-weight: 600; font-size: 13.5px; line-height: 1.35; color: $bday-ink; text-decoration: none; &:hover { color: $bday-red; } }
+}
+
+.bday-sidebar__most-popular,
+.bday-sidebar__recent {
+	margin-bottom: 28px;
+}

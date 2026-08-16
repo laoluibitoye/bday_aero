@@ -1,0 +1,1305 @@
+// "Redesign 2026" homepage variant (homepage-variants/redesign.php,
+// homepage-sections/*.php) — styling for every .bday-rd-* class emitted by
+// the section-registry-driven layout. Colors reuse the theme's real
+// design tokens (--color-*) since they're already byte-identical to the
+// source design's palette (see abstracts/_colors.scss's --bd-* brand
+// tokens) — but every font-size/line-height/gap/padding value below is
+// copied verbatim (in px, not rem, to avoid any root-font-size drift)
+// from the source design's own inline styles, not approximated from this
+// theme's --space-*/--text-* scale, per an explicit reader request that
+// the line-spacing/rhythm match exactly. bday-card, bday-list,
+// bday-container, bday-scroll-row, bday-byline are reused as-is from
+// _premium.scss — only genuinely new shapes get a class here.
+
+@font-face {
+	font-family: 'Newsreader';
+	font-style: normal;
+	font-weight: 400 700;
+	font-display: swap;
+	src: url('/wp-content/themes/Bday_Aero/assets/build/fonts/newsreader-variable.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Newsreader';
+	font-style: italic;
+	font-weight: 400 700;
+	font-display: swap;
+	src: url('/wp-content/themes/Bday_Aero/assets/build/fonts/newsreader-italic-variable.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Inter Tight';
+	font-style: normal;
+	font-weight: 400 700;
+	font-display: swap;
+	src: url('/wp-content/themes/Bday_Aero/assets/build/fonts/inter-tight-variable.woff2') format('woff2');
+}
+
+.bday-rd {
+	--rd-font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+	--rd-font-body: 'Inter Tight', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+	font-family: var(--rd-font-body);
+}
+
+// ---- Dark-mode-aware redesign tokens -------------------------------------
+// The 6 brand tokens (--bd-red/-strong/-tint, --bd-ink, --bd-steel,
+// --bd-paper) are already byte-identical to the source design's palette
+// AND already dark-mode-aware (abstracts/_colors.scss), so $rd-ink/
+// $rd-accent/etc below stay pointed at those directly. Everything here is
+// for values the design's own literal light-mode hex (secondary text
+// greys, the three "dark accent band" sections) needed a real dark-mode
+// counterpart for, which reusing this theme's existing --color-ink-2/
+// --color-border tokens wouldn't have given pixel-exact fidelity to.
+//
+// Reader-reported: dark-band sections (Headlines/Premium/Newsletter) are
+// hardcoded near-black in the source design because that reads as a
+// strong accent against the design's light page — but on this site's
+// actual dark mode, the *page* is already near-black, so a hardcoded
+// near-black band stops being an accent and just blends into the page,
+// and any literal grey/white-at-N%-opacity text sized for a light page
+// stops being legible against whatever's actually behind it. --rd-invert-*
+// flips the relationship instead of the literal color: light mode keeps
+// the design's black-band-white-text look; dark mode inverts to a light
+// band with dark text, so the band still reads as a deliberate accent
+// against whatever the page background actually is, in both modes.
+//
+// Reader-reported: --rd-invert-bg's dark-mode value was its own off-white
+// (#F3F1EC) rather than the canonical --bd-paper (#FBFAF8) every other
+// "white section background" on the site now resolves to — fixed below.
+// Also fixed here: the dark-mode media block was guarded only against an
+// explicit [data-theme="light"], not [data-theme="warm"] — so a reader on
+// warm mode with an OS-level dark preference would incorrectly get this
+// dark-mode invert banding instead of warm mode's own (unset, falls
+// through to the bare :root default) look. Now excluded the same way
+// light already was.
+:root {
+	--rd-ink-2: #4A4D51;
+	--rd-list-ink: #26292C;
+	--rd-hero-dek: #33363A;
+	--rd-border-a: rgba(10, 10, 10, 0.12);
+	--rd-border-a-soft: rgba(10, 10, 10, 0.1);
+	--rd-outline-border: rgba(10, 10, 10, 0.25);
+
+	--rd-invert-bg: #0A0A0A;
+	--rd-invert-ink: #FFFFFF;
+	--rd-placeholder-bg: #EFEDEA;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]):not([data-theme="warm"]) {
+		--rd-ink-2: #E4E1D9;
+		--rd-list-ink: #E4E1D9;
+		--rd-hero-dek: #E4E1D9;
+		--rd-border-a: rgba(255, 255, 255, 0.16);
+		--rd-border-a-soft: rgba(255, 255, 255, 0.12);
+		--rd-outline-border: rgba(255, 255, 255, 0.3);
+
+		--rd-invert-bg: #FBFAF8;
+		--rd-invert-ink: #0A0A0A;
+		--rd-placeholder-bg: #2A2823;
+	}
+}
+
+:root[data-theme="dark"] {
+	--rd-ink-2: #E4E1D9;
+	--rd-list-ink: #E4E1D9;
+	--rd-hero-dek: #E4E1D9;
+	--rd-border-a: rgba(255, 255, 255, 0.16);
+	--rd-border-a-soft: rgba(255, 255, 255, 0.12);
+	--rd-outline-border: rgba(255, 255, 255, 0.3);
+
+	--rd-invert-bg: #FBFAF8;
+	--rd-invert-ink: #0A0A0A;
+	--rd-placeholder-bg: #2A2823;
+}
+
+$rd-ink: var(--color-ink-1); // #0A0A0A / dark-mode #F3F1EE — exact match, already theme-aware
+$rd-ink-2: var(--rd-ink-2);
+$rd-muted: var(--color-ink-3); // #6E7175 / dark-mode #948F88 — exact match, already theme-aware
+$rd-accent: var(--color-accent); // #E30613 / dark-mode #FF3B47 — exact match, already theme-aware
+$rd-accent-strong: var(--color-accent-strong);
+$rd-tint: var(--color-accent-tint);
+$rd-border: var(--rd-border-a);
+$rd-surface: var(--color-bg-raised);
+$rd-bg: var(--color-bg); // #FBFAF8 / dark-mode #121110 — exact match, already theme-aware
+$rd-invert-bg: var(--rd-invert-bg);
+$rd-invert-ink: var(--rd-invert-ink);
+
+// ---- Section rhythm -----------------------------------------------------
+// The design gives every section margin-bottom: 64px (not padding) except
+// the four with their own background (Hero, Headlines, Premium,
+// Newsletter), which carry their own explicit padding below instead.
+.bday-rd {
+	> section {
+		margin-bottom: 64px;
+		&:last-child { margin-bottom: 0; }
+	}
+
+	// .bday-container's margin: 0 auto (_premium.scss) sets auto values on
+	// both cross-axis margins of a flex item — which, per the flexbox
+	// spec, suppresses align-items: stretch entirely and shrink-wraps the
+	// item to its own max-content width instead. Every section here that
+	// wraps its .bday-container in display:flex hit this (found live on
+	// E-editions: a content-light 4-column grid resolved to ~990px inside
+	// a 1350px section instead of filling it — Browse the Desks looked
+	// fine only by coincidence, because its 6-column photo grid's
+	// max-content width already exceeds 1350px, so shrink-to-fit clamped
+	// to the same width stretching would have produced anyway). An
+	// explicit width: 100% resolves the cross size before max-width caps
+	// it, which is what makes the auto margins center it correctly
+	// instead of sizing it.
+	> section > .bday-container {
+		width: 100%;
+	}
+}
+
+// ---- Shared primitives ------------------------------------------------
+
+// Reader-reported: read as too thin at 11px/400 — JetBrains Mono's
+// variable weight defaults to 400 when nothing overrides it, which at
+// this size (every category/taxonomy label sitewide, on both section
+// heads and individual post cards, all share this one class) came across
+// closer to a caption than a label. Bumped size and set an explicit bold
+// weight so it holds its own next to the serif headlines around it.
+.bday-rd-kicker {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: $rd-ink;
+
+	&--muted { color: $rd-muted; letter-spacing: 0.12em; font-size: 11.5px; }
+	&--faint { color: $rd-muted; font-size: 11.5px; letter-spacing: 0.1em; }
+	&--accent { color: $rd-accent; }
+	&--tint { color: $rd-accent-strong; }
+}
+
+.bday-rd-dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	background: $rd-accent;
+	flex: 0 0 auto;
+}
+
+.bday-rd-badge {
+	display: inline-block;
+	background: $rd-accent;
+	color: #fff;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	letter-spacing: 0.24em;
+	text-transform: uppercase;
+	padding: 6px 12px;
+}
+
+.bday-rd-rule { height: 1px; flex: 1; background: $rd-border; }
+
+// .bday-scroll-row (_premium.scss) deliberately shows its scrollbar by
+// default (has scroll-padding room for one) — Your News and E-editions
+// use the source design's hidden-scrollbar treatment instead, opted into
+// per-instance via this attribute rather than changing the shared class's
+// default for every other consumer of .bday-scroll-row.
+[data-hide-scrollbar] {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+	&::-webkit-scrollbar { display: none; }
+}
+
+// Section heading row: "Your News", "In Other News", "Opinion" etc — a
+// 30px serif heading + a hairline rule filling the remaining width, gap
+// 16px between them (identical shape reused by 8 of the 15 sections).
+.bday-rd-section-head {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	margin-bottom: 24px;
+	flex-wrap: wrap;
+
+	h2 {
+		font-family: var(--rd-font-display);
+		font-size: 30px;
+		font-weight: 600;
+		margin: 0;
+		line-height: 1.15;
+
+		a { color: $rd-ink; text-decoration: none; &:hover { color: $rd-accent; } }
+	}
+
+	// For section heads on a dark band (BD Investigates) — $rd-invert-ink
+	// is the same token the band's own background inverts against, so
+	// this stays white-on-black in light mode and correctly flips to
+	// dark-on-light along with the band when dark mode is on, rather
+	// than a literal white that would go invisible once the band itself
+	// turns light.
+	&--invert h2 { color: $rd-invert-ink; }
+}
+
+.bday-rd-rule--invert { background: color-mix(in srgb, #{$rd-invert-ink} 20%, transparent); }
+
+.bday-rd-btn {
+	display: inline-block;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	padding: 14px 26px;
+	text-decoration: none;
+	text-align: center;
+	transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+	&--solid {
+		background: $rd-ink;
+		color: $rd-bg;
+		&:hover { background: $rd-accent; color: #fff; }
+	}
+
+	&--outline {
+		border: 1px solid var(--rd-outline-border);
+		color: $rd-ink;
+		&:hover { border-color: $rd-accent; color: $rd-accent; }
+	}
+
+	// Reader-requested: the Subscribe CTA's button should read as
+	// prominently as the header's own "Subscribe Now" pill
+	// (.bd-header__subscribe-now, _header.scss) — same shape/colors,
+	// just bigger, since this one anchors a whole section rather than
+	// sitting in a compact nav bar.
+	&--pill {
+		font-family: var(--font-ui);
+		font-size: 16px;
+		font-weight: 700;
+		letter-spacing: normal;
+		text-transform: none;
+		color: #fff;
+		background: $rd-accent;
+		border-radius: 999px;
+		padding: 16px 34px;
+		&:hover { background: $rd-accent-strong; color: #fff; }
+	}
+}
+
+// ---- No-thumbnail state ---------------------------------------------------
+// Every card template below skips rendering an <img> entirely when the
+// post has no real featured image (has_post_thumbnail() check in the
+// PHP), rather than falling back to bday_get_thumbnail()'s generic
+// BusinessDay-logo placeholder — found live that the placeholder reads as
+// a rendering bug at a glance ("why does every third card show the same
+// logo?"), and a bigger headline reads better than a repeated fallback
+// graphic anyway. :has() detects the resulting no-image card purely in
+// CSS (no extra PHP-side modifier class needed) and enlarges the title to
+// use the space the image would have occupied.
+.bday-rd-story-list__item:not(:has(img)) {
+	grid-template-columns: 1fr;
+	.bday-rd-story-list__title { font-size: 32px; line-height: 1.15; }
+}
+
+.bday-rd-desk-card__item:not(:has(img)) {
+	grid-template-columns: 1fr;
+	.bday-rd-desk-card__item-title { font-size: 20px; }
+}
+
+.bday-rd-topic-triple__lead:not(:has(img)) h3,
+.bday-rd-weekender__lead:not(:has(img)) h4 {
+	font-size: 30px;
+	line-height: 1.15;
+}
+
+.bday-rd-premium__feature:not(:has(img)) h3 { font-size: 40px; }
+.bday-rd-premium__medium a:not(:has(img)) h4 { font-size: 26px; }
+.bday-rd-opinion__lead:not(:has(img)) h3 { font-size: 38px; }
+.bday-rd-desk-tile:not(:has(img)) .bday-rd-desk-tile__name { font-size: 24px; }
+.bday-rd-edition-card--no-thumb .bday-rd-edition-card__name { font-size: 22px; }
+
+// ---- Hero -----------------------------------------------------------------
+// section { padding: 40px 0 48px; } — no margin-bottom of its own (the
+// section rhythm rule above still adds 64px after it).
+
+.bday-rd-hero {
+	padding: 40px 0 48px;
+
+	&__grid {
+		display: grid;
+		grid-template-columns: 3fr 6fr 3fr;
+		gap: 40px;
+		@include bd-down($bp-desktop) { grid-template-columns: 1fr; }
+	}
+
+	&__topnews {
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+	}
+
+	&__topnews-head { display: flex; align-items: center; gap: 10px; }
+	&__date { margin-left: auto; font-size: 10.5px; letter-spacing: 0.12em; }
+
+	&__lead {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+
+		&-media img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: var(--rd-placeholder-bg); }
+		&-body { display: flex; flex-direction: column; gap: 14px; }
+		&-eyebrow { display: flex; align-items: center; gap: 12px; }
+		&-title {
+			font-family: var(--rd-font-display);
+			font-size: 46px;
+			line-height: 1.06;
+			font-weight: 600;
+			letter-spacing: -0.015em;
+			margin: 0;
+			a { color: $rd-ink; text-decoration: none; &:hover { color: $rd-accent; } }
+		}
+		&-dek { font-family: var(--rd-font-display); font-size: 19px; line-height: 1.5; color: var(--rd-hero-dek); max-width: 62ch; margin: 0; }
+	}
+
+	// The Latest News column reuses .bday-rd-numbered-list wholesale (same
+	// number/title/time-ago shape as Top News, reader-requested) —
+	// .bday-rd-hero__latest is just the flex wrapper around the kicker +
+	// that list, no link/list styling of its own to duplicate.
+	&__latest {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+}
+
+.bday-rd-numbered-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
+	li { display: block; }
+
+	a {
+		display: grid;
+		grid-template-columns: 26px 1fr;
+		gap: 12px;
+		align-items: start;
+		text-decoration: none;
+		color: $rd-ink;
+		&:hover .bday-rd-numbered-list__title { color: $rd-accent; }
+	}
+
+	&__n { font-family: var(--font-mono); font-size: 13px; color: $rd-accent; padding-top: 3px; }
+	// The grid's 2nd column (1fr) — title stacked over the time-ago
+	// kicker. min-width: 0 is load-bearing: a grid item's default
+	// min-width is auto (content-based), which without this can refuse
+	// to shrink to the 1fr track and force the column wider than
+	// intended.
+	&__body { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+	&__title { display: block; font-family: var(--rd-font-display); font-size: 18px; line-height: 1.25; font-weight: 600; }
+}
+
+// ---- Headlines (dark strip, inverts in dark mode) ------------------------
+// section { padding: 28px 32px; }
+
+.bday-rd-headlines {
+	background: $rd-invert-bg;
+	color: $rd-invert-ink;
+	padding: 28px 32px;
+	// Flush against Market Pulse below — see that section's own
+	// margin-bottom: 0 for the matching half of this. Reader-reported:
+	// this was missing, leaving the default 64px section gap as an
+	// unwanted stripe of empty space between the two.
+	margin-bottom: 0;
+
+	&__grid {
+		display: grid;
+		grid-template-columns: 180px 1fr 1fr 1fr;
+		gap: 32px;
+		align-items: start;
+		@include bd-down($bp-desktop) { grid-template-columns: 1fr; }
+	}
+
+	&__label {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+
+		h2 { font-family: var(--rd-font-display); font-size: 28px; font-weight: 600; margin: 0; color: $rd-invert-ink; }
+	}
+
+	&__item {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	&__item-link {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		text-decoration: none;
+		color: $rd-invert-ink;
+	}
+
+	&__more {
+		align-self: flex-start;
+		text-decoration: none;
+		&:hover { color: $rd-accent-strong; }
+	}
+
+	&__title { font-family: var(--rd-font-display); font-size: 20px; line-height: 1.25; font-weight: 500; }
+
+	.bday-rd-kicker { font-size: 11.5px; letter-spacing: 0.16em; }
+	.bday-rd-kicker--tint { color: $rd-accent-strong; }
+	.bday-rd-kicker--faint { color: color-mix(in srgb, #{$rd-invert-ink} 45%, transparent); }
+	.bday-rd-kicker--muted { color: color-mix(in srgb, #{$rd-invert-ink} 50%, transparent); }
+}
+
+// ---- Premium (dark, inverts in dark mode) ---------------------------------
+// section { padding: 44px 40px; }
+
+.bday-rd-premium {
+	background: $rd-invert-bg;
+	color: $rd-invert-ink;
+	padding: 44px 40px;
+	display: flex;
+	flex-direction: column;
+	gap: 30px;
+
+	&__head {
+		display: flex;
+		align-items: baseline;
+		gap: 16px;
+		flex-wrap: wrap;
+	}
+
+	&__title { font-family: var(--rd-font-display); font-size: 26px; font-weight: 500; margin: 0; color: $rd-invert-ink; }
+	&__cta { margin-left: auto; letter-spacing: 0.14em; }
+
+	&__grid {
+		display: grid;
+		grid-template-columns: 5fr 3fr 3fr;
+		gap: 36px;
+		@include bd-down($bp-desktop) { grid-template-columns: 1fr; }
+	}
+
+	&__feature {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		text-decoration: none;
+		color: $rd-invert-ink;
+
+		img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; display: block; }
+		h3 { font-family: var(--rd-font-display); font-size: 32px; line-height: 1.12; font-weight: 600; margin: 0; }
+		p { font-family: var(--rd-font-display); font-size: 17px; line-height: 1.5; color: color-mix(in srgb, #{$rd-invert-ink} 62%, transparent); margin: 0; }
+	}
+
+	&__medium {
+		display: flex;
+		flex-direction: column;
+		gap: 26px;
+
+		a { display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: $rd-invert-ink; }
+		img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+		h4 { font-family: var(--rd-font-display); font-size: 20px; line-height: 1.22; font-weight: 500; margin: 0; }
+	}
+
+	&__also {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+
+		a { font-family: var(--rd-font-display); font-size: 18px; line-height: 1.25; font-weight: 500; color: $rd-invert-ink; text-decoration: none; &:hover { color: $rd-accent-strong; } }
+	}
+
+	&__also-head {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+
+		.bday-rd-premium__see-more { margin-left: auto; font-family: inherit; font-size: 12px; font-weight: 400; }
+	}
+}
+
+// ---- Your News rail ---------------------------------------------------
+// section { gap: 28px; margin-bottom already handled by the shared rule. }
+
+.bday-rd-your-news {
+	display: flex;
+	flex-direction: column;
+	gap: 28px;
+}
+
+.bday-rd-your-news__rail { display: flex; gap: 24px; padding-bottom: 4px; }
+
+.bday-rd-desk-card {
+	flex: 0 0 320px;
+	min-width: 0;
+	border: 1px solid $rd-border;
+	padding: 18px 18px 6px;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+
+	&__head { display: flex; align-items: center; gap: 10px; }
+
+	&__items { display: flex; flex-direction: column; }
+
+	&__item {
+		display: grid;
+		grid-template-columns: 78px 1fr;
+		gap: 14px;
+		align-items: start;
+		padding: 14px 0;
+		border-top: 1px solid var(--rd-border-a-soft);
+		text-decoration: none;
+		color: $rd-ink;
+
+		img { width: 78px; height: 58px; object-fit: cover; display: block; }
+	}
+
+	&__item-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+	&__item-title {
+		font-family: var(--rd-font-display);
+		font-size: 16.5px;
+		line-height: 1.24;
+		font-weight: 600;
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+}
+
+// ---- In Other News + rail -----------------------------------------------
+// section { gap: 28px inside the left column; grid gap 56px. }
+
+.bday-rd-in-other-news__grid {
+	display: grid;
+	grid-template-columns: 1fr 320px;
+	gap: 56px;
+	align-items: start;
+	@include bd-down($bp-desktop) { grid-template-columns: 1fr; }
+}
+
+.bday-rd-in-other-news__col { display: flex; flex-direction: column; gap: 28px; }
+
+.bday-rd-story-list {
+	display: flex;
+	flex-direction: column;
+	gap: 28px;
+
+	&__item { display: grid; grid-template-columns: 260px 1fr; gap: 24px; align-items: start; text-decoration: none; color: $rd-ink; @include bd-down($bp-tablet) { grid-template-columns: 1fr; } }
+	&__item img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; display: block; }
+	&__body { display: flex; flex-direction: column; gap: 9px; }
+	&__title { font-family: var(--rd-font-display); font-size: 25px; line-height: 1.18; font-weight: 600; }
+	&__dek { font-family: var(--rd-font-display); font-size: 16.5px; line-height: 1.5; color: $rd-ink-2; margin: 0; }
+}
+
+.bday-rd-rail {
+	display: flex;
+	flex-direction: column;
+	gap: 40px;
+	position: sticky;
+	top: 24px;
+
+	&__block { display: flex; flex-direction: column; gap: 14px; }
+	&__block--tint { background: $rd-tint; padding: 22px 20px; }
+	&__epaper img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; }
+	&__block a { font-family: var(--rd-font-display); font-size: 17px; line-height: 1.28; color: $rd-ink; text-decoration: none; &:hover { color: $rd-accent; } }
+	&__block--tint a:first-of-type { font-size: 19px; line-height: 1.24; font-weight: 600; }
+	&__block--tint,
+	&__block--tint a { color: $rd-ink; } // $rd-ink is theme-relative (near-black in light mode, near-white in dark), which is what actually keeps this legible — --color-accent-tint itself is a translucent red overlay in dark mode (a dark maroon chip, not a light pink one), so a fixed dark-ink color here would go dark-on-dark
+	&__block .bday-list { display: flex; flex-direction: column; gap: 14px; }
+	&__block .bday-list li { padding: 0; border: 0; }
+	&__block .bday-list a { font-weight: 500; }
+}
+
+// ---- Toon of the Day ------------------------------------------------------
+// section { gap: 44px grid; align-items: center. }
+
+.bday-rd-toon {
+	&__grid { display: grid; grid-template-columns: 7fr 5fr; gap: 44px; align-items: center; @include bd-down($bp-desktop) { grid-template-columns: 1fr; } }
+	&__media img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+	&__body { display: flex; flex-direction: column; gap: 16px; }
+	&__title { font-family: var(--rd-font-display); font-size: 40px; line-height: 1.08; font-weight: 600; color: $rd-ink; text-decoration: none; &:hover { color: $rd-accent; } }
+	&__dek { font-family: var(--rd-font-display); font-size: 18px; line-height: 1.5; color: $rd-ink-2; max-width: 44ch; margin: 0; }
+	&__actions { display: flex; gap: 14px; margin-top: 4px; }
+}
+
+// ---- Opinion ---------------------------------------------------------------
+// section { gap: 26px; grid gap 44px; right-column grid gap 34px 32px. }
+
+.bday-rd-opinion {
+	&__grid { display: grid; grid-template-columns: 5fr 7fr; gap: 44px; align-items: start; @include bd-down($bp-desktop) { grid-template-columns: 1fr; } }
+
+	&__lead {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		text-decoration: none;
+		color: $rd-ink;
+
+		img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+		h3 { font-family: var(--rd-font-display); font-size: 30px; line-height: 1.14; font-weight: 600; margin: 0; }
+		p { font-family: var(--rd-font-display); font-size: 17px; line-height: 1.5; color: $rd-ink-2; margin: 0; }
+	}
+
+	&__list { display: grid; grid-template-columns: 1fr 1fr; gap: 34px 32px; @include bd-down($bp-tablet) { grid-template-columns: 1fr; } }
+
+	&__item {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		min-width: 0;
+		text-decoration: none;
+		color: $rd-ink;
+
+		h4 { font-family: var(--rd-font-display); font-size: 20px; line-height: 1.22; font-weight: 600; margin: 0; }
+		p { font-family: var(--rd-font-display); font-size: 15.5px; line-height: 1.45; color: $rd-ink-2; margin: 0; }
+	}
+
+	&__author { display: flex; align-items: center; gap: 12px; img { border-radius: 50%; width: 40px; height: 40px; } }
+}
+
+// ---- Browse the Desks ---------------------------------------------------
+// section { gap: 20px grid. } Reader-reported: tile images rendered at
+// inconsistent heights — core/theme-setup.php's add_image_size() calls
+// don't hard-crop (no 4th arg), so WP fits each source image inside the
+// box preserving its own aspect ratio rather than cropping to it, and
+// height:auto then rendered whatever that per-image result was. Forcing
+// the box's own aspect-ratio + object-fit:cover here crops visually to a
+// uniform box regardless of the source file's proportions, without
+// touching the global image-size registration (which every other part of
+// the site also relies on).
+
+.bday-rd-desk-tiles { display: flex; flex-direction: column; gap: 24px; }
+.bday-rd-desk-tiles__grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 20px; @include bd-down($bp-desktop) { grid-template-columns: repeat(3, 1fr); } @include bd-down($bp-tablet) { grid-template-columns: repeat(2, 1fr); } }
+
+.bday-rd-desk-tile {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	text-decoration: none;
+	color: $rd-ink;
+
+	img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; display: block; }
+	&__name { font-family: var(--rd-font-display); font-size: 19px; font-weight: 600; }
+}
+
+// ---- Topic triple (source design: "Tech Economy Legal") -----------------
+// section { gap: 40px grid; each column gap 18px. }
+
+.bday-rd-topic-triple {
+	&__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; @include bd-down($bp-desktop) { grid-template-columns: 1fr; } }
+	&__col { display: flex; flex-direction: column; gap: 18px; }
+	&__head { display: flex; align-items: center; gap: 12px; }
+	&__head .bday-rd-kicker { letter-spacing: 0.2em; }
+
+	&__lead {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		text-decoration: none;
+		color: $rd-ink;
+
+		img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+		h3 { font-family: var(--rd-font-display); font-size: 24px; line-height: 1.18; font-weight: 600; margin: 0; }
+		p { font-family: var(--rd-font-display); font-size: 16px; line-height: 1.5; color: $rd-ink-2; margin: 0; }
+	}
+
+	&__more { display: flex; flex-direction: column; gap: 14px; a { font-family: var(--rd-font-display); font-size: 17px; line-height: 1.28; font-weight: 500; color: $rd-ink; text-decoration: none; &:hover { color: $rd-accent; } } }
+}
+
+// ---- Newsletter (dark, inverts in dark mode) -----------------------------
+// section { padding: 48px 40px; grid gap 48px. }
+
+.bday-rd-newsletter {
+	background: $rd-invert-bg;
+	color: $rd-invert-ink;
+	padding: 48px 40px;
+
+	&__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; @include bd-down($bp-desktop) { grid-template-columns: 1fr; } }
+	&__copy { display: flex; flex-direction: column; gap: 14px; }
+
+	h2 { font-family: var(--rd-font-display); font-size: 44px; line-height: 1.06; font-weight: 600; margin: 0; color: $rd-invert-ink; }
+	// Reader-requested: solid white body copy, not the translucent tone
+	// most dark-band body text on this page uses.
+	p { font-family: var(--rd-font-display); font-size: 18px; line-height: 1.5; color: $rd-invert-ink; max-width: 46ch; margin: 0; }
+
+	&__cta { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+}
+
+// ---- Watch & Listen -------------------------------------------------------
+// Reader-requested rework: two media-card rows ("Watch Today's Videos",
+// "Latest Shows") instead of a feature-plus-list layout, closer to how a
+// real video/podcast section reads — every video/show gets equal visual
+// weight in its own row rather than one enlarged "feature" and a small
+// text list beside it.
+
+.bday-rd-watch-listen {
+	&__subhead {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		border-top: 1px solid $rd-ink;
+		padding-top: 14px;
+		margin-bottom: 20px;
+
+		&:not(:first-child) { margin-top: 48px; }
+
+		h3 { font-family: var(--rd-font-display); font-size: 22px; font-weight: 600; margin: 0; color: $rd-ink; }
+
+		a { margin-left: auto; text-decoration: none; }
+	}
+
+	&__video-grid {
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		gap: 24px;
+		@include bd-down($bp-desktop) { grid-template-columns: repeat(3, 1fr); }
+		@include bd-down($bp-tablet) { grid-template-columns: repeat(2, 1fr); }
+	}
+
+	&__video-card {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		text-decoration: none;
+		color: $rd-ink;
+
+		img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; }
+
+		h4 { font-family: var(--rd-font-display); font-size: 16px; line-height: 1.25; font-weight: 600; margin: 0; }
+		&:hover h4 { color: $rd-accent; }
+	}
+
+	&__show-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 24px;
+		@include bd-down($bp-tablet) { grid-template-columns: repeat(2, 1fr); }
+	}
+
+	&__show-card {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		aspect-ratio: 4 / 3;
+		overflow: hidden;
+		text-decoration: none;
+		// Fixed --bd-ink, not the theme-relative $rd-ink: this and its
+		// --no-thumb variant below pair with a hardcoded white (#fff) label,
+		// so the tile itself has to stay a constant dark placeholder in
+		// every mode. $rd-ink flips to near-white in dark mode, which
+		// previously left a --no-thumb card (no image to cover it) showing
+		// white text on a near-white tile — invisible.
+		background: var(--bd-ink);
+		color: #fff;
+
+		img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+		// A dark gradient under the text keeps the label/title legible
+		// over any thumbnail, the same problem the reference's solid-
+		// color illustrated tiles never had to solve — this is the fix
+		// for a real photo background instead.
+		&::after {
+			content: '';
+			position: absolute;
+			inset: 0;
+			background: linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.82) 100%);
+		}
+
+		&--no-thumb { background: var(--bd-ink); &::after { display: none; } }
+	}
+
+	&__play {
+		position: absolute;
+		top: 14px;
+		right: 14px;
+		z-index: 2;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.16);
+		backdrop-filter: blur(4px);
+		color: #fff;
+	}
+
+	&__show-body {
+		position: relative;
+		z-index: 2;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		padding: 16px;
+
+		.bday-rd-kicker--tint { color: var(--color-accent-tint, #F3C9CB); }
+	}
+
+	&__show-title {
+		font-family: var(--rd-font-display);
+		font-size: 17px;
+		line-height: 1.22;
+		font-weight: 600;
+		color: #fff;
+	}
+}
+
+// ---- E-editions -----------------------------------------------------------
+// Reader-reported: this used to be a fixed-width horizontal-scroll rail
+// (flex: 0 0 220px cards) with ONE shared View/Past-editions action pair
+// at the section's end — with only a handful of editions in a dev
+// database, the rail didn't fill the row's width the way every other
+// full-width grid section on this page does, and a single "Past
+// editions" link made no sense once the rail could mix covers from
+// different publications (BusinessDay's own E-Paper archive is a
+// different destination than Real Estate Digest's). A full-width grid
+// (matching Browse the Desks' own pattern) plus per-card actions fixes
+// both: it fills the section's width regardless of item count, and each
+// card's "Past editions" now correctly points at *that* card's own
+// publication archive.
+
+.bday-rd-editions { display: flex; flex-direction: column; gap: 24px; }
+
+.bday-rd-editions__grid {
+	display: grid;
+	// A fixed column count, not repeat(auto-fill, minmax(...)) — auto-fill
+	// needs the grid container to have a definite width to compute a
+	// column count, and .bday-container here doesn't have one (it's a
+	// flex child of .bday-rd-editions with margin: 0 auto, which shrinks
+	// to content width in a flex context rather than stretching) — found
+	// live: auto-fill collapsed to a single column at ~260px instead of
+	// filling the row. Every other grid section in this file already
+	// uses an explicit repeat(N, 1fr) for exactly this reason.
+	grid-template-columns: repeat(4, 1fr);
+	gap: 28px 24px;
+	@include bd-down($bp-desktop) { grid-template-columns: repeat(3, 1fr); }
+	@include bd-down($bp-tablet) { grid-template-columns: repeat(2, 1fr); }
+}
+
+.bday-rd-edition-card {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	color: $rd-ink;
+
+	&__media {
+		display: block;
+		width: 100%;
+		aspect-ratio: 3 / 4;
+
+		img { width: 100%; height: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; }
+	}
+
+	&__name { font-family: var(--rd-font-display); font-size: 18px; font-weight: 600; }
+
+	&__actions { display: flex; gap: 10px; margin-top: 4px; }
+	&__actions .bday-rd-btn { padding: 10px 18px; font-size: 10.5px; flex: 1; }
+
+	&--no-thumb .bday-rd-edition-card__media {
+		background: var(--rd-placeholder-bg);
+	}
+}
+
+// ---- Weekender / Off the Clock -------------------------------------------
+// section { gap: 24px; grid gap 32px; each column gap 14px. }
+
+.bday-rd-weekender { display: flex; flex-direction: column; gap: 24px; }
+.bday-rd-weekender__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; @include bd-down($bp-desktop) { grid-template-columns: repeat(2, 1fr); } }
+.bday-rd-weekender__col { display: flex; flex-direction: column; gap: 14px; }
+
+.bday-rd-weekender {
+	&__lead {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		text-decoration: none;
+		color: $rd-ink;
+
+		img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+		h4 { font-family: var(--rd-font-display); font-size: 21px; line-height: 1.2; font-weight: 600; margin: 0; }
+	}
+
+	&__more { display: block; font-family: var(--rd-font-display); font-size: 16px; line-height: 1.3; color: var(--rd-list-ink); text-decoration: none; &:hover { color: $rd-accent; } }
+	&__see-more { display: block; margin-top: 4px; text-decoration: none; }
+}
+
+// ---- Events -----------------------------------------------------------
+// section { gap: 16px; grid gap 44px; row list divider background rgba(10,10,10,.1). }
+
+.bday-rd-events {
+	&__grid { display: grid; grid-template-columns: 5fr 7fr; gap: 44px; align-items: start; @include bd-down($bp-desktop) { grid-template-columns: 1fr; } }
+	&__copy { display: flex; flex-direction: column; gap: 16px; }
+	h2 { font-family: var(--rd-font-display); font-size: 36px; line-height: 1.1; font-weight: 600; margin: 0; }
+	p { font-family: var(--rd-font-display); font-size: 17px; line-height: 1.55; color: $rd-ink-2; max-width: 44ch; margin: 0; }
+
+	&__list { display: flex; flex-direction: column; gap: 1px; background: var(--rd-border-a-soft); }
+
+	&__row {
+		background: $rd-bg;
+		display: grid;
+		grid-template-columns: 92px 1fr auto;
+		gap: 22px;
+		align-items: center;
+		padding: 20px 4px;
+		text-decoration: none;
+		color: $rd-ink;
+	}
+
+	&__date { display: flex; flex-direction: column; gap: 2px; }
+	&__month { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: $rd-accent; }
+	&__day { font-family: var(--rd-font-display); font-size: 34px; line-height: 1; font-weight: 600; }
+	&__body { display: flex; flex-direction: column; gap: 5px; }
+	&__title { font-family: var(--rd-font-display); font-size: 21px; line-height: 1.2; font-weight: 600; }
+}
+
+// ---- Today's Paper teaser -------------------------------------------------
+// Not in the source design (the design's own homepage predates this
+// addon) — styled to match the section-head/kicker/button language used
+// everywhere else so it reads as native to the page rather than bolted on.
+
+.bday-rd-todays-paper-teaser__inner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 32px;
+	flex-wrap: wrap;
+	padding: 28px 32px;
+	border: 1px solid $rd-border;
+
+	h2 { font-family: var(--rd-font-display); font-size: 24px; font-weight: 600; margin: 8px 0 6px; color: $rd-ink; }
+	p { font-family: var(--rd-font-display); font-size: 16px; line-height: 1.4; color: $rd-ink-2; margin: 0; max-width: 48ch; }
+}
+
+// ---- Latest Stories -------------------------------------------------------
+// section { gap: 28px; grid gap 36px 28px. }
+
+.bday-rd-latest { display: flex; flex-direction: column; gap: 28px; }
+.bday-rd-latest .bday-card-grid { gap: 36px 28px; }
+
+// ---- Reused shared components (_premium.scss) — font/size/color overrides
+// .bday-card/.bday-list/.bday-byline/.bday-scroll-row are reused as-is
+// structurally (bday_card_html() output in latest-stories.php, the
+// Most Popular list in in-other-news.php) but carry no font-family/size
+// of their own — they inherit the classic homepage's defaults, which is
+// what makes an unmodified shared component read as part of the classic
+// design instead of this one. Sized to the design's own "Latest Stories"
+// card spec (20px/1.2/600 title, 3:2 media) rather than _premium.scss's
+// 1.05rem/700/fixed-200px-height.
+.bday-rd {
+	.bday-card__title {
+		font-family: var(--rd-font-display);
+		font-size: 20px;
+		line-height: 1.2;
+		font-weight: 600;
+		margin: 0 0 6px;
+	}
+	.bday-card__media { margin-bottom: 5px; }
+	.bday-card__media img { aspect-ratio: 3 / 2; height: auto; }
+	.bday-byline { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; gap: 8px; }
+	.bday-list li a { font-family: var(--rd-font-display); }
+	.bday-list li { padding: 10px 0; }
+}
+
+// ==========================================================================
+// Phase 3 — the remaining source-design sections.
+// ==========================================================================
+
+// ---- Market Pulse ---------------------------------------------------------
+// section { gap: 1px grid, 6 cells, background acting as the hairline
+// between cells via the grid gap itself. }
+
+.bday-rd-market-pulse {
+	// Flush against Headlines above and Premium below — see Headlines'
+	// own margin-bottom: 0 for the matching half of this.
+	margin-bottom: 0;
+
+	&__grid {
+		// Reader-reported: this background used to live on the section
+		// wrapper above (full-bleed, edge to edge), but the grid itself
+		// is capped at .bday-container's max-width and centered — so the
+		// section's own background showed through as a grey stripe on
+		// both sides of the centered grid. Moved here, onto the grid
+		// element itself, so the hairlines it's meant to create between
+		// cells (via the 1px gap) stay, without also filling the
+		// (differently-sized) section around it. background-clip:
+		// content-box — .bday-container's own 20px inline padding
+		// otherwise still showed a thin sliver of this background past
+		// the grid's outermost cells, the last remnant of the same "grey
+		// strip on the edges" bug report.
+		background: var(--rd-border-a);
+		background-clip: content-box;
+		display: grid;
+		grid-template-columns: repeat(6, 1fr);
+		gap: 1px;
+		@include bd-down($bp-desktop) { grid-template-columns: repeat(3, 1fr); }
+		@include bd-down($bp-tablet) { grid-template-columns: repeat(2, 1fr); }
+	}
+
+	&__cell {
+		background: $rd-bg;
+		// Reader-requested: reduced from 20px — this section reads as a
+		// slim data strip, not a full content block, so a tighter
+		// vertical rhythm fits it better.
+		padding: 12px 18px;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	&__value { font-family: var(--rd-font-display); font-size: 26px; font-weight: 600; color: $rd-ink; }
+
+	&__label-row { display: flex; align-items: center; gap: 6px; }
+
+	&__live {
+		font-family: var(--font-mono);
+		font-size: 8.5px;
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		color: $rd-accent;
+		border: 1px solid $rd-accent;
+		border-radius: 2px;
+		padding: 1px 4px;
+		line-height: 1.4;
+	}
+}
+
+// ---- Columnists ---------------------------------------------------------
+// Reader-requested: same lead+grid layout as Opinion (.bday-rd-opinion__*
+// classes, reused directly in columnists.php) — this block is now just
+// the section's own background/heading treatment.
+
+// Reader-reported: this used to carry its own pink-tint background
+// ($rd-tint) to visually separate it from Opinion right below — removed,
+// now sits on the plain page background like every other non-invert-band
+// section, no per-section rule override needed either.
+
+// Reader-reported: get_avatar()'s <img> sits inside .bday-rd-opinion__lead
+// (reused wholesale from Opinion, which has no avatar of its own), so the
+// shared `.bday-rd-opinion__lead img { width: 100%; aspect-ratio: 4/3;
+// object-fit: cover; }` rule — meant for the lead's featured image — was
+// also stretching the 24px round avatar to full-width/4:3, wildly
+// distorting it. Scoped back down for just the avatar image specifically.
+.bday-rd-columnists .bday-rd-opinion__lead img.avatar {
+	display: inline-block;
+	width: 24px;
+	height: 24px;
+	aspect-ratio: 1;
+	border-radius: 50%;
+	object-fit: cover;
+	vertical-align: middle;
+	flex: none;
+}
+
+// ---- Editor's Pick & Most Read -------------------------------------------
+// section { grid gap 56px; left col gap 24px, lead gap 14px, more grid gap
+// 28px; right col gap 24px, list gap 16px. }
+
+.bday-rd-editor-pick {
+	&__grid { display: grid; grid-template-columns: 7fr 5fr; gap: 56px; align-items: start; @include bd-down($bp-desktop) { grid-template-columns: 1fr; } }
+	&__col { display: flex; flex-direction: column; gap: 24px; }
+
+	&__lead {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		text-decoration: none;
+		color: $rd-ink;
+
+		img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+		h3 { font-family: var(--rd-font-display); font-size: 32px; line-height: 1.14; font-weight: 600; margin: 0; }
+		p { font-family: var(--rd-font-display); font-size: 17px; line-height: 1.5; color: $rd-ink-2; max-width: 60ch; margin: 0; }
+	}
+
+	&__more {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 28px;
+
+		a { display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: $rd-ink; }
+		img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; display: block; }
+	}
+
+	&__more-title { font-family: var(--rd-font-display); font-size: 20px; line-height: 1.2; font-weight: 600; }
+}
+
+.bday-rd-most-read {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+
+	a { display: grid; grid-template-columns: 44px 1fr; gap: 14px; align-items: start; text-decoration: none; color: $rd-ink; &:hover .bday-rd-most-read__title { color: $rd-accent; } }
+	&__n { font-family: var(--rd-font-display); font-size: 34px; line-height: 0.9; font-weight: 600; color: $rd-tint; }
+	&__title { font-family: var(--rd-font-display); font-size: 18px; line-height: 1.28; font-weight: 500; }
+}
+
+// Fills the space the Most Read list leaves empty next to the taller
+// Editor's Pick column beside it — small-thumbnail picks, offset 3 from
+// the ones already shown above (see redesign-data.php's rd_editor_pick_more).
+.bday-rd-editor-pick__thumb-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-top: 24px;
+	padding-top: 20px;
+	border-top: 1px solid $rd-border;
+}
+
+.bday-rd-editor-pick__thumb-item {
+	display: grid;
+	grid-template-columns: 64px 1fr;
+	gap: 14px;
+	align-items: center;
+	padding: 10px 0;
+	text-decoration: none;
+	color: $rd-ink;
+
+	img { width: 64px; height: 48px; object-fit: cover; display: block; }
+	&--no-thumb { grid-template-columns: 1fr; }
+}
+
+.bday-rd-editor-pick__thumb-title {
+	font-family: var(--rd-font-display);
+	font-size: 15px;
+	line-height: 1.25;
+	font-weight: 600;
+}
+
+// ---- BD Investigates (dark, inverts in dark mode) ------------------------
+// section { padding: 44px 40px; grid gap 44px; body gap 18px. }
+
+.bday-rd-investigates {
+	background: $rd-invert-bg;
+	color: $rd-invert-ink;
+	padding: 44px 40px;
+
+	&__grid { display: grid; grid-template-columns: 7fr 5fr; gap: 44px; align-items: center; @include bd-down($bp-desktop) { grid-template-columns: 1fr; } }
+	&--no-thumb &__grid { grid-template-columns: 1fr; }
+
+	&__media img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
+	&__body { display: flex; flex-direction: column; gap: 18px; }
+
+	&__title {
+		font-family: var(--rd-font-display);
+		font-size: 40px;
+		line-height: 1.08;
+		font-weight: 600;
+		letter-spacing: -0.01em;
+		color: $rd-invert-ink;
+		text-decoration: none;
+	}
+
+	&__dek { font-size: 18px; line-height: 1.5; color: color-mix(in srgb, #{$rd-invert-ink} 62%, transparent); }
+
+	&__more {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding-top: 8px;
+
+		a { font-family: var(--rd-font-display); font-size: 17px; line-height: 1.3; font-weight: 500; color: $rd-invert-ink; text-decoration: none; &:hover { text-decoration: underline; } }
+	}
+}
+
+// ---- In Pictures -----------------------------------------------------------
+
+.bday-rd-in-pictures__rail {
+	gap: 16px;
+
+	.bday-rd-in-pictures__item {
+		flex: 0 0 300px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		text-decoration: none;
+		color: $rd-ink;
+
+		img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+	}
+}
+
+// ---- The Interview ----------------------------------------------------
+
+.bday-rd-interview {
+	&__grid { display: grid; grid-template-columns: 6fr 6fr; gap: 44px; @include bd-down($bp-desktop) { grid-template-columns: 1fr; } }
+	&__col { display: flex; flex-direction: column; gap: 16px; }
+
+	&__see-more { margin-top: -12px; text-decoration: none; }
+
+	&__portrait img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
+
+	&__quote {
+		font-family: var(--rd-font-display);
+		font-style: italic;
+		font-size: 34px;
+		line-height: 1.12;
+		font-weight: 600;
+		color: $rd-ink;
+		text-decoration: none;
+	}
+
+	&__more { display: flex; flex-direction: column; padding-top: 44px; gap: 22px; }
+	&__more-item {
+		display: grid;
+		grid-template-columns: 120px 1fr;
+		gap: 18px;
+		align-items: start;
+		text-decoration: none;
+		color: $rd-ink;
+
+		img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 50%; display: block; }
+	}
+	&__more-title { display: block; font-family: var(--rd-font-display); font-size: 21px; line-height: 1.2; font-weight: 600; margin-bottom: 8px; }
+}
+
+// ---- Partner Content --------------------------------------------------
+// section { padding 32px, gap 22px. Used to mix its own slightly-tinted
+// "neutral paper" shade off $rd-bg/$rd-ink — reader-reported as yet
+// another one-off section background shade; now just the plain canonical
+// page background like every other non-invert-band section. }
+
+.bday-rd-partner {
+	background: $rd-bg;
+	padding: 32px;
+	display: flex;
+	flex-direction: column;
+	gap: 22px;
+
+	&__head {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+
+		a { margin-left: auto; }
+	}
+
+	&__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; @include bd-down($bp-desktop) { grid-template-columns: repeat(2, 1fr); } }
+
+	&__item {
+		display: grid;
+		grid-template-columns: 72px 1fr;
+		gap: 14px;
+		align-items: start;
+		min-width: 0;
+		text-decoration: none;
+		color: $rd-ink;
+
+		img { width: 72px; height: 72px; object-fit: cover; display: block; }
+	}
+
+	&__body { display: flex; flex-direction: column; gap: 6px; min-width: 0; overflow-wrap: break-word; }
+	&__title { font-family: var(--rd-font-display); font-size: 16.5px; line-height: 1.25; font-weight: 600; }
+}
+
+@include bd-down($bp-mobile) {
+	.bday-rd-your-news__rail .bday-rd-desk-card {
+		flex-basis: 260px;
+	}
+}

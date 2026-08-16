@@ -1,0 +1,90 @@
+// Type tokens + self-hosted @font-face — see /design.md §2.
+//
+// Self-hosted, not a Google Fonts <link>: every performance decision
+// earlier in this project has been about removing external/render-blocking
+// requests, and a font CDN link is exactly that class of cost. Files live
+// in assets/src/public/fonts/ (copied verbatim by Vite's publicDir, same
+// unhashed-fixed-path convention already used for the logo images), built
+// output resolves to /wp-content/themes/Bday_Aero/assets/build/fonts/.
+//
+// Libre Baskerville and Merriweather each ship as a single variable-capable
+// woff2 per style (confirmed by fetching Google's own served files: the
+// 400 and 700 static-weight requests resolved to byte-identical URLs) —
+// one file per style covers the full 400-700 weight range via `font-weight:
+// 400 700`, rather than two separate static files.
+
+@font-face {
+	font-family: 'Libre Baskerville';
+	font-style: normal;
+	font-weight: 400 700;
+	font-display: swap;
+	src: url('/wp-content/themes/Bday_Aero/assets/build/fonts/libre-baskerville-400.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Libre Baskerville';
+	font-style: italic;
+	font-weight: 400 700;
+	font-display: swap;
+	src: url('/wp-content/themes/Bday_Aero/assets/build/fonts/libre-baskerville-italic.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Merriweather';
+	font-style: normal;
+	font-weight: 400 700;
+	font-display: swap;
+	src: url('/wp-content/themes/Bday_Aero/assets/build/fonts/merriweather-400.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Merriweather';
+	font-style: italic;
+	font-weight: 400 700;
+	font-display: swap;
+	src: url('/wp-content/themes/Bday_Aero/assets/build/fonts/merriweather-italic.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Inter';
+	font-style: normal;
+	font-weight: 400 700;
+	font-display: swap;
+	src: url('/wp-content/themes/Bday_Aero/assets/build/fonts/inter-variable.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'JetBrains Mono';
+	font-style: normal;
+	font-weight: 400 500;
+	font-display: swap;
+	src: url('/wp-content/themes/Bday_Aero/assets/build/fonts/jetbrains-mono-variable.woff2') format('woff2');
+}
+
+:root {
+	// Face stacks
+	--font-display: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
+	--font-body: 'Merriweather', Georgia, 'Times New Roman', serif;
+	--font-ui: 'Inter', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+	--font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+	// Type scale — see design.md §2 for the full size/line-height/use table.
+	--text-xs: 0.75rem;
+	--text-xs-lh: 1.4;
+	--text-sm: 0.875rem;
+	--text-sm-lh: 1.5;
+	--text-base: 1rem;
+	--text-base-lh: 1.65;
+	--text-lg: 1.125rem;
+	--text-lg-lh: 1.6;
+	--text-xl: 1.5rem;
+	--text-xl-lh: 1.3;
+	--text-2xl: 1.875rem;
+	--text-2xl-lh: 1.2;
+	--text-3xl: 2.25rem;
+	--text-3xl-lh: 1.15;
+	--text-4xl: 3rem;
+	--text-4xl-lh: 1.1;
+	--text-5xl: 3.75rem;
+	--text-5xl-lh: 1.05;
+}

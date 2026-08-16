@@ -1,11 +1,16 @@
 <?php
 /**
- * Nav menu rendering: a Bootstrap-flavored Walker_Nav_Menu, login/signup/
- * subscribe visibility by auth state, and page-title hiding. Ported from
- * the previous theme's functions/bootstrap_walker.php + inc/nav-menus.php
- * unchanged in behavior — the only difference is the account URL now comes
- * from bday_paywall_login_url() (core/boundary/paywall-contract.php)
- * instead of reading the plugin's option directly.
+ * Nav menu rendering: a dependency-free Walker_Nav_Menu (no Bootstrap JS
+ * coupling — dropdowns are driven by the theme's own header.js, matching
+ * the rest of this theme's no-jQuery/no-framework convention), login/
+ * signup/subscribe visibility by auth state, and page-title hiding.
+ *
+ * Previously extended Bootstrap's data-bs-toggle="dropdown" pattern; the
+ * header rebuild (Bday_Aero Deep Dive roadmap, Phase "header") replaced
+ * every Bootstrap component (navbar, offcanvas, dropdown) with custom
+ * markup driven by design.md's own tokens, so this walker no longer emits
+ * Bootstrap-specific attributes/classes. The account URL still comes from
+ * bday_paywall_login_url() (core/boundary/paywall-contract.php).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -16,7 +21,7 @@ class Bday_Nav_Walker extends Walker_Nav_Menu {
 
 	public function start_lvl( &$output, $depth = 0, $args = array() ) {
 		$indent  = str_repeat( "\t", $depth );
-		$output .= "\n$indent<ul role=\"menu\" class=\"dropdown-menu\">\n";
+		$output .= "\n$indent<ul role=\"menu\" class=\"bd-header__submenu\">\n";
 	}
 
 	public function start_el( &$output, $item, $depth = 0, $args = array(), $id = 0 ) {
@@ -28,7 +33,7 @@ class Bday_Nav_Walker extends Walker_Nav_Menu {
 
 		$has_children = is_object( $args ) && ! empty( $args->has_children );
 		if ( $has_children ) {
-			$class_names .= ' dropdown';
+			$class_names .= ' bd-header__nav-item--has-children';
 		}
 		if ( in_array( 'current-menu-item', $classes, true ) ) {
 			$class_names .= ' active';
@@ -40,15 +45,12 @@ class Bday_Nav_Walker extends Walker_Nav_Menu {
 			'title'  => $item->title,
 			'target' => $item->target,
 			'rel'    => $item->xfn,
+			'href'   => $item->url,
 		);
 
 		if ( $has_children && 0 === $depth ) {
-			$atts['href']          = $item->url;
-			$atts['data-bs-toggle'] = 'dropdown';
-			$atts['class']         = 'dropdown-toggle';
 			$atts['aria-haspopup'] = 'true';
-		} else {
-			$atts['href'] = $item->url;
+			$atts['aria-expanded'] = 'false';
 		}
 
 		$atts = apply_filters( 'nav_menu_link_attributes', $atts, $item, $args );
@@ -64,7 +66,11 @@ class Bday_Nav_Walker extends Walker_Nav_Menu {
 
 		$title = apply_filters( 'the_title', $item->title, $item->ID );
 
-		$output .= '<a' . $attributes . '>' . $title . ( $has_children && 0 === $depth ? ' <span class="caret"></span>' : '' ) . '</a>';
+		$caret = ( $has_children && 0 === $depth )
+			? ' <svg class="bd-header__caret" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+			: '';
+
+		$output .= '<a' . $attributes . '>' . $title . $caret . '</a>';
 	}
 
 	public function display_element( $element, &$children_elements, $max_depth, $depth, $args, &$output ) {

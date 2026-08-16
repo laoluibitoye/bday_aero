@@ -1,0 +1,129 @@
+// Design tokens — see /design.md for the full rationale behind every
+// value here. CSS custom properties, not Sass variables: dark/warm mode
+// has to resolve at runtime (prefers-color-scheme / [data-theme]), which a
+// compile-time Sass variable can't do.
+//
+// Reader-request follow-up: the toggle previously only had two states
+// (light/dark) and — the actual bug report — only ever affected the
+// header, because nothing else in the theme consumed these tokens yet
+// (design.md's migration table always said as much: "not yet applied over
+// legacy Lato"). Fixed on both counts: a third explicit "warm" state
+// (sepia, reduced blue light, same idea as Kindle's sepia mode) is added
+// here, and body.scss now reads --color-bg/--color-ink-1 for its base
+// surface/text instead of hardcoded legacy values, so a mode switch now
+// visibly repaints the whole page, not just the header chrome.
+//
+// State pattern:
+//   1. Bare :root            -> light theme, the default.
+//   2. prefers-color-scheme  -> OS-driven dark, guarded so an explicit
+//      light/warm choice always wins over it.
+//   3. [data-theme="warm"]   -> explicit warm/sepia toggle.
+//   4. [data-theme="dark"]   -> explicit dark toggle, wins over all above.
+//
+// Reader-reported: section backgrounds across the homepage/header/footer
+// had drifted into several different near-black and near-white shades
+// (--color-bg-raised's #FFFFFF vs --bd-paper's #FBFAF8 in light mode;
+// --color-bg's #121110 vs --color-bg-raised's #1C1A18 in dark mode; the
+// redesign's own --rd-invert-bg using yet another off-white, #F3F1EC, for
+// its dark-mode band). Every one of those now resolves to the same two
+// canonical values everywhere a solid black or white section background
+// is needed — --bd-ink (#0A0A0A) / --bd-paper (#FBFAF8) — so there's
+// exactly one black and one white in play, not four or five near-misses.
+// Warm mode's own values are unrelated to this cleanup and stay as they
+// were.
+
+:root {
+	// Brand tokens — fixed values from the supplied brand-accent palette,
+	// same meaning in both themes.
+	--bd-red: #E30613;
+	--bd-red-strong: #8A0410;
+	--bd-red-tint: #F3C9CB;
+	--bd-ink: #0A0A0A;
+	--bd-steel: #6E7175;
+	--bd-paper: #FBFAF8;
+
+	// Light theme (default)
+	--color-bg: var(--bd-paper);
+	--color-bg-raised: var(--bd-paper);
+	--color-ink-1: var(--bd-ink);
+	--color-ink-2: #2B2B2B;
+	--color-ink-3: var(--bd-steel);
+	--color-border: #E7E2DD;
+	--color-accent: var(--bd-red);
+	--color-accent-strong: var(--bd-red-strong);
+	--color-accent-tint: var(--bd-red-tint);
+	--color-focus-ring: rgba(227, 6, 19, 0.55);
+
+	--color-success: #1E7A3D;
+	--color-warning: #B5790A;
+	--color-danger: #C1121F;
+
+	--glass-bg: rgba(255, 255, 255, 0.72);
+	--glass-border: rgba(10, 10, 10, 0.08);
+	--glass-blur: blur(16px);
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) {
+		--color-bg: var(--bd-ink);
+		--color-bg-raised: var(--bd-ink);
+		--color-ink-1: #F3F1EE;
+		--color-ink-2: #D6D2CC;
+		--color-ink-3: #948F88;
+		--color-border: #2E2B28;
+		--color-accent: #FF3B47;
+		--color-accent-strong: #FF6169;
+		--color-accent-tint: rgba(227, 6, 19, 0.16);
+		--color-focus-ring: rgba(255, 59, 71, 0.55);
+
+		--color-success: #4ADE80;
+		--color-warning: #DEA948;
+		--color-danger: #F87171;
+
+		--glass-bg: rgba(18, 17, 16, 0.62);
+		--glass-border: rgba(255, 255, 255, 0.08);
+	}
+}
+
+// Explicit-only — no OS-level "prefers warm" media feature exists, so
+// this is reachable solely via the header's toggle (design.md §5), never
+// auto-selected the way dark can be.
+:root[data-theme="warm"] {
+	--color-bg: #F5ECDC;
+	--color-bg-raised: #FBF3E4;
+	--color-ink-1: #3A2E1F;
+	--color-ink-2: #5A4A35;
+	--color-ink-3: #8A7860;
+	--color-border: #E3D5B8;
+	--color-accent: #C7391F;
+	--color-accent-strong: #8A0410;
+	--color-accent-tint: #EFD9C7;
+	--color-focus-ring: rgba(199, 57, 31, 0.55);
+
+	--color-success: #3D7A3D;
+	--color-warning: #8A6410;
+	--color-danger: #A3341F;
+
+	--glass-bg: rgba(245, 236, 220, 0.72);
+	--glass-border: rgba(58, 46, 31, 0.1);
+}
+
+:root[data-theme="dark"] {
+	--color-bg: var(--bd-ink);
+	--color-bg-raised: var(--bd-ink);
+	--color-ink-1: #F3F1EE;
+	--color-ink-2: #D6D2CC;
+	--color-ink-3: #948F88;
+	--color-border: #2E2B28;
+	--color-accent: #FF3B47;
+	--color-accent-strong: #FF6169;
+	--color-accent-tint: rgba(227, 6, 19, 0.16);
+	--color-focus-ring: rgba(255, 59, 71, 0.55);
+
+	--color-success: #4ADE80;
+	--color-warning: #DEA948;
+	--color-danger: #F87171;
+
+	--glass-bg: rgba(18, 17, 16, 0.62);
+	--glass-border: rgba(255, 255, 255, 0.08);
+}

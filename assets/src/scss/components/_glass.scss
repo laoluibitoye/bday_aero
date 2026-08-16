@@ -1,0 +1,40 @@
+// Frosted-glass utility — see /design.md §4 for the token values and the
+// explicit "where it's used / never used" rule. One class, applied to a
+// fixed, documented set of surfaces (sticky header, nav drawer, search
+// overlay, modals, video-card controls) — not a free-floating style choice
+// per component.
+//
+// Solid-color fallback is required, not optional: backdrop-filter isn't
+// supported in every browser context (some in-app webviews), and
+// prefers-reduced-transparency should get the same solid treatment as an
+// unsupported browser — same accessibility posture as prefers-reduced-motion
+// elsewhere in this project.
+
+.bd-glass {
+	background: var(--color-bg-raised); // fallback painted first
+	border: 1px solid var(--color-border);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+	.bd-glass {
+		background: var(--glass-bg);
+		backdrop-filter: var(--glass-blur);
+		-webkit-backdrop-filter: var(--glass-blur);
+		border-color: var(--glass-border);
+	}
+}
+
+// Overrides the glass treatment back to the solid fallback when the reader
+// has explicitly asked for reduced transparency — deliberately only
+// matching the "reduce" case, not relying on "no-preference"/"none"
+// matching correctly in browsers that don't support this media feature at
+// all (most don't yet; unsupported must default to glass-on, not
+// glass-off).
+@media (prefers-reduced-transparency: reduce) {
+	.bd-glass {
+		background: var(--color-bg-raised) !important;
+		backdrop-filter: none !important;
+		-webkit-backdrop-filter: none !important;
+		border-color: var(--color-border) !important;
+	}
+}

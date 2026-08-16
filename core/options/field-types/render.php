@@ -63,6 +63,29 @@ function bday_render_field( array $field, array $values ): void {
 			printf( '<input type="text" name="%s" value="%s" class="regular-text" />', esc_attr( $name ), esc_attr( (string) $value ) );
 			break;
 
+		case 'image':
+			// Media-library picker (wp.media, enqueued for every page
+			// under this framework's menu — class-options-framework.php's
+			// enqueue_media()). $value is an attachment ID; the field
+			// stores that ID, not a URL, so the source stays valid even
+			// if the image is later replaced/regenerated at another size.
+			$attachment_id = (int) $value;
+			$preview_url   = $attachment_id ? wp_get_attachment_image_url( $attachment_id, 'medium' ) : '';
+			$field_id      = 'bday-image-field-' . sanitize_html_class( $name );
+			?>
+			<div class="bday-image-field" data-bday-image-field>
+				<div class="bday-image-field__preview" style="margin-bottom:8px;">
+					<?php if ( $preview_url ) : ?>
+						<img src="<?php echo esc_url( $preview_url ); ?>" alt="" style="max-width:220px;height:auto;display:block;border:1px solid #ddd;">
+					<?php endif; ?>
+				</div>
+				<input type="hidden" name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $field_id ); ?>" value="<?php echo esc_attr( (string) $attachment_id ); ?>" data-bday-image-input>
+				<button type="button" class="button" data-bday-image-select>Select image</button>
+				<button type="button" class="button" data-bday-image-remove style="<?php echo $attachment_id ? '' : 'display:none;'; ?>">Remove</button>
+			</div>
+			<?php
+			break;
+
 		case 'text':
 		default:
 			printf( '<input type="text" name="%s" value="%s" class="regular-text" />', esc_attr( $name ), esc_attr( (string) $value ) );
@@ -107,6 +130,9 @@ function bday_sanitize_fields( array $fields, $input ): array {
 				break;
 			case 'url':
 				$output[ $key ] = esc_url_raw( wp_unslash( (string) $raw ) );
+				break;
+			case 'image':
+				$output[ $key ] = absint( $raw );
 				break;
 			case 'code-editor':
 				$output[ $key ] = wp_unslash( (string) $raw );

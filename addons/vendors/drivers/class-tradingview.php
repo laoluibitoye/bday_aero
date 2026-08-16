@@ -17,12 +17,13 @@ class Bday_Vendor_Tradingview extends Bday_Vendor_Driver {
 
 	public function settings_fields(): array {
 		return array(
-			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable TradingView ticker', 'default' => true ),
+			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable TradingView ticker', 'default' => true, 'description' => 'The scrolling forex/stock-index strip shown between the utility bar and the masthead. Real-time market data from TradingView, not editorially curated.' ),
 			array(
 				'key'         => 'symbols',
 				'type'        => 'text',
 				'label'       => 'Symbols (comma-separated)',
 				'default'     => 'NSENG:NGXGROUP,FX_IDC:NGNUSD,FX_IDC:NGNGBP,FX_IDC:NGNEUR,ECONOMICS:NGNOE,FX_IDC:NGNJPY',
+				'description' => 'TradingView\'s own ticker symbol format (EXCHANGE:SYMBOL), e.g. "NSENG:NGXGROUP" for the Nigerian Exchange All-Share Index. Look up a symbol at tradingview.com/symbols before adding it — an invalid symbol shows as blank in the strip rather than an error.',
 			),
 		);
 	}

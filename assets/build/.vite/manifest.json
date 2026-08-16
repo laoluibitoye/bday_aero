@@ -1,12 +1,21 @@
 {
+  "assets/src/js/admin-app/main.tsx": {
+    "file": "js/admin-app.Ckw3Y9oQ.js",
+    "name": "admin-app",
+    "src": "assets/src/js/admin-app/main.tsx",
+    "isEntry": true,
+    "css": [
+      "css/admin-app.BAnWRoSp.css"
+    ]
+  },
   "assets/src/js/script.js": {
-    "file": "js/script.Pht0Vlp0.js",
+    "file": "js/script.CmrvFXum.js",
     "name": "script",
     "src": "assets/src/js/script.js",
     "isEntry": true
   },
   "assets/src/scss/main.scss": {
-    "file": "css/main.CR1Ql071.css",
+    "file": "css/main.D1k3XJKg.css",
     "src": "assets/src/scss/main.scss",
     "isEntry": true
   }

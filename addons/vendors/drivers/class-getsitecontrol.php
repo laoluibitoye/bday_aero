@@ -16,8 +16,8 @@ class Bday_Vendor_Getsitecontrol extends Bday_Vendor_Driver {
 
 	public function settings_fields(): array {
 		return array(
-			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable GetSiteControl', 'default' => true ),
-			array( 'key' => 'widget_id', 'type' => 'text', 'label' => 'Widget ID', 'default' => 'm42y997y' ),
+			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable GetSiteControl', 'default' => true, 'description' => 'On-site popup/survey/announcement widgets (exit-intent offers, quick polls) — managed entirely from GetSiteControl\'s own dashboard once this script is present.' ),
+			array( 'key' => 'widget_id', 'type' => 'text', 'label' => 'Widget ID', 'default' => 'm42y997y', 'description' => 'Found in the embed code GetSiteControl gives you when setting up the site.' ),
 		);
 	}
 

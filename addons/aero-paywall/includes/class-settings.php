@@ -28,6 +28,8 @@ final class Bday_Aero_Settings {
 	public const ACCOUNT_PAGE_URL           = 'aero_paywall_account_page_url';
 	public const LOGIN_PAGE_URL             = 'aero_paywall_login_page_url';
 	public const REGISTER_PAGE_URL          = 'aero_paywall_register_page_url';
+	public const SUBSCRIBE_PAGE_URL         = 'aero_paywall_subscribe_page_url';
+	public const RESET_PASSWORD_PAGE_URL    = 'aero_paywall_reset_password_page_url';
 	public const GOOGLE_CLIENT_ID           = 'aero_paywall_google_client_id';
 	public const APPLE_CLIENT_ID            = 'aero_paywall_apple_client_id';
 	public const RESTRICTION_RULES          = 'aero_paywall_restriction_rules';
@@ -79,7 +81,13 @@ final class Bday_Aero_Settings {
 	}
 
 	public static function accent_color(): string {
-		return (string) get_option( self::ACCENT_COLOR, '#1a73e8' );
+		// BusinessDay's real brand red (--bd-red in abstracts/_colors.scss)
+		// — the retired connector-plugin's own generic-SaaS-blue default
+		// made sense for an installable-on-any-site plugin; this add-on is
+		// specifically BusinessDay's, so the reader-facing fallback accent
+		// should match the site's actual brand from the start, not a color
+		// every admin would have to remember to change.
+		return (string) get_option( self::ACCENT_COLOR, '#E30613' );
 	}
 
 	public static function adfree_enabled(): bool {
@@ -101,6 +109,14 @@ final class Bday_Aero_Settings {
 
 	public static function register_page_url(): string {
 		return (string) get_option( self::REGISTER_PAGE_URL, '' );
+	}
+
+	public static function subscribe_page_url(): string {
+		return (string) get_option( self::SUBSCRIBE_PAGE_URL, '' );
+	}
+
+	public static function reset_password_page_url(): string {
+		return (string) get_option( self::RESET_PASSWORD_PAGE_URL, '' );
 	}
 
 	public static function google_client_id(): string {

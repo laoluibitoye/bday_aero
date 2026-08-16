@@ -2,6 +2,7 @@
 /**
  * Addon Name: Premium Leaderboard
  * Addon Slug: premium-leaderboard
+ * Description: A promotional leaderboard banner shown to non-subscribers.
  * Cache Namespace: premium_leaderboard
  * Settings Tab: Premium Leaderboard
  * Default: on
@@ -45,6 +46,8 @@ add_filter(
 			'tab_label' => 'Premium Leaderboard',
 			'option'    => 'bday_addon_premium_leaderboard',
 			'render'    => 'bday_premium_leaderboard_settings_tab',
+			'intro'     => 'A rotating promotional/sponsor banner on the homepage — despite the name, not limited to subscription offers specifically (it\'s a generic image+link slot; a subscribe-promo image is one common use, a paid sponsor placement is another). Shown to every visitor regardless of subscription status, since it isn\'t always subscribe-related content.',
+			'about'     => '<p>A simple auto-rotating image slideshow, each slide an image plus the URL it links to. Add as many slides as needed; the slider speed controls how long each one stays on screen before advancing.</p>',
 		);
 		return $schema;
 	}
@@ -56,16 +59,16 @@ function bday_premium_leaderboard_settings_tab(): void {
 	$count    = max( 1, count( $slides ) ?: 4 );
 	?>
 	<table class="form-table" role="presentation"><tbody>
-		<tr><th scope="row">Number of items</th><td><input type="number" name="bday_addon_premium_leaderboard[count]" value="<?php echo esc_attr( (string) $count ); ?>" min="1" max="10" /></td></tr>
-		<tr><th scope="row">Slider speed (ms)</th><td><input type="number" name="bday_addon_premium_leaderboard[slider_speed]" value="<?php echo esc_attr( (string) ( $settings['slider_speed'] ?? 20000 ) ); ?>" min="1000" /></td></tr>
+		<tr><th scope="row">Number of items</th><td><input type="number" name="bday_addon_premium_leaderboard[count]" value="<?php echo esc_attr( (string) $count ); ?>" min="1" max="10" /><p class="description">How many slides to configure below.</p></td></tr>
+		<tr><th scope="row">Slider speed (ms)</th><td><input type="number" name="bday_addon_premium_leaderboard[slider_speed]" value="<?php echo esc_attr( (string) ( $settings['slider_speed'] ?? 20000 ) ); ?>" min="1000" /><p class="description">Milliseconds each slide stays visible before advancing to the next (20000 = 20 seconds).</p></td></tr>
 	</tbody></table>
 	<?php for ( $i = 0; $i < $count; $i++ ) :
 		$slide = $slides[ $i ] ?? array();
 		?>
 		<h4>Slide <?php echo (int) ( $i + 1 ); ?></h4>
 		<table class="form-table" role="presentation"><tbody>
-			<tr><th scope="row">Image URL</th><td><input type="text" name="bday_addon_premium_leaderboard[slides][<?php echo $i; ?>][image]" value="<?php echo esc_attr( $slide['image'] ?? '' ); ?>" class="regular-text" /></td></tr>
-			<tr><th scope="row">Landing URL</th><td><input type="text" name="bday_addon_premium_leaderboard[slides][<?php echo $i; ?>][url]" value="<?php echo esc_attr( $slide['url'] ?? '' ); ?>" class="regular-text" /></td></tr>
+			<tr><th scope="row">Image URL</th><td><input type="text" name="bday_addon_premium_leaderboard[slides][<?php echo $i; ?>][image]" value="<?php echo esc_attr( $slide['image'] ?? '' ); ?>" class="regular-text" /><p class="description">The banner creative for this slide. A wide, short "leaderboard"-shaped image reads best in this slot.</p></td></tr>
+			<tr><th scope="row">Landing URL</th><td><input type="text" name="bday_addon_premium_leaderboard[slides][<?php echo $i; ?>][url]" value="<?php echo esc_attr( $slide['url'] ?? '' ); ?>" class="regular-text" /><p class="description">Where clicking this slide sends a reader — usually the subscribe page.</p></td></tr>
 		</tbody></table>
 	<?php endfor;
 }

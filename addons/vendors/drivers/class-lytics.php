@@ -16,8 +16,8 @@ class Bday_Vendor_Lytics extends Bday_Vendor_Driver {
 
 	public function settings_fields(): array {
 		return array(
-			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable Lytics', 'default' => true ),
-			array( 'key' => 'tag_id', 'type' => 'text', 'label' => 'Tag ID', 'default' => '83288ca484b4febdd7907bd820c502cd' ),
+			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable Lytics', 'default' => true, 'description' => 'Customer data platform used for audience segmentation/personalization behind the scenes — a reader never sees anything from this directly.' ),
+			array( 'key' => 'tag_id', 'type' => 'text', 'label' => 'Tag ID', 'default' => '83288ca484b4febdd7907bd820c502cd', 'description' => 'The Lytics JS tag ID from your Lytics account settings.' ),
 		);
 	}
 

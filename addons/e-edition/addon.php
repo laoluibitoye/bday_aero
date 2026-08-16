@@ -2,6 +2,7 @@
 /**
  * Addon Name: E-Edition
  * Addon Slug: e-edition
+ * Description: Legacy single e-edition PDF viewer (superseded by E-Editions for new content).
  * Cache Namespace: e_edition
  * Settings Tab: E-Edition
  * Default: on

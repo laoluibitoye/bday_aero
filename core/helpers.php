@@ -22,6 +22,110 @@ function bday_get_thumbnail( int $post_id, string $size, string $classes = '' ):
 	return '<img src="' . esc_url( $fallback ) . '" alt="BusinessDay" class="' . esc_attr( $classes ) . '">';
 }
 
+/**
+ * Card-media HTML: the thumbnail, or a video facade when the post has a
+ * _featured_video_id and the featured-video-cards add-on is on. Routed
+ * through a filter (rather than checking the meta here) so this stays
+ * addon-agnostic — bday_get_thumbnail() alone is unaware video cards exist
+ * at all, same separation the add-on loader already enforces everywhere
+ * else (a disabled add-on's file is never required, so the filter simply
+ * has no listener and this silently degrades to a plain thumbnail).
+ */
+function bday_get_card_media( int $post_id, string $size, string $classes = '' ): string {
+	$html = bday_get_thumbnail( $post_id, $size, $classes );
+	/**
+	 * Small play badge over the thumbnail for any video-format post,
+	 * everywhere a card/topic-list media slot renders — one place rather
+	 * than re-checking has_post_format() at every homepage call site.
+	 * Purely visual (the video-facade addon's own click-to-play swap is a
+	 * separate, opt-in mechanism keyed off _featured_video_id, not this).
+	 */
+	if ( has_post_format( 'video', $post_id ) ) {
+		$html .= '<span class="bday-media-badge bday-media-badge--video" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>';
+	}
+	return apply_filters( 'bday_card_media_html', $html, $post_id, $size, $classes );
+}
+
+/**
+ * The one `.bday-card` renderer, consolidating what used to be five
+ * near-identical copies of this markup (rail.php, listing.php,
+ * bottom-widgets.php's magazine row, single-default.php's "You Might Also
+ * Like", and weekend.php's printf-built version) — Phase 2 of the Bday_Aero
+ * roadmap. Returns a string (not an echo) so weekend.php's printf-style
+ * homepage-variant building keeps working unchanged.
+ *
+ * $args:
+ *   size          string  thumbnail size, default 'medium_rectangle'
+ *   show_byline   bool    author + time-ago row, default false
+ *   show_excerpt  bool    trimmed excerpt paragraph, default false
+ *   excerpt_words int     default 20
+ *   card_class    string  extra class(es) appended to the <article>, default ''
+ */
+function bday_card_html( WP_Post $post, array $args = array() ): string {
+	$args = wp_parse_args(
+		$args,
+		array(
+			'size'          => 'medium_rectangle',
+			'show_byline'   => false,
+			'show_excerpt'  => false,
+			'excerpt_words' => 20,
+			'card_class'    => '',
+		)
+	);
+
+	$permalink = get_permalink( $post );
+	$card_class = trim( 'bday-card ' . $args['card_class'] );
+
+	ob_start();
+	?>
+	<article class="<?php echo esc_attr( $card_class ); ?>">
+		<a href="<?php echo esc_url( $permalink ); ?>" class="bday-card__media"><?php echo bday_get_card_media( $post->ID, $args['size'] ); ?></a>
+		<h3 class="bday-card__title"><a href="<?php echo esc_url( $permalink ); ?>"><?php echo esc_html( get_the_title( $post ) ); ?></a></h3>
+		<?php if ( $args['show_byline'] ) : ?>
+			<div class="bday-byline">
+				<span><?php echo esc_html( get_the_author_meta( 'display_name', $post->post_author ) ); ?></span>
+				<span><?php echo esc_html( bday_time_ago( $post->post_date ) ); ?></span>
+			</div>
+		<?php endif; ?>
+		<?php if ( $args['show_excerpt'] ) : ?>
+			<p class="bday-card__excerpt"><?php echo esc_html( wp_trim_words( get_the_excerpt( $post ), $args['excerpt_words'] ) ); ?></p>
+		<?php endif; ?>
+	</article>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * Points at the e-paper category archive rather than a guessed page slug
+ * Points at the real Today's Paper page (templates/template-todays-
+ * paper.php, addons/todays-paper/) when a Page using that template
+ * exists — the actual editor-curated destination (marked stories +
+ * e-paper cover/download), not just a plain category archive. Falls back
+ * to the e-paper category link when no such Page has been created yet,
+ * same "never a dead link" posture this helper always had. Extracted
+ * from header.php (utility-bar "Today's Paper" link) so every other
+ * "Today's Paper" link in the theme (bottom-widgets.php's homepage
+ * teaser, the new masthead button, the footer) shares one resolution
+ * path rather than each hardcoding its own.
+ */
+function bday_epaper_url(): string {
+	$pages = bday_get_posts(
+		array(
+			'post_type'       => 'page',
+			'numberposts'     => 1,
+			'meta_key'        => '_wp_page_template',
+			'meta_value'      => 'templates/template-todays-paper.php',
+			'cache_namespace' => 'core',
+		)
+	);
+	if ( ! empty( $pages ) ) {
+		return (string) get_permalink( $pages[0] );
+	}
+
+	$category = get_category_by_slug( 'e-paper' );
+	return $category ? (string) get_category_link( $category ) : home_url( '/' );
+}
+
 function bday_category_url( string $slug ): string {
 	$category = get_category_by_slug( $slug );
 	return $category ? (string) get_category_link( $category->term_id ) : '#';
@@ -90,6 +194,55 @@ function bday_social_share_html( int $post_id ): string {
 	</div>
 	<?php
 	return (string) ob_get_clean();
+}
+
+/**
+ * Estimated reading time in whole minutes (225 wpm, the commonly-cited
+ * average for adult prose reading — same figure Medium/WordPress.com use).
+ * Phase 3 of the Bday_Aero roadmap: "reading is a feature surface."
+ */
+function bday_estimate_read_time( int $post_id ): int {
+	$word_count = str_word_count( wp_strip_all_tags( get_post_field( 'post_content', $post_id ) ) );
+	return max( 1, (int) ceil( $word_count / 225 ) );
+}
+
+/**
+ * Slugifies every <h2>/<h3> in already-rendered article HTML with a
+ * stable, collision-safe id (so a same-titled heading twice in one
+ * article doesn't produce two identical anchors), and returns both the
+ * modified HTML and a flat table-of-contents array for the caller to
+ * render as nav links. Regex over trusted, editor-authored post content
+ * (not user input) — consistent with how the rest of this theme already
+ * treats post content, e.g. bday_rss_featured_image() above.
+ *
+ * @return array{content: string, toc: array<int, array{id: string, text: string, level: int}>}
+ */
+function bday_add_heading_anchors( string $content ): array {
+	$toc  = array();
+	$seen = array();
+
+	$content = preg_replace_callback(
+		'/<h([23])([^>]*)>(.*?)<\/h\1>/is',
+		static function ( array $m ) use ( &$toc, &$seen ): string {
+			$level = (int) $m[1];
+			$text  = trim( wp_strip_all_tags( $m[3] ) );
+			if ( '' === $text ) {
+				return $m[0];
+			}
+			$slug = sanitize_title( $text );
+			if ( isset( $seen[ $slug ] ) ) {
+				++$seen[ $slug ];
+				$slug .= '-' . $seen[ $slug ];
+			} else {
+				$seen[ $slug ] = 1;
+			}
+			$toc[] = array( 'id' => $slug, 'text' => $text, 'level' => $level );
+			return '<h' . $level . $m[2] . ' id="' . esc_attr( $slug ) . '">' . $m[3] . '</h' . $level . '>';
+		},
+		$content
+	);
+
+	return array( 'content' => (string) $content, 'toc' => $toc );
 }
 
 add_filter( 'excerpt_more', '__return_empty_string' );

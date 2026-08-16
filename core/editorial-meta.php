@@ -22,8 +22,12 @@ add_action(
 function bday_video_metabox( WP_Post $post ): void {
 	wp_nonce_field( 'bday_editorial_meta', 'bday_editorial_meta_nonce' );
 	printf(
-		'<label for="bday-youtube-id">YouTube video ID:</label> <input type="text" id="bday-youtube-id" name="youtube_id" value="%s" size="25" placeholder="YouTube video ID" />',
+		'<p><label for="bday-youtube-id">YouTube video ID (single-post player):</label> <input type="text" id="bday-youtube-id" name="youtube_id" value="%s" size="25" placeholder="YouTube video ID" /></p>',
 		esc_attr( get_post_meta( $post->ID, '_youtube_id', true ) )
+	);
+	printf(
+		'<p><label for="bday-featured-video-id">Featured video ID (card thumbnail, requires the Featured Video Cards add-on):</label> <input type="text" id="bday-featured-video-id" name="featured_video_id" value="%s" size="25" placeholder="YouTube video ID" /><br><span class="description">Independent of the field above — set this to show a playable video facade wherever this post appears as a card (homepage rails, related, archive grids), whether or not the post itself is a Video-format post.</span></p>',
+		esc_attr( get_post_meta( $post->ID, '_featured_video_id', true ) )
 	);
 }
 
@@ -60,9 +64,10 @@ add_action(
 			return;
 		}
 		$map = array(
-			'youtube_id'            => '_youtube_id',
-			'pro_url'               => '_pro_url',
-			'bday_pdf_link'         => '_bday_pdf_link',
+			'youtube_id'         => '_youtube_id',
+			'featured_video_id'  => '_featured_video_id',
+			'pro_url'            => '_pro_url',
+			'bday_pdf_link'      => '_bday_pdf_link',
 			'bday_pdf_preview_link' => '_bday_pdf_preview_link',
 		);
 		foreach ( $map as $field => $meta_key ) {

@@ -25,6 +25,17 @@ if ( is_category() || is_tag() || is_tax() ) {
 	$query_args['author'] = get_queried_object_id();
 } elseif ( is_search() ) {
 	$query_args['s'] = get_search_query();
+} elseif ( is_post_type_archive() ) {
+	/**
+	 * Phase 9: this partial is also WordPress's fallback for any custom
+	 * post type archive with no dedicated archive-{post_type}.php of its
+	 * own (e.g. the new addons/podcasts/ CPT) — found while adding that
+	 * CPT that the post_type was hardcoded to 'post' above, so a CPT
+	 * archive page would have silently listed regular blog posts instead
+	 * of its own content. Category/tag/author/search behavior is
+	 * untouched — this only takes effect for a genuine post-type archive.
+	 */
+	$query_args['post_type'] = get_query_var( 'post_type' );
 }
 
 $results = Bday_Query_Cache::query( 'listing', md5( wp_json_encode( $query_args ) ), $query_args, 300 );
@@ -33,15 +44,7 @@ $results = Bday_Query_Cache::query( 'listing', md5( wp_json_encode( $query_args 
 	<?php if ( $results->have_posts() ) : ?>
 		<div class="bday-card-grid">
 			<?php while ( $results->have_posts() ) : $results->the_post(); ?>
-				<article class="bday-card">
-					<a href="<?php the_permalink(); ?>" class="bday-card__media"><?php echo bday_get_thumbnail( get_the_ID(), 'medium_rectangle' ); ?></a>
-					<h3 class="bday-card__title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
-					<div class="bday-byline">
-						<span><?php the_author(); ?></span>
-						<span><?php echo esc_html( bday_time_ago( get_the_date( 'c' ) ) ); ?></span>
-					</div>
-					<p class="bday-card__excerpt"><?php echo esc_html( wp_trim_words( get_the_excerpt(), 20 ) ); ?></p>
-				</article>
+				<?php echo bday_card_html( get_post(), array( 'show_byline' => true, 'show_excerpt' => true ) ); ?>
 				<?php if ( 0 === ( $results->current_post + 1 ) % 6 ) : ?>
 					<?php bday_ad_zone( 'below_article_recirculation' ); ?>
 				<?php endif; ?>

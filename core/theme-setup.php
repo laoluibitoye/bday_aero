@@ -39,18 +39,31 @@ add_action(
 			'after_sidebar' => '',
 		);
 
+		/**
+		 * Every sidebar below previously used `<span>` for before_widget/
+		 * before_sidebar — an inline element wrapping block content (widget
+		 * lists, search forms, images), invalid nesting that also meant
+		 * `.bday-sidebar`'s CSS had nothing block-level to actually target,
+		 * which is why the default-widgets sidebar rendered as a completely
+		 * unstyled markup dump. `<div>` fixes both the validity bug and
+		 * gives `_premium.scss` real selectors to style.
+		 */
+		$widget_wrapper_args = array(
+			'before_widget'  => '<div class="bday-widget">',
+			'after_widget'   => '</div>',
+			'before_title'   => '<h3 class="widget-title">',
+			'after_title'    => '</h3>',
+			'before_sidebar' => '<div class="bday-sidebar-widgets">',
+			'after_sidebar'  => '</div>',
+		);
+
 		register_sidebar(
 			array_merge(
+				$widget_wrapper_args,
 				array(
 					'name'        => 'Page Sidebar',
 					'id'          => 'page_sidebar',
 					'description' => 'Widgets shown on standard pages.',
-					'before_widget' => '<span>',
-					'after_widget'  => '</span>',
-					'before_title'  => '<h3 class="widget-title">',
-					'after_title'   => '</h3>',
-					'before_sidebar' => '<span>',
-					'after_sidebar' => '</span>',
 				)
 			)
 		);
@@ -68,16 +81,13 @@ add_action(
 		}
 
 		register_sidebar(
-			array(
-				'name'          => 'Homepage Sidebar',
-				'id'            => 'homepage_sidebar',
-				'description'   => 'Widgets shown in the homepage right rail.',
-				'before_widget' => '<span>',
-				'after_widget'  => '</span>',
-				'before_title'  => '<h3 class="widget-title">',
-				'after_title'   => '</h3>',
-				'before_sidebar' => '<span>',
-				'after_sidebar' => '</span>',
+			array_merge(
+				$widget_wrapper_args,
+				array(
+					'name'        => 'Homepage Sidebar',
+					'id'          => 'homepage_sidebar',
+					'description' => 'Widgets shown in the homepage right rail.',
+				)
 			)
 		);
 

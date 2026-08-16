@@ -2,6 +2,7 @@
 /**
  * Addon Name: Cartoons
  * Addon Slug: cartoons
+ * Description: Daily editorial cartoon post type, shown on the homepage and its own archive.
  * Cache Namespace: cartoons
  * Settings Tab: Cartoons
  * Default: on

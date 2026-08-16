@@ -2,6 +2,7 @@
 /**
  * Addon Name: Sections
  * Addon Slug: sections
+ * Description: Custom section labels and links for homepage or nav headings that aren't a real WordPress category.
  * Cache Namespace: sections
  * Settings Tab: Sections
  * Default: on
@@ -59,6 +60,8 @@ add_filter(
 			'tab_label' => 'Sections',
 			'option'    => 'bday_sections',
 			'render'    => 'bday_render_sections_tab',
+			'intro'     => 'Sections are the labeled links/headings used across the site — e.g. the homepage rail\'s "In Other News" or "Columnists" headings — each one a short internal key mapped to a real WordPress category, so the wording an editor sees and the URL a reader lands on can both be changed here without editing a template file.',
+			'about'     => '<p>Reorder by dragging a row — order here is the order these headings appear wherever the theme reads them by key. A section with no category assigned still saves, but its heading link goes nowhere until one is chosen.</p>',
 		);
 		return $schema;
 	}

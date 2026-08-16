@@ -15,17 +15,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 		.bday-minimal-footer {
 			margin-top: 48px;
 			padding: 24px 16px 32px;
-			border-top: 1px solid #e5e7eb;
+			border-top: 1px solid var(--color-border);
 			text-align: center;
 			font: 13px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-			color: #6b7280;
+			color: var(--color-ink-3);
 		}
 		.bday-minimal-footer a {
-			color: #6b7280;
+			color: var(--color-ink-3);
 			text-decoration: underline;
 		}
 		.bday-minimal-footer a:hover {
-			color: #111827;
+			color: var(--color-ink-1);
 		}
 		.bday-minimal-footer nav {
 			margin-bottom: 8px;

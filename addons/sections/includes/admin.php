@@ -16,8 +16,6 @@ function bday_render_sections_tab( array $values ): void {
 	$sections  = bday_sections();
 	$categories = get_categories( array( 'hide_empty' => false, 'number' => 300 ) );
 	?>
-	<p>Sections are the labeled links/headings used across the site (e.g. the homepage rail's "In Other News" / "Columnists" / "Opinion" headings). Reorder by dragging a row; each section's link is resolved from the category you assign it.</p>
-
 	<table class="widefat bday-sections-table" id="bday-sections-table">
 		<thead>
 			<tr>

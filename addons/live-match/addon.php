@@ -2,6 +2,7 @@
 /**
  * Addon Name: Live Match
  * Addon Slug: live-match
+ * Description: Live sports score and commentary widget for an in-progress match.
  * Cache Namespace: live_match
  * Settings Tab: Live Match
  * Default: off

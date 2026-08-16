@@ -32,6 +32,20 @@ final class Bday_Options_Framework {
 	public static function init(): void {
 		add_action( 'admin_menu', array( self::class, 'register_menu' ) );
 		add_action( 'admin_init', array( self::class, 'register_settings' ) );
+		add_action( 'admin_enqueue_scripts', array( self::class, 'enqueue_media' ) );
+	}
+
+	/**
+	 * The media library picker ('image' field type, field-types/render.php)
+	 * needs wp.media, which core only enqueues automatically on screens
+	 * that ask for it — every settings page under this framework's own
+	 * menu slug gets it unconditionally rather than each schema entry
+	 * needing to remember to request it itself.
+	 */
+	public static function enqueue_media(): void {
+		if ( isset( $_GET['page'] ) && 0 === strpos( (string) $_GET['page'], self::PAGE_SLUG ) ) {
+			wp_enqueue_media();
+		}
 	}
 
 	/** @return array<string, array<string, mixed>> */
@@ -110,7 +124,22 @@ final class Bday_Options_Framework {
 		echo '<div class="wrap"><h1>BusinessDay Theme</h1><p>No settings sections registered.</p></div>';
 	}
 
-	/** Renders one schema entry's own submenu page — the section switcher is the wp-admin sidebar itself, not in-page tabs. */
+	/** @return array<int, array{label: string, url: string, active: bool}> */
+	private static function build_tabs( string $current_slug ): array {
+		$schema = self::schema();
+		$tabs   = array();
+		foreach ( array_keys( $schema ) as $index => $slug ) {
+			$page_slug = 0 === $index ? self::PAGE_SLUG : self::PAGE_SLUG . '-' . $slug;
+			$tabs[]    = array(
+				'label'  => $schema[ $slug ]['tab_label'] ?? $slug,
+				'url'    => admin_url( 'admin.php?page=' . $page_slug ),
+				'active' => $slug === $current_slug,
+			);
+		}
+		return $tabs;
+	}
+
+	/** Renders one schema entry's own submenu page. */
 	public static function render_tab( string $slug ): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
@@ -121,10 +150,9 @@ final class Bday_Options_Framework {
 			return;
 		}
 		$tab = $schema[ $slug ];
-		?>
-		<div class="wrap bday-theme-settings">
-			<h1><?php echo esc_html( 'BusinessDay Theme — ' . ( $tab['tab_label'] ?? $slug ) ); ?></h1>
 
+		Bday_Admin_UI::open( 'BusinessDay Theme', $tab['tab_label'] ?? $slug, self::build_tabs( $slug ), $tab['intro'] ?? '' );
+		?>
 			<form action="options.php" method="post">
 				<?php settings_fields( $tab['option'] ); ?>
 				<?php
@@ -146,7 +174,65 @@ final class Bday_Options_Framework {
 				submit_button();
 				?>
 			</form>
-		</div>
+		<?php
+		if ( ! empty( $tab['about'] ) ) {
+			Bday_Admin_UI::start_aside();
+			Bday_Admin_UI::sidebar_card( 'About this feature', $tab['about'], true );
+			if ( ! empty( $tab['use_cases'] ) ) {
+				$items = '<ul>';
+				foreach ( (array) $tab['use_cases'] as $use_case ) {
+					$items .= '<li>' . wp_kses_post( $use_case ) . '</li>';
+				}
+				$items .= '</ul>';
+				Bday_Admin_UI::sidebar_card( 'Common use cases', $items );
+			}
+			Bday_Admin_UI::close( true );
+		} else {
+			Bday_Admin_UI::close( false );
+		}
+		self::render_image_field_script();
+	}
+
+	/**
+	 * One shared wp.media wiring for every 'image' field on the page
+	 * (field-types/render.php's markup) instead of a per-field inline
+	 * script — a tab can declare any number of image fields (sidebar-
+	 * promo's two slots, for instance) without each needing its own copy.
+	 */
+	private static function render_image_field_script(): void {
+		?>
+		<script>
+		(function () {
+			document.querySelectorAll('[data-bday-image-field]').forEach(function (field) {
+				var input = field.querySelector('[data-bday-image-input]');
+				var selectBtn = field.querySelector('[data-bday-image-select]');
+				var removeBtn = field.querySelector('[data-bday-image-remove]');
+				var preview = field.querySelector('.bday-image-field__preview');
+				var frame;
+
+				selectBtn.addEventListener('click', function (e) {
+					e.preventDefault();
+					if (frame) { frame.open(); return; }
+					frame = wp.media({ title: 'Select image', multiple: false, library: { type: 'image' } });
+					frame.on('select', function () {
+						var attachment = frame.state().get('selection').first().toJSON();
+						input.value = attachment.id;
+						var src = (attachment.sizes && attachment.sizes.medium) ? attachment.sizes.medium.url : attachment.url;
+						preview.innerHTML = '<img src="' + src + '" alt="" style="max-width:220px;height:auto;display:block;border:1px solid #ddd;">';
+						removeBtn.style.display = '';
+					});
+					frame.open();
+				});
+
+				removeBtn.addEventListener('click', function (e) {
+					e.preventDefault();
+					input.value = '';
+					preview.innerHTML = '';
+					removeBtn.style.display = 'none';
+				});
+			});
+		})();
+		</script>
 		<?php
 	}
 }

@@ -16,9 +16,9 @@ class Bday_Vendor_Playstream extends Bday_Vendor_Driver {
 
 	public function settings_fields(): array {
 		return array(
-			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable Playstream', 'default' => true ),
-			array( 'key' => 'tag_id', 'type' => 'text', 'label' => 'Tag ID', 'default' => '6544b23556f61ee5810f11c9' ),
-			array( 'key' => 'publisher_id', 'type' => 'text', 'label' => 'Publisher ID', 'default' => '6544ae1ce11e88434700bf13' ),
+			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable Playstream', 'default' => true, 'description' => 'A video-ad network — auto-inserts video ad units into the page without further template changes.' ),
+			array( 'key' => 'tag_id', 'type' => 'text', 'label' => 'Tag ID', 'default' => '6544b23556f61ee5810f11c9', 'description' => 'Provided by Playstream when the ad unit was set up.' ),
+			array( 'key' => 'publisher_id', 'type' => 'text', 'label' => 'Publisher ID', 'default' => '6544ae1ce11e88434700bf13', 'description' => 'Your Playstream publisher account ID.' ),
 		);
 	}
 

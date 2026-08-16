@@ -1,0 +1,405 @@
+/**
+ * Shared wp-admin design system for the "BusinessDay Theme" and
+ * "AeroPaywall" settings screens — scoped to body.bday-admin-ui only
+ * (see Bday_Admin_UI::body_class()) so nothing here leaks onto Posts,
+ * Media, or any other core wp-admin screen. Brand tokens match the
+ * theme's own front-end palette exactly (assets/src/scss/abstracts/
+ * _colors.scss's --bd-* tokens) — one brand, not a second palette
+ * invented for the admin side.
+ */
+
+body.bday-admin-ui {
+	--bd-red: #E30613;
+	--bd-red-strong: #8A0410;
+	--bd-red-tint: #F3C9CB;
+	--bd-ink: #0A0A0A;
+	--bd-steel: #6E7175;
+	--bd-paper: #FBFAF8;
+	--bd-radius: 10px;
+	--bd-font-display: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	--bd-font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+	background: var(--bd-paper);
+}
+
+/* WordPress's own chrome (menu, admin bar, notices) stays untouched —
+   only the page content area (#wpbody-content) and its own <h1>/.wrap
+   get the redesign, so the rest of wp-admin still feels like wp-admin. */
+body.bday-admin-ui #wpbody-content {
+	padding-bottom: 40px;
+}
+body.bday-admin-ui #wpbody-content > .notice,
+body.bday-admin-ui #wpbody-content > div.updated,
+body.bday-admin-ui #wpbody-content > div.error {
+	margin: 16px 20px 0;
+}
+body.bday-admin-ui .wrap {
+	margin: 0;
+}
+/* The page's own <h1> is superseded by .bday-admin__topbar's title —
+   hidden rather than removed from markup, so nothing server-side has to
+   change about what each render method already prints. */
+body.bday-admin-ui .wrap > h1:first-child {
+	position: absolute;
+	width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0);
+}
+
+.bday-admin__topbar {
+	background: linear-gradient(120deg, var(--bd-red) 0%, var(--bd-red-strong) 100%);
+	margin: 0 0 0 -20px;
+	padding: 22px 32px;
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+.bday-admin__mark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	border-radius: 10px;
+	background: rgba(255,255,255,0.16);
+	border: 1px solid rgba(255,255,255,0.3);
+	color: #fff;
+	font-family: var(--bd-font-display);
+	font-weight: 700;
+	font-size: 18px;
+	flex-shrink: 0;
+}
+.bday-admin__title-group {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+.bday-admin__product {
+	font-family: var(--bd-font-mono);
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: rgba(255,255,255,0.75);
+}
+.bday-admin__page-title {
+	font-family: var(--bd-font-display);
+	font-size: 21px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	color: #fff;
+	margin: 0;
+}
+
+.bday-admin__tabs {
+	margin: 0 0 0 -20px;
+	background: #fff;
+	border-bottom: 1px solid rgba(10,10,10,0.08);
+	padding: 0 32px;
+	display: flex;
+	gap: 4px;
+	overflow-x: auto;
+}
+.bday-admin__tabs a {
+	display: inline-block;
+	padding: 14px 14px;
+	font-family: var(--bd-font-display);
+	font-size: 13.5px;
+	font-weight: 500;
+	color: var(--bd-steel);
+	text-decoration: none;
+	border-bottom: 2.5px solid transparent;
+	white-space: nowrap;
+	transition: color 0.15s ease, border-color 0.15s ease;
+}
+.bday-admin__tabs a:hover {
+	color: var(--bd-ink);
+}
+.bday-admin__tabs a.is-active {
+	color: var(--bd-ink);
+	font-weight: 600;
+	border-bottom-color: var(--bd-red);
+}
+
+.bday-admin__body {
+	margin: 28px 32px 0 -20px;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 300px;
+	gap: 28px;
+	align-items: start;
+}
+@media (max-width: 1100px) {
+	.bday-admin__body { grid-template-columns: 1fr; }
+}
+
+.bday-admin__main {
+	background: #fff;
+	border: 1px solid rgba(10,10,10,0.08);
+	border-radius: var(--bd-radius);
+	padding: 32px;
+	box-shadow: 0 1px 2px rgba(10,10,10,0.04);
+}
+
+.bday-admin__intro {
+	font-family: var(--bd-font-display);
+	font-size: 14px;
+	line-height: 1.6;
+	color: var(--bd-steel);
+	background: var(--bd-paper);
+	border: 1px solid rgba(10,10,10,0.06);
+	border-left: 3px solid var(--bd-red);
+	border-radius: 6px;
+	padding: 14px 18px;
+	margin: 0 0 28px;
+}
+.bday-admin__intro strong { color: var(--bd-ink); }
+
+.bday-admin__section-title {
+	font-family: var(--bd-font-mono);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--bd-steel);
+	margin: 0 0 20px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid rgba(10,10,10,0.08);
+}
+
+/* --- Form-table reskin: every existing settings page already uses
+   WordPress's own .form-table row shape (<tr><th>label</th><td>field
+   +description</td></tr>) — restyled here rather than rewritten, so
+   every addon's already-working render callback needed zero markup
+   changes to inherit the new look. --- */
+.bday-admin__main .form-table {
+	margin-top: 0;
+}
+.bday-admin__main .form-table th {
+	font-family: var(--bd-font-mono);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--bd-steel);
+	padding: 20px 16px 20px 0;
+	width: 240px;
+	vertical-align: top;
+}
+.bday-admin__main .form-table td {
+	padding: 14px 0;
+	vertical-align: top;
+}
+.bday-admin__main .form-table tr {
+	border-bottom: 1px solid rgba(10,10,10,0.06);
+}
+.bday-admin__main .form-table tr:last-child {
+	border-bottom: none;
+}
+.bday-admin__main h2 {
+	font-family: var(--bd-font-display);
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--bd-ink);
+	margin: 32px 0 8px;
+}
+.bday-admin__main h4 {
+	font-family: var(--bd-font-display);
+	font-size: 13.5px;
+	font-weight: 600;
+	color: var(--bd-ink);
+	margin: 24px 0 4px;
+}
+
+.bday-admin__main input[type="text"],
+.bday-admin__main input[type="url"],
+.bday-admin__main input[type="number"],
+.bday-admin__main input[type="password"],
+.bday-admin__main input[type="email"],
+.bday-admin__main select,
+.bday-admin__main textarea {
+	font-family: var(--bd-font-display);
+	border: 1.5px solid rgba(10,10,10,0.12);
+	border-radius: 7px;
+	padding: 9px 12px;
+	box-shadow: none;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.bday-admin__main input[type="text"]:focus,
+.bday-admin__main input[type="url"]:focus,
+.bday-admin__main input[type="number"]:focus,
+.bday-admin__main input[type="password"]:focus,
+.bday-admin__main input[type="email"]:focus,
+.bday-admin__main select:focus,
+.bday-admin__main textarea:focus {
+	border-color: var(--bd-red);
+	box-shadow: 0 0 0 3px var(--bd-red-tint);
+	outline: none;
+}
+.bday-admin__main textarea.code {
+	font-family: var(--bd-font-mono);
+	font-size: 12.5px;
+}
+.bday-admin__main input[type="checkbox"],
+.bday-admin__main input[type="radio"] {
+	accent-color: var(--bd-red);
+}
+.bday-admin__main .description {
+	font-family: var(--bd-font-display);
+	font-size: 12.5px;
+	color: var(--bd-steel);
+	margin-top: 6px;
+	line-height: 1.5;
+}
+.bday-admin__main label {
+	font-family: var(--bd-font-display);
+	font-size: 13.5px;
+	color: var(--bd-ink);
+}
+
+.bday-admin__main .button,
+.bday-admin__main .button-primary,
+.bday-admin__main p.submit .button-primary {
+	font-family: var(--bd-font-display);
+	font-weight: 600;
+	font-size: 13.5px;
+	border-radius: 999px;
+	border: none;
+	padding: 9px 22px;
+	height: auto;
+	line-height: 1.4;
+	box-shadow: none;
+	text-shadow: none;
+}
+.bday-admin__main .button-primary {
+	background: var(--bd-red);
+	color: #fff;
+}
+.bday-admin__main .button-primary:hover,
+.bday-admin__main .button-primary:focus {
+	background: var(--bd-red-strong);
+	color: #fff;
+}
+.bday-admin__main .button:not(.button-primary) {
+	background: #fff;
+	color: var(--bd-ink);
+	border: 1.5px solid rgba(10,10,10,0.14);
+}
+.bday-admin__main .button:not(.button-primary):hover {
+	border-color: var(--bd-red);
+	color: var(--bd-red);
+}
+
+.bday-admin__main table.widefat {
+	border: 1px solid rgba(10,10,10,0.1);
+	border-radius: 8px;
+	overflow: hidden;
+}
+.bday-admin__main table.widefat th,
+.bday-admin__main table.widefat td {
+	font-family: var(--bd-font-display);
+}
+.bday-admin__main table.widefat thead th {
+	font-family: var(--bd-font-mono);
+	font-size: 10.5px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--bd-steel);
+	background: var(--bd-paper);
+}
+
+/* --- Sidebar (right column): contextual "what is this" + status —
+   the Leaky Paywall reference screenshot's own right-column pattern. --- */
+.bday-admin__aside {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+.bday-admin__card {
+	background: #fff;
+	border: 1px solid rgba(10,10,10,0.08);
+	border-radius: var(--bd-radius);
+	padding: 20px;
+}
+.bday-admin__card h3 {
+	font-family: var(--bd-font-mono);
+	font-size: 10.5px;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--bd-steel);
+	margin: 0 0 12px;
+}
+.bday-admin__card p {
+	font-family: var(--bd-font-display);
+	font-size: 13px;
+	line-height: 1.55;
+	color: var(--bd-ink);
+	margin: 0 0 10px;
+}
+.bday-admin__card p:last-child { margin-bottom: 0; }
+.bday-admin__card ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.bday-admin__card li {
+	font-family: var(--bd-font-display);
+	font-size: 13px;
+	padding: 7px 0;
+	border-bottom: 1px solid rgba(10,10,10,0.06);
+}
+.bday-admin__card li:last-child { border-bottom: none; }
+.bday-admin__card--accent {
+	background: var(--bd-paper);
+	border-color: rgba(227,6,19,0.15);
+}
+.bday-admin__status {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-family: var(--bd-font-display);
+	font-size: 12.5px;
+	font-weight: 600;
+	padding: 4px 10px;
+	border-radius: 999px;
+}
+.bday-admin__status::before {
+	content: '';
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: currentColor;
+}
+.bday-admin__status--on { background: rgba(30,122,61,0.1); color: #1E7A3D; }
+.bday-admin__status--off { background: rgba(193,18,31,0.1); color: #C1121F; }
+.bday-admin__status--warn { background: rgba(181,121,10,0.12); color: #B5790A; }
+
+/* Readers tab (AeroPaywall) — summary stat cards + top-followed-terms table */
+body.bday-admin-ui .bday-aero-readers-summary {
+	display: flex;
+	gap: 16px;
+	margin: 0 0 28px;
+}
+body.bday-admin-ui .bday-aero-readers-stat {
+	flex: 1;
+	background: #fff;
+	border: 1px solid rgba(10,10,10,0.08);
+	border-radius: 10px;
+	padding: 18px 20px;
+}
+body.bday-admin-ui .bday-aero-readers-stat__value {
+	display: block;
+	font-family: var(--bd-font-display);
+	font-size: 32px;
+	font-weight: 700;
+	color: var(--bd-ink);
+	line-height: 1.1;
+}
+body.bday-admin-ui .bday-aero-readers-stat__label {
+	display: block;
+	margin-top: 6px;
+	font-size: 12.5px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--bd-steel);
+}

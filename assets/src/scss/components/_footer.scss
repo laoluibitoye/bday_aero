@@ -1,0 +1,122 @@
+// Footer rebuild — full replacement of the old Bootstrap grid markup.
+// Reader-reported: this footer used to stay fixed-dark (--bd-ink/--bd-paper)
+// regardless of the site's light/warm/dark switcher, same posture as the
+// header's utility bar — but unlike that thin always-dark strip, the
+// footer is a large, full-width block most readers scroll past on every
+// page, and having it stay fixed-dark while everything above it repaints
+// per theme read as broken, not intentional. Now reads the same
+// theme-relative --color-* tokens the rest of the page uses, so it
+// genuinely repaints across all three modes.
+
+.bd-footer {
+	background: var(--color-bg-raised);
+	color: var(--color-ink-1);
+	border-top: 1px solid var(--color-border);
+	margin-top: var(--space-8, 32px);
+}
+
+.bd-footer__inner {
+	display: grid;
+	gap: var(--space-7, 28px);
+	padding-block: var(--space-8, 32px);
+
+	@include bd-up($bp-tablet) {
+		grid-template-columns: 1.2fr 2fr;
+		gap: var(--space-8, 32px);
+	}
+}
+
+.bd-footer__logo {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2, 8px);
+	text-decoration: none;
+	color: var(--color-ink-1);
+	margin-bottom: var(--space-4, 16px);
+
+	img {
+		height: 32px;
+		width: auto;
+		display: block;
+	}
+}
+
+.bd-footer__about {
+	font-size: var(--text-sm, 0.875rem);
+	line-height: var(--text-sm-lh, 1.5);
+	color: var(--color-ink-1);
+	opacity: 0.75;
+	max-width: 42em;
+
+	a {
+		color: var(--color-accent);
+		font-weight: 600;
+		text-decoration: none;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+}
+
+.bd-footer__columns {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: var(--space-6, 24px);
+
+	@include bd-up($bp-tablet) {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+.bd-footer__column {
+	h2 {
+		margin: 0 0 var(--space-3, 12px);
+		font-family: var(--font-ui, sans-serif);
+		font-size: var(--text-xs, 0.75rem);
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--color-ink-1);
+		opacity: 0.5;
+	}
+
+	ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	li {
+		margin-bottom: var(--space-2, 8px);
+	}
+
+	a {
+		font-size: var(--text-sm, 0.875rem);
+		color: var(--color-ink-1);
+		opacity: 0.85;
+		text-decoration: none;
+		word-break: break-word;
+
+		&:hover {
+			opacity: 1;
+			color: var(--color-accent);
+		}
+	}
+}
+
+.bd-footer__bottom {
+	border-top: 1px solid var(--color-border);
+}
+
+.bd-footer__bottom-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-2, 8px);
+	padding-block: var(--space-4, 16px);
+	font-size: var(--text-xs, 0.75rem);
+	color: var(--color-ink-1);
+	opacity: 0.55;
+}

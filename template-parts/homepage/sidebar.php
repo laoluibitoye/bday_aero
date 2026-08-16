@@ -3,6 +3,8 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+// See template-parts/homepage/hero.php's comment for why this is needed.
+$data   = $args['data'] ?? array();
 $epaper = $data['e_paper'][0] ?? null;
 ?>
 <aside class="bday-sidebar">

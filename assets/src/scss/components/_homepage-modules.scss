@@ -1,0 +1,94 @@
+// Phase 4 of the Bday_Aero roadmap: Today's Paper teaser, Shorts rail,
+// landscape/portrait promo banners (addons/homepage-modules).
+
+// WSJ-layout homepage adoption: Today's Paper now pairs with Toon of the
+// Day in a two-column row instead of standing alone full-width — same
+// border-top/bottom treatment .bday-todays-paper__inner used to provide,
+// moved up to the row itself since Today's Paper is now a plain grid cell.
+.bday-paper-toon-row {
+	.bday-container.bday-two-col {
+		grid-template-columns: 1fr 1fr;
+		align-items: center;
+		padding-top: var(--space-5, 20px);
+		padding-bottom: var(--space-5, 20px);
+		border-top: 1px solid var(--color-border, #e2e2e2);
+		border-bottom: 1px solid var(--color-border, #e2e2e2);
+		@media (max-width: 767px) { grid-template-columns: 1fr; }
+	}
+
+	.bday-toon-card { margin: 0; }
+}
+
+.bday-todays-paper__inner {
+	// Vertical-only padding — this element also carries .bday-container's
+	// own `padding: 0 20px`, and a plain `padding` shorthand here would
+	// silently clobber that horizontal inset (found live: the section
+	// rendered flush against the viewport edge instead of aligned with
+	// every section above it).
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-4, 16px);
+	flex-wrap: wrap;
+	padding-top: var(--space-5, 20px);
+	padding-bottom: var(--space-5, 20px);
+	border-top: 1px solid var(--color-border, #e2e2e2);
+	border-bottom: 1px solid var(--color-border, #e2e2e2);
+}
+
+.bday-scroll-row--shorts {
+	display: flex;
+	gap: var(--space-3, 12px);
+	overflow-x: auto;
+}
+
+.bday-shorts-card {
+	position: relative;
+	flex: 0 0 auto;
+	width: 160px;
+	aspect-ratio: 9 / 16;
+	border-radius: var(--radius-md, 8px);
+	overflow: hidden;
+	display: block;
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	&__play {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #fff;
+		font-size: 1.5rem;
+		background: rgba(10, 10, 10, 0.15);
+	}
+}
+
+.bday-promo-banners__inner {
+	// Same vertical-only padding note as .bday-todays-paper__inner above.
+	display: flex;
+	gap: var(--space-4, 16px);
+	align-items: flex-start;
+	flex-wrap: wrap;
+	padding-top: var(--space-4, 16px);
+	padding-bottom: var(--space-4, 16px);
+}
+
+.bday-promo-banner img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+}
+
+.bday-promo-banner--landscape {
+	flex: 1 1 100%;
+}
+
+.bday-promo-banner--portrait {
+	flex: 0 0 auto;
+}

@@ -81,7 +81,28 @@ final class Bday_Aero_Mobile_Api {
 			$base_url = Bday_Aero_Settings::api_base_url();
 			$claims   = '' !== $base_url ? Bday_Aero_Jwks_Client::verify( $token, $base_url, 'reader_jwks' ) : null;
 			if ( null !== $claims && ( $claims['type'] ?? '' ) !== 'staff' ) {
-				return array( 'open' => true, 'stage' => 'open', 'remaining' => null, 'isSubscriber' => true );
+				/**
+				 * A verified, non-staff token only means "this is a real
+				 * signed-in reader" — it does NOT mean "this reader has
+				 * paid." Bug found live while seeding test content: this
+				 * used to return open+isSubscriber unconditionally for any
+				 * valid reader token, so every registered-but-free account
+				 * read unlimited premium content through the exact route
+				 * the SDK uses to unlock articles — the paywall was a
+				 * no-op for anyone who'd merely signed up. subscription-
+				 * service bakes the real answer into every token it issues
+				 * (EntitlementClaimsService, checked on login/register/
+				 * refresh/checkout-verify) as `subscriptionStatus`, the
+				 * same claim the SDK's own nav-sync.ts already trusts
+				 * client-side for UI state — reusing it here, not
+				 * inventing a new signal.
+				 */
+				if ( 'active' === ( $claims['subscriptionStatus'] ?? '' ) ) {
+					return array( 'open' => true, 'stage' => 'open', 'remaining' => null, 'isSubscriber' => true );
+				}
+				// Signed in but not subscribed: same free-article meter an
+				// anonymous reader gets, not an automatic pass — falls
+				// through to the device-id/meter check below.
 			}
 		}
 

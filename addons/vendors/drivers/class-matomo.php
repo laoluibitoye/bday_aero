@@ -17,9 +17,9 @@ class Bday_Vendor_Matomo extends Bday_Vendor_Driver {
 
 	public function settings_fields(): array {
 		return array(
-			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable Matomo', 'default' => true ),
-			array( 'key' => 'url', 'type' => 'text', 'label' => 'Tracker URL', 'default' => '//data.businessday.ng/' ),
-			array( 'key' => 'site_id', 'type' => 'text', 'label' => 'Site ID', 'default' => '2' ),
+			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable Matomo', 'default' => true, 'description' => 'A self-hosted, privacy-focused alternative/supplement to Google Analytics — data stays on servers this organization controls rather than Google\'s.' ),
+			array( 'key' => 'url', 'type' => 'text', 'label' => 'Tracker URL', 'default' => '//data.businessday.ng/', 'description' => 'The base URL of the self-hosted Matomo instance (trailing slash included).' ),
+			array( 'key' => 'site_id', 'type' => 'text', 'label' => 'Site ID', 'default' => '2', 'description' => 'The numeric site ID assigned to this property inside Matomo.' ),
 		);
 	}
 

@@ -206,11 +206,32 @@ final class Bday_Aero_Premium_Map {
 				'fields'         => 'ids',
 				'posts_per_page' => -1,
 				'tax_query'      => $tax_query,
+				/**
+				 * Bug found live while testing the meter/funnel end to
+				 * end: a bare `'compare' => '!='` against a meta key that
+				 * doesn't exist on a post never matches that post at all
+				 * (SQL NULL != 'free' is unknown, not true) — since no
+				 * post gets this override meta unless an editor
+				 * explicitly sets one, this excluded literally every
+				 * category-premium post from the synced set, every time.
+				 * subscription-service's own meter/funnel only ever
+				 * counts/gates posts it believes are premium, so the
+				 * practical effect was the paywall's free-article quota
+				 * never engaging for anyone, on any post, regardless of
+				 * how many they read — the OR'd NOT EXISTS clause below
+				 * is the standard WP fix for "compare against an
+				 * optional meta key."
+				 */
 				'meta_query'     => array(
+					'relation' => 'OR',
 					array(
 						'key'     => self::META_KEY,
 						'value'   => 'free',
 						'compare' => '!=',
+					),
+					array(
+						'key'     => self::META_KEY,
+						'compare' => 'NOT EXISTS',
 					),
 				),
 			)

@@ -8,6 +8,19 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+/**
+ * This theme's WordPress core (7.0.1) does NOT extract get_template_part()'s
+ * $args into individual variables inside load_template() — only
+ * $wp_query->query_vars gets that treatment (see wp-includes/template.php).
+ * Every homepage template-part was written assuming a bare $data variable
+ * would exist from `array( 'data' => $data )`; it never did, so these
+ * sections silently rendered empty this whole time (found live while
+ * building the E-Editions homepage section — `$data['other_news']` etc.
+ * threw real "Undefined variable" warnings, `?? null`-guarded accesses
+ * elsewhere just failed silently instead). Normalizing here, not by
+ * patching WordPress core.
+ */
+$data   = $args['data'] ?? array();
 $layout = $args['layout'] ?? 'split';
 $lead   = $data['lead'][0] ?? null;
 ?>
@@ -39,12 +52,18 @@ $lead   = $data['lead'][0] ?? null;
 		<?php endif; ?>
 
 		<?php if ( 'takeover' !== $layout ) : ?>
-		<aside class="bday-hero__col bday-hero__col--recent">
+		<aside class="bday-hero__col bday-hero__col--opinion">
 			<?php do_action( 'bday_hero_before_recent' ); ?>
-			<h2 class="bday-eyebrow">Recent</h2>
-			<ul class="bday-list">
-				<?php foreach ( $data['recent'] as $post ) : ?>
-					<li><a href="<?php echo esc_url( get_permalink( $post ) ); ?>"><?php echo esc_html( get_the_title( $post ) ); ?></a><time><?php echo esc_html( bday_time_ago( $post->post_date ) ); ?></time></li>
+			<h2 class="bday-eyebrow"><a href="<?php echo esc_url( bday_section_url( 'opinion' ) ); ?>">Opinion</a></h2>
+			<ul class="bday-list bday-list--byline">
+				<?php foreach ( $data['opinion'] as $post ) : ?>
+					<li>
+						<?php echo get_avatar( $post->post_author, 32 ); ?>
+						<div>
+							<a href="<?php echo esc_url( get_permalink( $post ) ); ?>"><?php echo esc_html( get_the_title( $post ) ); ?></a>
+							<span><?php echo esc_html( get_the_author_meta( 'display_name', $post->post_author ) ); ?></span>
+						</div>
+					</li>
 				<?php endforeach; ?>
 			</ul>
 		</aside>

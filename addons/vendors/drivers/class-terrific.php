@@ -16,8 +16,8 @@ class Bday_Vendor_Terrific extends Bday_Vendor_Driver {
 
 	public function settings_fields(): array {
 		return array(
-			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable Terrific', 'default' => true ),
-			array( 'key' => 'store_id', 'type' => 'text', 'label' => 'Store ID', 'default' => 'hcIgBSw8yP8qpUmQrosv' ),
+			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable Terrific', 'default' => true, 'description' => 'A commerce/affiliate widget SDK — adds shoppable product recommendations to the site.' ),
+			array( 'key' => 'store_id', 'type' => 'text', 'label' => 'Store ID', 'default' => 'hcIgBSw8yP8qpUmQrosv', 'description' => 'Your Terrific store ID, from the Terrific dashboard.' ),
 		);
 	}
 

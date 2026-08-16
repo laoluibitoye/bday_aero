@@ -61,7 +61,7 @@ function bday_render_ads_matrix_tab(): void {
 	$saved       = get_option( 'bday_ads_matrix', array() );
 	$post_types  = get_post_types( array( 'public' => true ), 'objects' );
 	?>
-	<p>Every zone defaults to on, for every post type. Narrow a zone only where an editorial rule requires it (e.g. "no ads on op-eds").</p>
+	<p class="description" style="margin-bottom:20px;">Every zone defaults to on, for every post type. Narrow a zone only where an editorial rule requires it (e.g. "no ads on op-eds").</p>
 	<?php foreach ( bday_ads_matrix_zones() as $zone => $label ) :
 		$config = $saved[ $zone ] ?? array( 'enabled_globally' => true );
 		?>

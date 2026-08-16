@@ -1,0 +1,87 @@
+// Phase 3 of the Bday_Aero roadmap: reading progress, read time, ToC —
+// "reading is a feature surface," not just a text dump (design.md/deep
+// dive §6, the WSJ/NYT/Economist/Semafor benchmark).
+
+.bday-reading-progress {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 50; // above .bd-header (z-index 40)
+	height: 3px;
+	background: transparent;
+
+	&__bar {
+		display: block;
+		height: 100%;
+		width: 0%;
+		background: var(--color-accent, #e30613);
+		transition: width 0.1s linear;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bday-reading-progress__bar {
+		transition: none;
+	}
+}
+
+.bday-byline__read-time {
+	&::before {
+		content: '\2022';
+		margin-right: 0.5em;
+		opacity: 0.6;
+	}
+}
+
+.bday-toc {
+	margin: var(--space-6, 24px) 0;
+	padding: var(--space-4, 16px) var(--space-5, 20px);
+	border: 1px solid var(--color-border, #e2e2e2);
+	border-radius: var(--radius-md, 8px);
+	background: var(--color-surface, #fff);
+
+	&__heading {
+		margin: 0 0 var(--space-2, 8px);
+		font-family: var(--font-ui, sans-serif);
+		font-size: var(--text-xs, 0.75rem);
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--color-steel, #6e7175);
+	}
+
+	&__list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		counter-reset: bd-toc;
+	}
+
+	&__item {
+		counter-increment: bd-toc;
+		margin: 0.35em 0;
+
+		a {
+			color: var(--color-ink, #0a0a0a);
+			text-decoration: none;
+			font-family: var(--font-body, serif);
+
+			&:hover,
+			&:focus-visible {
+				text-decoration: underline;
+			}
+
+			&::before {
+				content: counter(bd-toc) '. ';
+				color: var(--color-accent, #e30613);
+				font-weight: 700;
+			}
+		}
+
+		&--level-3 {
+			margin-left: var(--space-4, 16px);
+			font-size: var(--text-sm, 0.875rem);
+		}
+	}
+}

@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 // Real, working build config — replaces the previous package.json's gulp
 // declaration, which had no gulpfile.js anywhere in the repo and no
@@ -9,8 +10,14 @@ import { defineConfig } from 'vite';
 // real fix for the old inline-PHP-include pattern (CSS/JS wrapped in .php
 // files and include()'d directly into every page's <head>, bypassing HTTP
 // caching entirely).
+//
+// react() only applies to the admin-app entry below (its plugin transform
+// is a no-op on plain .js/.scss) — added when the AeroPaywall add-on's
+// wp-admin screen was ported from the retired connector-plugin's React
+// app (class-admin-ui.php), same Vite/React pairing that app already used.
 export default defineConfig({
-	base: '/wp-content/themes/bday_ng_remastered/assets/build/',
+	plugins: [react()],
+	base: '/wp-content/themes/Bday_Aero/assets/build/',
 	// Copied verbatim into outDir on every build (unhashed — referenced by
 	// fixed path from PHP, e.g. assets/build/images/bd-logo.png). Anything
 	// that needs cache-busting/hashing belongs in an entry above instead,
@@ -24,6 +31,7 @@ export default defineConfig({
 			input: {
 				main: 'assets/src/scss/main.scss',
 				script: 'assets/src/js/script.js',
+				'admin-app': 'assets/src/js/admin-app/main.tsx',
 			},
 			output: {
 				// Default ES module output (Rollup's 'iife' format doesn't

@@ -454,19 +454,37 @@ a {
 }
 
 body {
-    font-family: Lato;
+    font-family: var(--font-body, Lato);
+    color: var(--color-ink-1, #0A0A0A);
+    background: var(--color-bg, #fff);
     margin: 0;
     padding: 0;
-    height: 100%;
+    min-height: 100%;
     width: 100%;
+    // The whole-page repaint the reader-reported bug asked for — every
+    // other selector in this legacy file still hardcodes its own colors
+    // (design.md's migration table already tracked this as unstarted;
+    // that work continues incrementally), but body's own background/text
+    // is the one declaration nothing else overrides, so token-driving it
+    // here is what actually makes the light/warm/dark switch visible
+    // across the page instead of stopping at the header.
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
 
+@media (prefers-reduced-motion: reduce) {
+    body {
+        transition: none;
+    }
 }
 
 
 footer {
-    border-top: solid 2px #000;
-    margin-top: 20px;
-    padding-top: 2rem;
+    // border-top/margin-top/padding-top intentionally dropped — the new
+    // .bd-footer (components/_footer.scss) replaces this bare-element
+    // rule's visual intent entirely; left un-set here rather than
+    // !important-fighting it, since the nested .footer-top/.about-us/
+    // .social-media selectors below target markup the old Bootstrap
+    // footer.php had and the new one doesn't, so they're already inert.
     position: static;
     left: 0;
     bottom: 0;

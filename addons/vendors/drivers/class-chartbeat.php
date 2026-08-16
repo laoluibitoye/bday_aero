@@ -16,9 +16,9 @@ class Bday_Vendor_Chartbeat extends Bday_Vendor_Driver {
 
 	public function settings_fields(): array {
 		return array(
-			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable Chartbeat', 'default' => true ),
-			array( 'key' => 'uid', 'type' => 'text', 'label' => 'Account UID', 'default' => '67124' ),
-			array( 'key' => 'domain', 'type' => 'text', 'label' => 'Domain', 'default' => 'businessday.ng' ),
+			array( 'key' => 'enabled', 'type' => 'checkbox', 'label' => 'Enable Chartbeat', 'default' => true, 'description' => 'Real-time traffic/engagement analytics — the "how many people are on this article right now" dashboard newsrooms use during breaking news.' ),
+			array( 'key' => 'uid', 'type' => 'text', 'label' => 'Account UID', 'default' => '67124', 'description' => 'Your numeric Chartbeat account ID, found in Chartbeat\'s own dashboard settings.' ),
+			array( 'key' => 'domain', 'type' => 'text', 'label' => 'Domain', 'default' => 'businessday.ng', 'description' => 'The domain this traffic should be attributed to in Chartbeat.' ),
 		);
 	}
 

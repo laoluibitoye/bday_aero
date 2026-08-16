@@ -2,6 +2,7 @@
 /**
  * Addon Name: World Cup 2026
  * Addon Slug: world-cup-2026
+ * Description: World Cup 2026 fixtures and scores widget.
  * Cache Namespace: world_cup
  * Settings Tab: World Cup 2026
  * Default: off

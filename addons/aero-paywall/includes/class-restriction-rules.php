@@ -5,6 +5,12 @@
  * require_registration}. Ported behavior-for-behavior from the retired
  * connector-plugin's AeroPaywall_Restriction_Rules — rules are matched
  * top-to-bottom, first match wins, a post is governed by exactly one rule.
+ *
+ * Repeatable nested rows don't fit register_setting()'s flat POST model
+ * cleanly, so this is saved via a dedicated JSON-body AJAX endpoint
+ * instead — same nonce-checked pattern as class-admin-ui.php's
+ * handle_test_connection(), called directly by the React Restrictions
+ * tab (RestrictionsTab.tsx's handleSaveAll()).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,6 +18,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class Bday_Aero_Restriction_Rules {
+
+	public function __construct() {
+		add_action( 'wp_ajax_aero_paywall_save_restriction_rules', array( $this, 'handle_save_rules' ) );
+	}
+
+	public function handle_save_rules(): void {
+		check_ajax_referer( 'aero_paywall_restriction_rules', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'bday-aero' ) ), 403 );
+			return;
+		}
+
+		$raw     = isset( $_POST['rules'] ) ? wp_unslash( (string) $_POST['rules'] ) : '[]';
+		$decoded = json_decode( $raw, true );
+		if ( ! is_array( $decoded ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid payload.', 'bday-aero' ) ), 400 );
+			return;
+		}
+
+		$sanitized = self::sanitize_rules( $decoded );
+		update_option( Bday_Aero_Settings::RESTRICTION_RULES, $sanitized );
+
+		wp_send_json_success( array( 'rules' => $sanitized ) );
+	}
 
 	/** @return array<int, array<string, mixed>> */
 	public static function get_rules(): array {

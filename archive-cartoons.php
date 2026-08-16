@@ -3,7 +3,11 @@
 get_header();
 ?>
 <section id="cartoon-archive" class="bday-container">
-	<header><h1>Cartoons — Past Editions</h1></header>
+	<header class="bday-gallery-header">
+		<span class="bday-eyebrow">Gallery</span>
+		<h1>Editorial Cartoons</h1>
+		<p class="bday-gallery-header__dek">Browse past artwork from the BusinessDay cartoon desk.</p>
+	</header>
 	<?php
 	get_template_part(
 		'addons/cartoons/template-parts/past-editions-grid',

@@ -18,12 +18,7 @@ echo '<section class="bday-weekend-magazine"><div class="bday-container">';
 echo '<h2 class="bday-section-heading">This Weekend</h2><div class="bday-card-grid bday-card-grid--large">';
 foreach ( array( $data['weekender'], $data['womens_hub'], $data['reports'] ) as $group ) {
 	foreach ( $group as $post ) {
-		printf(
-			'<article class="bday-card"><a href="%1$s" class="bday-card__media">%2$s</a><h3 class="bday-card__title"><a href="%1$s">%3$s</a></h3></article>',
-			esc_url( get_permalink( $post ) ),
-			bday_get_thumbnail( $post->ID, 'pdf_thumbnail' ),
-			esc_html( get_the_title( $post ) )
-		);
+		echo bday_card_html( $post, array( 'size' => 'pdf_thumbnail' ) );
 	}
 }
 echo '</div></div></section>';

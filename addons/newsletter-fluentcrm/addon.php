@@ -2,6 +2,7 @@
 /**
  * Addon Name: Newsletter (FluentCRM)
  * Addon Slug: newsletter-fluentcrm
+ * Description: Newsletter signup forms wired to a FluentCRM mailing list.
  * Cache Namespace: newsletter
  * Settings Tab: Newsletter
  * Default: on

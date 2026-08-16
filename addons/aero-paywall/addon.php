@@ -2,6 +2,7 @@
 /**
  * Addon Name: AeroPaywall
  * Addon Slug: aero-paywall
+ * Description: The reader paywall and subscription system — sign-in, content gating, entitlements, and payments.
  * Cache Namespace: aero_paywall
  * Settings Tab: AeroPaywall
  * Default: off
@@ -10,9 +11,15 @@
  * plugin — content gating, the reader SDK, entitlement REST routes, and
  * reader identity sync, folded directly into the theme instead of a
  * separate plugin to install/activate. Gets its OWN top-level wp-admin
- * menu (class-admin.php) rather than a tab under the shared BusinessDay
- * Theme settings screen — an intentional, documented exception, same as
- * the retired plugin's own dedicated admin screen.
+ * menu (class-admin-ui.php) rather than a tab under the shared
+ * BusinessDay Theme settings screen — an intentional, documented
+ * exception, same as the retired plugin's own dedicated admin screen.
+ *
+ * Reader-requested, emphatically: the wp-admin screen is the same React
+ * admin app the retired connector-plugin already built
+ * (assets/src/js/admin-app/), ported here rather than the plain
+ * native-forms screen this add-on used to have — see class-admin-ui.php's
+ * own docblock.
  *
  * Migration note: every option key here (aero_paywall_*) is unchanged
  * from the retired connector-plugin, so a site that had the plugin
@@ -43,6 +50,7 @@ require_once __DIR__ . '/includes/class-premium-map.php';
 require_once __DIR__ . '/includes/class-meter-client.php';
 require_once __DIR__ . '/includes/class-paywall-config-client.php';
 require_once __DIR__ . '/includes/class-branding-client.php';
+require_once __DIR__ . '/includes/class-dashboard-stats-client.php';
 require_once __DIR__ . '/includes/class-content-gate.php';
 require_once __DIR__ . '/includes/class-sdk-loader.php';
 require_once __DIR__ . '/includes/class-jwks-client.php';
@@ -53,12 +61,25 @@ require_once __DIR__ . '/includes/class-user-sync.php';
 require_once __DIR__ . '/includes/class-user-sync-receiver.php';
 require_once __DIR__ . '/includes/class-login-redirect.php';
 require_once __DIR__ . '/includes/class-account-page.php';
+require_once __DIR__ . '/includes/class-reader-settings-page.php';
 require_once __DIR__ . '/includes/class-nav-button.php';
 require_once __DIR__ . '/includes/class-post-list-badge.php';
-require_once __DIR__ . '/includes/class-admin.php';
+require_once __DIR__ . '/includes/class-vite-assets.php';
+require_once __DIR__ . '/includes/class-shared-assets.php';
+require_once __DIR__ . '/includes/class-restrictions-picker.php';
+require_once __DIR__ . '/includes/class-connector-settings-client.php';
+require_once __DIR__ . '/includes/class-page-setup.php';
+require_once __DIR__ . '/includes/class-admin-ui.php';
 
-new Bday_Aero_Admin();
-new Bday_Aero_Restriction_Rules(); // no-op constructor today, kept symmetric with the other classes for a future dedicated AJAX endpoint
+new Bday_Aero_Admin_Ui();
+new Bday_Aero_Restriction_Rules();
+new Bday_Aero_Connector_Settings_Client();
+
+// Always constructed, independent of the enabled+license gate below — a
+// site needs its required pages (My Account, Subscribe, etc.) to exist
+// from the moment the theme is activated, not only once AeroPaywall
+// itself is enabled and licensed.
+new Bday_Aero_Page_Setup();
 
 // Premium-map sync is inert with respect to what a reader sees, so it
 // (and its metabox/post-list badge) run regardless of the enabled+license
@@ -86,6 +107,7 @@ if ( Bday_Aero_Settings::enabled() && Bday_Aero_License_Client::is_active() ) {
 
 	new Bday_Aero_Sdk_Loader( $bday_aero_premium_map );
 	new Bday_Aero_Account_Page();
+	new Bday_Aero_Reader_Settings_Page();
 	new Bday_Aero_User_Sync();
 	new Bday_Aero_Login_Redirect();
 }

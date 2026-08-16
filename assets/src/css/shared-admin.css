@@ -1,0 +1,134 @@
+/**
+ * Plain, unbundled stylesheet for the two AeroPaywall surfaces that live
+ * outside the React settings app and therefore never go through Vite: the
+ * post-edit "AeroPaywall Premium" metabox and the posts-list "Premium"
+ * badge column. Enqueued directly (no build step) by
+ * includes/class-shared-assets.php. Depends on tokens.css being enqueued
+ * first for the --aero-* custom properties used below.
+ */
+
+/* Posts/Pages list-table "Premium" / "Free" badge (class-post-list-badge.php).
+   Previously referenced with no matching CSS anywhere in the plugin — this
+   is that missing stylesheet, not a restyle of something that existed. */
+.aero-paywall-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 2px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.aero-paywall-badge-premium {
+  background: var(--aero-warning-bg, #fff8e5);
+  color: var(--aero-warning, #9a6700);
+  border: 1px solid var(--aero-warning-border, #f2d98a);
+}
+
+.aero-paywall-badge-free {
+  background: var(--aero-success-bg, #edfaef);
+  color: var(--aero-success, #1a7f37);
+  border: 1px solid var(--aero-success-border, #b7e4c1);
+}
+
+/* Post-edit "AeroPaywall Premium" metabox (class-premium-map.php). Replaces
+   bare <label style="display:block"> radios with the same segmented-control
+   visual language as the settings app's Toggle/tab components. */
+.aero-metabox {
+  font-size: 13px;
+  color: var(--aero-text, #1d2327);
+}
+
+.aero-metabox__intro {
+  margin: 0 0 10px;
+  color: var(--aero-text-muted, #646970);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.aero-segmented {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--aero-border, #e2e5ea);
+  border-radius: var(--aero-radius, 8px);
+  overflow: hidden;
+}
+
+.aero-segmented__option {
+  position: relative;
+  display: block;
+  border-bottom: 1px solid var(--aero-border, #e2e5ea);
+}
+
+.aero-segmented__option:last-child {
+  border-bottom: none;
+}
+
+.aero-segmented__option input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.aero-segmented__label {
+  display: block;
+  padding: 8px 12px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.aero-segmented__label strong {
+  display: block;
+  font-size: 13px;
+}
+
+.aero-segmented__label span.aero-segmented__help {
+  display: block;
+  font-size: 11.5px;
+  color: var(--aero-text-muted, #646970);
+  margin-top: 2px;
+}
+
+.aero-segmented__option input:checked + .aero-segmented__label {
+  background: var(--aero-accent, #1a73e8);
+  color: #fff;
+}
+
+.aero-segmented__option input:checked + .aero-segmented__label span.aero-segmented__help {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.aero-segmented__option input:focus-visible + .aero-segmented__label {
+  box-shadow: var(--aero-focus-ring, 0 0 0 2px #1a73e8);
+  position: relative;
+  z-index: 1;
+}
+
+.aero-metabox__link {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+/* Shared branded notice wrapper — used by the DEV MODE, license-inactive,
+   and backend-unreachable admin notices. Kept inside a real WP
+   `notice notice-*` element for accessibility/dismiss behavior; this only
+   styles the content inside it. */
+.aero-admin-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.aero-admin-notice__icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.aero-admin-notice a {
+  font-weight: 600;
+}

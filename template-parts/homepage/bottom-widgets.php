@@ -1,37 +1,48 @@
 <?php
 /**
- * Bottom-of-homepage content rows: video, magazine (weekender/womens-hub/
- * reports/e-paper teasers), today's cartoon + podcast, upcoming events.
- * Each row is its own cached query — small enough not to warrant separate
- * add-ons, but still routed through bday_get_posts() like everything else.
+ * Bottom-of-homepage content rows: magazine (weekender/womens-hub/reports
+ * teasers), today's paper + today's cartoon, upcoming events, then a hook
+ * point for addon-owned modules (Phase 4: promo banners, YouTube Shorts
+ * rail). Each row is its own cached query — small enough not to warrant
+ * separate add-ons of their own, but each is independently toggleable
+ * (bday_addon_homepage_modules option, registered by
+ * addons/homepage-modules/addon.php's settings schema) per the roadmap's
+ * "each independently toggleable" requirement — "dead air" when off, not
+ * an empty section, same posture as bday-live's hero embed toggle.
+ *
+ * The video row and the single-episode podcast card that used to live
+ * here both moved as part of the WSJ-layout homepage adoption: video is
+ * now its own template-parts/homepage/video-row.php (independently
+ * positioned), and the podcast card was superseded by the multi-episode
+ * podcast-carousel.php. Toon of the Day, no longer paired with a podcast
+ * card, now pairs with Today's Paper instead.
  */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$videos = bday_get_posts( array( 'category_name' => 'top-video', 'numberposts' => 8, 'cache_namespace' => 'homepage' ) );
-$events = bday_get_posts( array( 'post_type' => 'events', 'numberposts' => 3, 'cache_namespace' => 'homepage' ) );
-$cartoon_of_day = post_type_exists( 'cartoons' )
+// See template-parts/homepage/hero.php's comment for why this is needed.
+$data = $args['data'] ?? array();
+
+$modules = wp_parse_args(
+	get_option( 'bday_addon_homepage_modules', array() ),
+	array(
+		'enable_magazine_row'     => true,
+		'enable_todays_paper'     => true,
+		'enable_toon_podcast_row' => true,
+		'enable_events_row'       => true,
+	)
+);
+
+$events = $modules['enable_events_row']
+	? bday_get_posts( array( 'post_type' => 'events', 'numberposts' => 3, 'cache_namespace' => 'homepage' ) )
+	: array();
+$cartoon_of_day = ( $modules['enable_toon_podcast_row'] && post_type_exists( 'cartoons' ) )
 	? bday_get_posts( array( 'post_type' => 'cartoons', 'numberposts' => 1, 'cache_namespace' => 'homepage' ) )
 	: array();
 ?>
 
-<?php if ( ! empty( $videos ) ) : ?>
-<section class="bday-video-row">
-	<div class="bday-container">
-		<h2 class="bday-section-heading bday-section-heading--inverse">BD TV</h2>
-		<div class="bday-scroll-row">
-			<?php foreach ( $videos as $post ) : ?>
-				<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-video-card">
-					<?php echo bday_get_thumbnail( $post->ID, 'medium_rectangle' ); ?>
-					<h4><?php echo esc_html( get_the_title( $post ) ); ?></h4>
-				</a>
-			<?php endforeach; ?>
-		</div>
-	</div>
-</section>
-<?php endif; ?>
-
+<?php if ( $modules['enable_magazine_row'] ) : ?>
 <section class="bday-magazine-row">
 	<div class="bday-container bday-card-grid">
 		<?php foreach ( array(
@@ -40,27 +51,38 @@ $cartoon_of_day = post_type_exists( 'cartoons' )
 			'reports'    => $data['reports'][0] ?? null,
 		) as $slug => $post ) :
 			if ( ! $post ) continue;
-			?>
-			<article class="bday-card">
-				<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-card__media"><?php echo bday_get_thumbnail( $post->ID, 'pdf_thumbnail' ); ?></a>
-				<h3 class="bday-card__title"><a href="<?php echo esc_url( get_permalink( $post ) ); ?>"><?php echo esc_html( get_the_title( $post ) ); ?></a></h3>
-			</article>
-		<?php endforeach; ?>
+			echo bday_card_html( $post, array( 'size' => 'pdf_thumbnail' ) );
+		endforeach; ?>
 	</div>
 </section>
+<?php endif; ?>
 
-<?php if ( ! empty( $cartoon_of_day ) ) : ?>
-<section class="bday-toon-podcast-row">
+<?php if ( $modules['enable_todays_paper'] || ! empty( $cartoon_of_day ) ) : ?>
+<section class="bday-paper-toon-row">
 	<div class="bday-container bday-two-col">
-		<div class="bday-toon">
-			<h2 class="bday-eyebrow">Toon of the Day</h2>
-			<a href="<?php echo esc_url( get_permalink( $cartoon_of_day[0] ) ); ?>"><?php echo bday_get_thumbnail( $cartoon_of_day[0]->ID, 'top_story' ); ?></a>
-			<a href="<?php echo esc_url( get_post_type_archive_link( 'cartoons' ) ); ?>" class="bday-btn-link">See past editions</a>
-		</div>
-		<div class="bday-podcast">
-			<h2 class="bday-eyebrow">Podcast</h2>
-			<iframe width="100%" height="300" scrolling="no" frameborder="no" loading="lazy" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/users/619290771&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true"></iframe>
-		</div>
+		<?php if ( $modules['enable_todays_paper'] ) : ?>
+			<div class="bday-todays-paper">
+				<h2 class="bday-eyebrow">Today's Paper</h2>
+				<p>The full print edition, laid out exactly as it appeared today — read it page by page or download the PDF.</p>
+				<a href="<?php echo esc_url( bday_epaper_url() ); ?>" class="bday-btn-link">Read today's edition</a>
+			</div>
+		<?php endif; ?>
+
+		<?php if ( ! empty( $cartoon_of_day ) ) :
+			$toon = $cartoon_of_day[0];
+			?>
+			<div class="bday-toon-card">
+				<h2 class="bday-eyebrow">Toon of the Day</h2>
+				<a href="<?php echo esc_url( get_permalink( $toon ) ); ?>" class="bday-toon-card__frame">
+					<?php echo bday_get_thumbnail( $toon->ID, 'top_story' ); ?>
+					<span class="bday-toon-card__pin" aria-hidden="true"></span>
+				</a>
+				<div class="bday-toon-card__caption">
+					<p><?php echo esc_html( get_the_title( $toon ) ); ?></p>
+					<a href="<?php echo esc_url( get_post_type_archive_link( 'cartoons' ) ); ?>" class="bday-btn-link">See past editions</a>
+				</div>
+			</div>
+		<?php endif; ?>
 	</div>
 </section>
 <?php endif; ?>
@@ -80,3 +102,14 @@ $cartoon_of_day = post_type_exists( 'cartoons' )
 	</div>
 </section>
 <?php endif; ?>
+
+<?php
+/**
+ * Genuinely new Phase 4 modules (promo banners, YouTube Shorts rail) live
+ * entirely in addons/homepage-modules/ rather than inline here — unlike
+ * the sections above, there's no existing content/query for them to
+ * extend, so they're addon-owned from the start per the loader's normal
+ * convention, off by default until an editor configures them.
+ */
+do_action( 'bday_homepage_after_bottom_widgets' );
+?>

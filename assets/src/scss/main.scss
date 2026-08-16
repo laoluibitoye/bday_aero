@@ -12,6 +12,17 @@
 // updated) than this pipeline rebuild, and isn't attempted here.
 
 @import 'abstracts/breakpoints';
+
+// Design tokens (Phase 1 of the Bday_Aero Deep Dive roadmap) — see
+// /design.md for the full rationale. Imported first, before the legacy
+// stylesheets below, so :root custom properties exist for any new
+// component to consume immediately even though the legacy rules
+// themselves aren't migrated onto them yet (see design.md's "Migration
+// status" table — incremental, not a rewrite).
+@import 'abstracts/colors';
+@import 'abstracts/typography';
+@import 'abstracts/spacing';
+
 @import 'style';
 @import 'responsive';
 @import 'lightbox';
@@ -22,3 +33,12 @@
 @import 'components/cartoon';
 @import 'components/error-page';
 @import 'components/premium';
+@import 'components/topic-list';
+@import 'components/glass';
+@import 'components/header';
+@import 'components/footer';
+@import 'components/video-facade';
+@import 'components/reading';
+@import 'components/homepage-modules';
+@import 'components/gallery';
+@import 'components/homepage-redesign';

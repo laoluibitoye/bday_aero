@@ -1,0 +1,232 @@
+// Phase 11 of the Bday_Aero roadmap (Deep Dive §15): a true scrollable
+// gallery for the cartoon/art archive — replaces the plain uniform-card
+// grid with a masonry-style layout (CSS columns, so each card keeps its
+// own natural aspect ratio instead of being cropped to a fixed box) plus
+// a hover-revealed date overlay, closer to how a picture-led gallery
+// actually wants to present artwork than a news card grid does.
+
+.bday-gallery-header {
+	padding: var(--space-6, 24px) 0 var(--space-4, 16px);
+	text-align: center;
+
+	h1 {
+		margin: var(--space-2, 8px) 0;
+		font-family: var(--font-display, serif);
+	}
+
+	&__dek {
+		color: var(--color-steel, #6e7175);
+		max-width: 40em;
+		margin: 0 auto;
+	}
+}
+
+// Shared by both class names the gallery-grid component can render as
+// (grid-grid.php's $grid_class arg) — .bday-cartoon-grid for the
+// already-verified cartoon gallery, .bday-gallery-grid (the default) for
+// every other use, e.g. the e-editions past-editions archive.
+.bday-cartoon-grid,
+.bday-gallery-grid {
+	&__grid {
+		column-count: 1;
+		column-gap: var(--space-4, 16px);
+
+		@media (min-width: 640px) {
+			column-count: 2;
+		}
+		@media (min-width: 960px) {
+			column-count: 3;
+		}
+		@media (min-width: 1280px) {
+			column-count: 4;
+		}
+	}
+
+	&__card {
+		position: relative;
+		display: block;
+		break-inside: avoid;
+		margin-bottom: var(--space-4, 16px);
+		border-radius: var(--radius-md, 8px);
+		overflow: hidden;
+		box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+
+		figure {
+			margin: 0;
+			line-height: 0;
+		}
+
+		img {
+			width: 100%;
+			height: auto;
+			display: block;
+			transition: transform 0.3s ease;
+		}
+
+		&:hover img,
+		&:focus-visible img {
+			transform: scale(1.03);
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			img {
+				transition: none;
+			}
+			&:hover img,
+			&:focus-visible img {
+				transform: none;
+			}
+		}
+	}
+
+	&__overlay {
+		position: absolute;
+		inset: auto 0 0 0;
+		padding: var(--space-3, 12px) var(--space-3, 12px) var(--space-2, 8px);
+		background: linear-gradient(to top, rgba(10, 10, 10, 0.75), transparent);
+	}
+
+	&__date {
+		color: #fff;
+		font-family: var(--font-ui, sans-serif);
+		font-size: var(--text-xs, 0.75rem);
+		font-weight: 600;
+		letter-spacing: 0.02em;
+	}
+
+	// Follow-up hook: once the client-side archive-window check
+	// (GET /me/archive-window) is wired in, script.js toggles this class
+	// on [data-bd-gallery-item] elements whose data-bd-gallery-date falls
+	// outside the reader's window — styling shipped ahead of that wiring
+	// so it's a pure JS follow-up, not a design one.
+	&__card.is-locked {
+		figure img {
+			filter: blur(6px) grayscale(0.3);
+		}
+
+		&::after {
+			content: '\1F512';
+			position: absolute;
+			inset: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 1.5rem;
+			background: rgba(10, 10, 10, 0.25);
+		}
+	}
+}
+
+// The homepage "E-Editions" row (addons/editions/includes/homepage.php)
+// — one card per publication, distinct from the gallery-grid archive
+// above (this is a curated "latest issue" strip, not a scrollable
+// history), so it gets its own compact card treatment.
+.bday-editions-row__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	gap: var(--space-4, 16px);
+}
+
+.bday-edition-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1, 4px);
+
+	&__media {
+		display: block;
+		border-radius: var(--radius-md, 8px);
+		overflow: hidden;
+		box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+
+		img {
+			width: 100%;
+			height: auto;
+			display: block;
+			aspect-ratio: 3 / 4;
+			object-fit: cover;
+		}
+	}
+
+	&__title {
+		margin: var(--space-1, 4px) 0 0;
+		font-size: var(--text-sm, 0.875rem);
+
+		a {
+			color: inherit;
+			text-decoration: none;
+		}
+	}
+
+	&__date {
+		font-size: var(--text-xs, 0.75rem);
+		color: var(--color-steel, #6e7175);
+	}
+
+	&__past-link {
+		font-size: var(--text-xs, 0.75rem);
+		color: var(--color-accent, #e30613);
+		text-decoration: underline;
+	}
+}
+
+// Single e-edition landing page (single-bday_edition.php)
+.bday-edition-single {
+	max-width: 480px;
+	margin: 0 auto;
+	text-align: center;
+	padding: var(--space-6, 24px) 0;
+
+	&__header {
+		margin-bottom: var(--space-4, 16px);
+	}
+
+	&__date {
+		display: block;
+		color: var(--color-steel, #6e7175);
+		font-size: var(--text-sm, 0.875rem);
+		margin-top: var(--space-1, 4px);
+	}
+
+	&__cover {
+		margin: 0 0 var(--space-4, 16px);
+		border-radius: var(--radius-md, 8px);
+		overflow: hidden;
+		box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.15));
+
+		img {
+			width: 100%;
+			height: auto;
+			display: block;
+		}
+	}
+
+	&__read-btn {
+		display: inline-block;
+		padding: var(--space-3, 12px) var(--space-6, 24px);
+		border: none;
+		border-radius: var(--radius-sm, 4px);
+		background: var(--color-accent, #e30613);
+		color: #fff;
+		font-weight: 600;
+		cursor: pointer;
+
+		&[aria-busy='true'] {
+			opacity: 0.7;
+			cursor: wait;
+		}
+	}
+
+	&__status {
+		min-height: 1.2em;
+		margin: var(--space-2, 8px) 0 0;
+		color: var(--color-danger, #c1121f);
+		font-size: var(--text-sm, 0.875rem);
+	}
+
+	&__archive-link {
+		display: block;
+		margin-top: var(--space-4, 16px);
+		color: var(--color-steel, #6e7175);
+		text-decoration: underline;
+	}
+}

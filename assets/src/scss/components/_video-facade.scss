@@ -1,0 +1,91 @@
+// Featured video cards (addons/featured-video-cards) — Phase 2 of the
+// Bday_Aero Deep Dive roadmap, §9. The facade sits inside the existing
+// .bday-card__media <a>, so its own children must never intercept clicks
+// meant for that link — only the two control buttons (mute/pause) stop
+// propagation, handled in script.js's bdayInitFeaturedVideoCards().
+
+.bday-video-facade {
+	position: relative;
+	display: block;
+	width: 100%;
+	// No existing .bday-card__media rule sets an aspect ratio (that
+	// wrapper is otherwise unstyled today), so the facade defines its own
+	// rather than depending on height: 100% against a height-less parent.
+	aspect-ratio: 16 / 9;
+	overflow: hidden;
+	background: var(--color-ink, #0a0a0a);
+
+	&__poster {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	&__badge {
+		position: absolute;
+		z-index: 2;
+		top: var(--space-2, 8px);
+		left: var(--space-2, 8px);
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35em;
+		padding: 0.25em 0.6em;
+		border-radius: var(--radius-sm, 4px);
+		background: rgba(10, 10, 10, 0.65);
+		color: #fff;
+		font-family: var(--font-ui, sans-serif);
+		font-size: var(--text-xs, 0.75rem);
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		pointer-events: none;
+	}
+
+	&__controls {
+		position: absolute;
+		z-index: 2;
+		bottom: var(--space-2, 8px);
+		right: var(--space-2, 8px);
+		display: flex;
+		gap: var(--space-1, 4px);
+	}
+
+	&__btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 30px;
+		height: 30px;
+		padding: 0;
+		border: none;
+		border-radius: 50%;
+		background: rgba(10, 10, 10, 0.65);
+		color: #fff;
+		cursor: pointer;
+		transition: background-color 0.15s ease;
+
+		&:hover,
+		&:focus-visible {
+			background: rgba(10, 10, 10, 0.85);
+		}
+	}
+
+	// script.js mounts the YouTube iframe player into this element once
+	// activated — cover the poster completely once playing, staying below
+	// the badge/controls (z-index 2 above) which sit in front of it.
+	&__player {
+		position: absolute;
+		z-index: 1;
+		inset: 0;
+
+		iframe {
+			width: 100%;
+			height: 100%;
+			border: 0;
+		}
+	}
+
+	&.is-playing .bday-video-facade__poster {
+		opacity: 0;
+	}
+}

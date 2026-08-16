@@ -2,6 +2,7 @@
 /**
  * Addon Name: Events
  * Addon Slug: events
+ * Description: Upcoming BusinessDay events (conferences, summits) post type and listing page.
  * Cache Namespace: events
  * Settings Tab: Events
  * Default: on
