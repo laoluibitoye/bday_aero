@@ -39,7 +39,7 @@ final class Bday_Aero_Page_Setup {
 			),
 			'subscribe'     => array(
 				'label'    => 'Subscribe',
-				'content'  => '',
+				'content'  => '[aeropaywall_account tab="subscribe"]',
 				'template' => 'templates/template-subscribe.php',
 			),
 			'todays_paper'  => array(
