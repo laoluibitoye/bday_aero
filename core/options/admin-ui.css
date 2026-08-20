@@ -25,8 +25,18 @@ body.bday-admin-ui {
 /* WordPress's own chrome (menu, admin bar, notices) stays untouched —
    only the page content area (#wpbody-content) and its own <h1>/.wrap
    get the redesign, so the rest of wp-admin still feels like wp-admin. */
+/* Reader-reported: buttons near the bottom of both the AeroPaywall and
+   BusinessDay Theme settings screens (e.g. "Save changes") were only
+   clickable across their very top edge. Root cause: WordPress core's own
+   #wpfooter is position:absolute + bottom:0 within this same container,
+   and relies on #wpbody-content reserving enough bottom padding to sit
+   below the actual content instead of overlapping it. This was previously
+   shrunk to 40px — less than #wpfooter's own rendered height — so the
+   footer bar overlapped (and pointer-event-intercepted) the last ~25px of
+   every settings page, covering most of any bottom-anchored button except
+   a thin strip at its top. Restored to WP core's own default reservation. */
 body.bday-admin-ui #wpbody-content {
-	padding-bottom: 40px;
+	padding-bottom: 65px;
 }
 body.bday-admin-ui #wpbody-content > .notice,
 body.bday-admin-ui #wpbody-content > div.updated,

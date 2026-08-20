@@ -1030,52 +1030,71 @@ $bday-border: var(--color-border);
 		&::after { content: none !important; }
 	}
 
-	// Text-to-speech, right next to the bookmark button — both sit at the
-	// byline's far end together (the bookmark mount's margin-left: auto
-	// above pushes everything after it there too).
-	.bday-byline__tts {
+}
+
+// Text-to-speech — its own row below the byline (reference layout: a
+// circular icon button + "Listen to this article" label, not a small
+// pill sharing space with the bookmark button). One <button> for
+// accessibility (the whole row is one control), but only the icon gets
+// the circular border — the label is plain text beside it, matching the
+// reference exactly.
+.bday-audio-cta {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 0 0 20px;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--color-ink-1, #{$bday-ink});
+	font-family: var(--font-ui);
+	cursor: pointer;
+
+	&__circle {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
-		padding: 6px 12px;
-		border: 1px solid $bday-border;
-		border-radius: 999px;
-		background: none;
-		color: $bday-ink;
-		font-family: var(--font-ui);
-		font-size: 12px;
-		font-weight: 600;
-		cursor: pointer;
-		&::after { content: none !important; }
+		justify-content: center;
+		width: 38px;
+		height: 38px;
+		flex-shrink: 0;
+		border-radius: 50%;
+		border: 1.5px solid var(--color-ink-1, #{$bday-ink});
+		transition: border-color 0.15s ease, color 0.15s ease;
+	}
 
-		&:hover {
+	&__label {
+		font-size: 14px;
+		font-weight: 700;
+	}
+
+	&:hover &__circle {
+		border-color: $bday-red;
+		color: $bday-red;
+	}
+
+	&__icon-pause { display: none; }
+
+	// 'speaking' and 'paused' were sharing one rule that always showed the
+	// pause glyph — reader-reported: clicking to resume still showed a
+	// pause icon, when a resumable/paused state should show the headphone
+	// (listen/resume) glyph instead. Split so each state shows the icon for
+	// the action a click will actually perform next.
+	&[data-state='speaking'],
+	&[data-state='paused'] {
+		.bday-audio-cta__circle {
 			border-color: $bday-red;
 			color: $bday-red;
 		}
+	}
 
-		.bday-byline__tts-icon-pause { display: none; }
+	&[data-state='speaking'] {
+		.bday-audio-cta__icon-listen { display: none; }
+		.bday-audio-cta__icon-pause { display: inline-block; }
+	}
 
-		// 'speaking' and 'paused' were sharing one rule that always showed
-		// the pause glyph — reader-reported: clicking to resume still
-		// showed a pause icon, when a resumable/paused state should show
-		// play. Split so each state shows the icon for the action a click
-		// will actually perform next (pause glyph while speaking, since
-		// clicking pauses; play glyph while paused, since clicking resumes).
-		&[data-state='speaking'],
-		&[data-state='paused'] {
-			border-color: $bday-red;
-			color: $bday-red;
-		}
-
-		&[data-state='speaking'] {
-			.bday-byline__tts-icon-play { display: none; }
-			.bday-byline__tts-icon-pause { display: inline-block; }
-		}
-
-		&[data-state='paused'] {
-			.bday-byline__tts-icon-play { display: inline-block; }
-			.bday-byline__tts-icon-pause { display: none; }
-		}
+	&[data-state='paused'] {
+		.bday-audio-cta__icon-listen { display: inline-block; }
+		.bday-audio-cta__icon-pause { display: none; }
 	}
 }
 

@@ -92,20 +92,26 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 			 */
 			?>
 			<span id="aero-paywall-bookmark-mount" class="bday-byline__bookmark"></span>
-			<?php
-			/**
-			 * Text-to-speech (script.js's bdayInitTextToSpeech()) —
-			 * theme-owned, not an SDK mount: window.speechSynthesis needs
-			 * no account/API, so unlike the bookmark button next to it,
-			 * this renders for every reader regardless of sign-in state.
-			 */
-			?>
-			<button type="button" id="bday-tts-toggle" class="bday-byline__tts" data-state="idle" aria-label="Listen to this article">
-				<svg class="bday-byline__tts-icon-play" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15.5 8.5a5 5 0 0 1 0 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M18 6a9 9 0 0 1 0 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-				<svg class="bday-byline__tts-icon-pause" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
-				<span class="bday-byline__tts-label">Listen</span>
-			</button>
 		</div>
+
+		<?php
+		/**
+		 * Text-to-speech (script.js's bdayInitTextToSpeech()) — theme-owned,
+		 * not an SDK mount: window.speechSynthesis needs no account/API, so
+		 * this renders for every reader regardless of sign-in state.
+		 * Reader-requested: its own row below the byline (a circular icon
+		 * button + "Listen to this article" label) rather than a small pill
+		 * crammed in with the bookmark button, matching the reference
+		 * layout this was rebuilt against.
+		 */
+		?>
+		<button type="button" id="bday-tts-toggle" class="bday-audio-cta" data-state="idle" aria-label="Listen to this article">
+			<span class="bday-audio-cta__circle">
+				<svg class="bday-audio-cta__icon-listen" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 18v-6a9 9 0 0 1 18 0v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5ZM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				<svg class="bday-audio-cta__icon-pause" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
+			</span>
+			<span class="bday-audio-cta__label">Listen to this article</span>
+		</button>
 
 		<article data-bd-article-body>
 			<?php if ( has_post_format( 'video' ) ) : ?>

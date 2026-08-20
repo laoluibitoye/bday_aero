@@ -504,11 +504,11 @@ function bdayInitTextToSpeech() {
 		synth.addEventListener('voiceschanged', resolvePreferredVoice, { once: true });
 	}
 
-	var label = button.querySelector('.bday-byline__tts-label');
+	var label = button.querySelector('.bday-audio-cta__label');
 	function setState(state) {
 		button.dataset.state = state; // 'idle' | 'speaking' | 'paused'
 		button.setAttribute('aria-label', state === 'speaking' ? 'Pause reading' : state === 'paused' ? 'Resume reading' : 'Listen to this article');
-		if (label) label.textContent = state === 'speaking' ? 'Pause' : state === 'paused' ? 'Resume' : 'Listen';
+		if (label) label.textContent = state === 'speaking' ? 'Pause reading' : state === 'paused' ? 'Resume reading' : 'Listen to this article';
 	}
 	setState('idle');
 
