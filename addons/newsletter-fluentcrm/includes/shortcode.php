@@ -57,6 +57,54 @@ function bday_newsletter_render_form_fields( array $lists, string $button_text )
 	<?php
 }
 
+/**
+ * Reader-requested: newsletters + Category Alerts need to render inline
+ * inside the SDK's My Account tab and the combined onboarding modal, not
+ * only on the dedicated /newsletter-opt-in/ page the [fluentcrm_remote_form]
+ * shortcode renders — those SDK mount points have no server-rendered
+ * nonce field to read the way the shortcode's own inline script does, so
+ * this hands one back in the payload for the SDK to echo on submit.
+ * "alertEligibleCategoryIds" is just the category_mappings keys that
+ * actually have a list mapped — a category with "— Do not map —" left
+ * selected was never meant to trigger an alert either, and this is the
+ * same source of truth an admin already fills in for the contextual
+ * newsletter box, not a second curation step to maintain.
+ */
+add_action( 'wp_ajax_bday_newsletter_options', 'bday_newsletter_handle_options' );
+add_action( 'wp_ajax_nopriv_bday_newsletter_options', 'bday_newsletter_handle_options' );
+
+function bday_newsletter_handle_options(): void {
+	$all_lists    = bday_newsletter_get_lists();
+	$visible_ids  = array_map( 'intval', (array) bday_newsletter_setting( 'visible_lists', array() ) );
+	$descriptions = (array) bday_newsletter_setting( 'list_descriptions', array() );
+	$mappings     = (array) bday_newsletter_setting( 'category_mappings', array() );
+
+	$lists = array_values(
+		array_map(
+			static function ( $list ) use ( $descriptions ) {
+				return array(
+					'id'          => (int) $list['id'],
+					'title'       => $list['title'],
+					'description' => (string) ( $descriptions[ $list['id'] ] ?? '' ),
+				);
+			},
+			array_filter( $all_lists, static fn( $l ) => in_array( (int) $l['id'], $visible_ids, true ) )
+		)
+	);
+
+	$alert_eligible_category_ids = array_values(
+		array_map( 'intval', array_keys( array_filter( $mappings, static fn( $list_id ) => (int) $list_id > 0 ) ) )
+	);
+
+	wp_send_json_success(
+		array(
+			'lists'                    => $lists,
+			'alertEligibleCategoryIds' => $alert_eligible_category_ids,
+			'nonce'                    => wp_create_nonce( 'bday_newsletter_subscribe' ),
+		)
+	);
+}
+
 add_action( 'wp_ajax_bday_newsletter_subscribe', 'bday_newsletter_handle_subscribe' );
 add_action( 'wp_ajax_nopriv_bday_newsletter_subscribe', 'bday_newsletter_handle_subscribe' );
 
