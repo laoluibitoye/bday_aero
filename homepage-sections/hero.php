@@ -70,7 +70,6 @@ $top_news_archive_url = $bdlead_term && ! is_wp_error( $bdlead_term ) ? get_tag_
 			<article class="bday-rd-hero__lead">
 				<a href="<?php echo esc_url( get_permalink( $lead ) ); ?>" class="bday-rd-hero__lead-media"><?php echo bday_get_thumbnail( $lead->ID, 'featured' ); ?></a>
 				<div class="bday-rd-hero__lead-body">
-					<span class="bday-rd-kicker bday-rd-kicker--accent">BD Lead</span>
 					<h1 class="bday-rd-hero__lead-title"><a href="<?php echo esc_url( get_permalink( $lead ) ); ?>"><?php echo esc_html( get_the_title( $lead ) ); ?></a></h1>
 					<p class="bday-rd-hero__lead-dek"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $lead->post_excerpt ?: $lead->post_content ), 50, '…' ) ); ?></p>
 					<div class="bday-byline">

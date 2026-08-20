@@ -349,12 +349,16 @@ $rd-invert-ink: var(--rd-invert-ink);
 		&-body { display: flex; flex-direction: column; gap: 14px; }
 		&-eyebrow { display: flex; align-items: center; gap: 12px; }
 		&-title {
-			// Was var(--rd-font-display) ('Newsreader', a redesign-only face) —
-			// visibly mismatched every other article title on the site, which
-			// all use this exact font-headline stack (Georgia/Times New Roman,
-			// since --font-headline itself isn't defined as a custom property
-			// anywhere in the theme, so it always resolves to this fallback).
-			font-family: var(--font-headline, Georgia, serif);
+			// Reader-reported mismatch was actually the other direction: this
+			// previously used --font-headline (Georgia fallback), which put it
+			// out of step with every *other* title inside this same Redesign
+			// 2026 hero — the Top News/Latest News numbered-list titles
+			// beside it (.bday-rd-numbered-list__title below) and this
+			// section's own -dek line right underneath all use
+			// --rd-font-display (Newsreader), the deliberate display face for
+			// this whole redesigned homepage system (used consistently across
+			// every section in this file). Matching that instead.
+			font-family: var(--rd-font-display);
 			font-size: 46px;
 			line-height: 1.06;
 			font-weight: 600;
@@ -1021,38 +1025,64 @@ $rd-invert-ink: var(--rd-invert-ink);
 // ==========================================================================
 
 // ---- Market Pulse ---------------------------------------------------------
-// section { gap: 1px grid, 6 cells, background acting as the hairline
-// between cells via the grid gap itself. }
+// Auto-scrolling ticker, reader-requested: the figure list is now
+// admin-editable/repeatable (add/remove/reorder in wp-admin) rather than a
+// fixed six, so a static CSS grid with hardcoded column counts no longer
+// fits — a horizontally auto-scrolling strip works for any item count.
+// The track renders the cell list twice back-to-back (market-pulse.php)
+// and animates translateX(-50%): at the halfway point the second copy is
+// pixel-identical to where the first copy started, so the loop has no
+// visible seam/reset jump — the standard duplicated-track marquee
+// technique.
 
 .bday-rd-market-pulse {
 	// Flush against Headlines above and Premium below — see Headlines'
 	// own margin-bottom: 0 for the matching half of this.
 	margin-bottom: 0;
 
+	&__viewport {
+		overflow-x: auto;
+		overflow-y: hidden;
+		// A reader can still grab-scroll/swipe manually even while the
+		// auto-scroll animation runs (common, acceptable ticker
+		// behavior) — pausing only on hover/manual-scroll intent below.
+		-webkit-overflow-scrolling: touch;
+
+		&:hover .bday-rd-market-pulse__track,
+		&:active .bday-rd-market-pulse__track {
+			animation-play-state: paused;
+		}
+	}
+
+	&__track {
+		display: flex;
+		width: fit-content;
+		// Admin-configurable (Market Pulse settings tab, "Scroll speed") —
+		// set inline per-page via a CSS custom property; 30s is only the
+		// value if that setting is somehow missing entirely.
+		animation: bday-market-pulse-scroll var(--bday-market-pulse-duration, 30s) linear infinite;
+
+		@media (prefers-reduced-motion: reduce) {
+			animation: none;
+		}
+	}
+
 	&__grid {
-		// Reader-reported: this background used to live on the section
-		// wrapper above (full-bleed, edge to edge), but the grid itself
-		// is capped at .bday-container's max-width and centered — so the
-		// section's own background showed through as a grey stripe on
-		// both sides of the centered grid. Moved here, onto the grid
-		// element itself, so the hairlines it's meant to create between
-		// cells (via the 1px gap) stay, without also filling the
-		// (differently-sized) section around it. background-clip:
-		// content-box — .bday-container's own 20px inline padding
-		// otherwise still showed a thin sliver of this background past
-		// the grid's outermost cells, the last remnant of the same "grey
-		// strip on the edges" bug report.
 		background: var(--rd-border-a);
-		background-clip: content-box;
-		display: grid;
-		grid-template-columns: repeat(6, 1fr);
+		display: flex;
 		gap: 1px;
-		@include bd-down($bp-desktop) { grid-template-columns: repeat(3, 1fr); }
-		@include bd-down($bp-tablet) { grid-template-columns: repeat(2, 1fr); }
+		flex-shrink: 0;
 	}
 
 	&__cell {
 		background: $rd-bg;
+		// A fixed width (rather than the old grid's 1fr columns) — a
+		// flex row scrolling infinitely needs every cell to hold a
+		// stable, predictable width instead of stretching to fill
+		// whatever's currently visible.
+		flex: 0 0 220px;
+		width: 220px;
+		box-sizing: border-box;
 		// Reader-requested: reduced from 20px — this section reads as a
 		// slim data strip, not a full content block, so a tighter
 		// vertical rhythm fits it better.
@@ -1077,6 +1107,11 @@ $rd-invert-ink: var(--rd-invert-ink);
 		padding: 1px 4px;
 		line-height: 1.4;
 	}
+}
+
+@keyframes bday-market-pulse-scroll {
+	from { transform: translateX(0); }
+	to { transform: translateX(-50%); }
 }
 
 // ---- Columnists ---------------------------------------------------------
