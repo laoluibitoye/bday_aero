@@ -945,6 +945,10 @@ $bday-border: var(--color-border);
 .bday-byline__avatar {
 	border-radius: 50%;
 	flex-shrink: 0;
+	// A non-square uploaded author photo otherwise stretches to fill the
+	// <img>'s forced-square width/height box — object-fit crops instead of
+	// distorting, regardless of the source image's own aspect ratio.
+	object-fit: cover;
 }
 
 // Narrower prose measure than the article column's own full width — WSJ's
@@ -1149,6 +1153,8 @@ $bday-border: var(--color-border);
 	&__avatar {
 		border-radius: 50%;
 		flex-shrink: 0;
+		// Same distortion fix as .bday-byline__avatar above.
+		object-fit: cover;
 	}
 
 	strong {

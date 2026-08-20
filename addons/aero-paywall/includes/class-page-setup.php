@@ -47,11 +47,6 @@ final class Bday_Aero_Page_Setup {
 				'content'  => '',
 				'template' => 'templates/template-todays-paper.php',
 			),
-			'todays_epaper' => array(
-				'label'    => 'Todays Epaper',
-				'content'  => '',
-				'template' => 'templates/todays-epaper.php',
-			),
 			'newsletter'    => array(
 				'label'    => 'Newsletter Opt-In',
 				'content'  => '',

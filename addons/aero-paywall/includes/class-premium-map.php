@@ -101,9 +101,17 @@ final class Bday_Aero_Premium_Map {
 			return false;
 		}
 
+		// Bug found live: a matching restriction rule used to short-circuit
+		// this check entirely, which meant the moment *any* restriction rule
+		// existed anywhere on the site, the simple "Premium Categories"
+		// picker stopped doing anything for every post that didn't happen to
+		// match one of those rules — an admin picking a new premium category
+		// would see it silently ignored. Restriction rules and premium
+		// categories are two independent ways a post can be premium, not one
+		// overriding the other — either being true is enough.
 		$rules = Bday_Aero_Settings::restriction_rules();
-		if ( ! empty( $rules ) ) {
-			return null !== Bday_Aero_Restriction_Rules::match_rule_for_post( $post_id );
+		if ( ! empty( $rules ) && null !== Bday_Aero_Restriction_Rules::match_rule_for_post( $post_id ) ) {
+			return true;
 		}
 
 		return self::terms_match( $post_id, Bday_Aero_Settings::premium_terms() );

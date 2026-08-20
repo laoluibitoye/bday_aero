@@ -13,6 +13,21 @@ if ( ! defined( 'ABSPATH' ) ) {
  * template changes needed anywhere else.
  */
 
+/**
+ * Reader-reported: a non-square uploaded photo was coming out visibly
+ * stretched/oval in the byline and author-bio avatar. The old filter below
+ * asked wp_get_attachment_image_src() for an arbitrary `[$size, $size]`
+ * box, which WordPress only ever treats as a fit-within max, not a hard
+ * crop — the file it returns keeps the original aspect ratio, while
+ * get_avatar() still renders it inside a forced-square `width`/`height`
+ * box, so the browser stretches it to fill. A dedicated size registered
+ * with `crop = true` is what actually guarantees a true square file, no
+ * matter what aspect ratio the author's original upload was.
+ */
+add_action( 'after_setup_theme', static function (): void {
+	add_image_size( 'bday_author_avatar', 300, 300, true );
+} );
+
 add_action( 'show_user_profile', 'bday_render_author_photo_field' );
 add_action( 'edit_user_profile', 'bday_render_author_photo_field' );
 
@@ -120,8 +135,12 @@ add_filter(
 			return $url;
 		}
 
-		$size    = (int) ( $args['size'] ?? 96 );
-		$custom  = wp_get_attachment_image_src( $attachment_id, array( $size, $size ) );
+		// Always the hard-cropped square size registered above, regardless
+		// of the requested display $size — get_avatar() scales the
+		// resulting <img> down via width/height attributes anyway, and a
+		// guaranteed-square source is what keeps that scaling from
+		// distorting a non-square original.
+		$custom = wp_get_attachment_image_src( $attachment_id, 'bday_author_avatar' );
 		return $custom ? $custom[0] : $url;
 	},
 	10,
