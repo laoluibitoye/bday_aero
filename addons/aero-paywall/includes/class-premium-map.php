@@ -83,22 +83,38 @@ final class Bday_Aero_Premium_Map {
 		}
 
 		update_post_meta( $post_id, self::META_KEY, $value );
+		unset( self::$resolved_cache[ $post_id ] );
 		$this->invalidate_and_sync();
 	}
 
+	/**
+	 * Per-request memoization — is_premium() is called once per row by
+	 * class-post-list-badge.php on every wp-admin list-table screen
+	 * (including search results, the reported spike source), so without
+	 * this a page of N rows costs up to 3N wp_get_post_terms() lookups for
+	 * what's always the same answer within a single request.
+	 *
+	 * @var array<int, bool>
+	 */
+	private static array $resolved_cache = array();
+
 	/** Cheap per-post check: one meta read, plus (only when 'inherit') the restriction rules/legacy-terms check. */
 	public function is_premium( int $post_id ): bool {
+		if ( array_key_exists( $post_id, self::$resolved_cache ) ) {
+			return self::$resolved_cache[ $post_id ];
+		}
+
 		$override = get_post_meta( $post_id, self::META_KEY, true ) ?: 'inherit';
 
 		if ( 'premium' === $override ) {
-			return true;
+			return self::$resolved_cache[ $post_id ] = true;
 		}
 		if ( 'free' === $override ) {
-			return false;
+			return self::$resolved_cache[ $post_id ] = false;
 		}
 
 		if ( self::terms_match( $post_id, Bday_Aero_Settings::restriction_exceptions() ) ) {
-			return false;
+			return self::$resolved_cache[ $post_id ] = false;
 		}
 
 		// Bug found live: a matching restriction rule used to short-circuit
@@ -111,10 +127,10 @@ final class Bday_Aero_Premium_Map {
 		// overriding the other — either being true is enough.
 		$rules = Bday_Aero_Settings::restriction_rules();
 		if ( ! empty( $rules ) && null !== Bday_Aero_Restriction_Rules::match_rule_for_post( $post_id ) ) {
-			return true;
+			return self::$resolved_cache[ $post_id ] = true;
 		}
 
-		return self::terms_match( $post_id, Bday_Aero_Settings::premium_terms() );
+		return self::$resolved_cache[ $post_id ] = self::terms_match( $post_id, Bday_Aero_Settings::premium_terms() );
 	}
 
 	/** @param array<string, int[]> $taxonomy_term_map */

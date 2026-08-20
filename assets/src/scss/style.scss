@@ -621,7 +621,7 @@ footer {
             }
 
             span.title {
-                color: #131313;
+                color: var(--color-ink-1, #131313);
                 font-size: 15px;
                 padding: 0;
                 line-height: 36px;
@@ -678,7 +678,7 @@ footer {
                         font-size: 16px;
                         text-align: inherit;
                         text-transform: none;
-                        color: #131313;
+                        color: var(--color-ink-1, #131313);
 
                         a {
                             &:hover {
@@ -692,7 +692,7 @@ footer {
                         font-weight: 400;
                         font-size: 9px;
                         text-transform: none;
-                        color: #909090;
+                        color: var(--color-ink-3, #909090);
                     }
                 }
             }
@@ -843,11 +843,11 @@ footer {
         font-family: 'Lato';
         font-weight: 400;
         text-transform: inherit;
-        color: #2d2d2d;
+        color: var(--color-ink-1, #2d2d2d);
         text-transform: uppercase;
 
         span {
-            color: #131313;
+            color: var(--color-ink-1, #131313);
             font-size: 16px;
             position: relative;
             padding-bottom: 0.51rem;
@@ -899,7 +899,7 @@ footer {
                     font-size: 16px;
                     text-align: inherit;
                     text-transform: inherit;
-                    color: #131313;
+                    color: var(--color-ink-1, #131313);
                 }
 
                 .post-meta {
@@ -907,7 +907,7 @@ footer {
                     font-weight: 400;
                     font-size: 9px;
                     text-transform: none;
-                    color: #909090;
+                    color: var(--color-ink-3, #909090);
                     padding-top: 5px;
 
                     .time {
@@ -989,7 +989,7 @@ footer {
                 font-size: 25px;
                 text-align: inherit;
                 text-transform: capitalize;
-                color: #131313;
+                color: var(--color-ink-1, #131313);
             }
 
             .post-meta {
@@ -1002,7 +1002,7 @@ footer {
                     font-weight: 400;
                     font-size: 12px;
                     text-transform: capitalize;
-                    color: #909090;
+                    color: var(--color-ink-3, #909090);
                     margin-inline-end: 0.65rem;
                 }
 
@@ -1013,7 +1013,7 @@ footer {
                     font-weight: 400;
                     font-size: 9px;
                     text-transform: none;
-                    color: #909090;
+                    color: var(--color-ink-3, #909090);
 
                 }
             }
@@ -1091,7 +1091,7 @@ footer {
                 font-size: 17px;
                 text-align: inherit;
                 text-transform: none;
-                color: #131313;
+                color: var(--color-ink-1, #131313);
 
                 a {
                     transition: all .4s ease;
@@ -1108,7 +1108,7 @@ footer {
                 font-weight: 400;
                 font-size: 9px;
                 text-transform: none;
-                color: #909090;
+                color: var(--color-ink-3, #909090);
             }
         }
     }
@@ -1206,7 +1206,7 @@ footer {
                 font-size: 16px;
                 text-align: inherit;
                 text-transform: none;
-                color: #131313;
+                color: var(--color-ink-1, #131313);
 
                 a {
                     transition: all .4s ease;
@@ -1226,7 +1226,7 @@ footer {
                     font-weight: 400;
                     font-size: 12px;
                     text-transform: capitalize;
-                    color: #909090;
+                    color: var(--color-ink-3, #909090);
                     font-style: normal;
                     margin-right: 8px;
                     max-width: 110px;
@@ -1242,7 +1242,7 @@ footer {
                     font-weight: 400;
                     font-size: 12px;
                     text-transform: capitalize;
-                    color: #909090;
+                    color: var(--color-ink-3, #909090);
                     font-style: normal;
                     margin-right: 8px;
                     max-width: 110px;
@@ -1287,7 +1287,7 @@ footer {
             font-size: 17px;
             text-align: inherit;
             text-transform: none;
-            color: #131313;
+            color: var(--color-ink-1, #131313);
             font-weight: 600;
             line-height: 17px;
             font-size: 17px;
@@ -1300,7 +1300,7 @@ footer {
             font-weight: 400;
             font-size: 12px;
             text-transform: none;
-            color: #909090;
+            color: var(--color-ink-3, #909090);
             margin-top: 10px;
             display: block;
         }
@@ -1327,11 +1327,11 @@ footer {
         font-family: 'Lato';
         font-weight: 400;
         text-transform: inherit;
-        color: #2d2d2d;
+        color: var(--color-ink-1, #2d2d2d);
         text-transform: uppercase;
 
         span {
-            color: #131313;
+            color: var(--color-ink-1, #131313);
             font-size: 16px;
             position: relative;
             padding-bottom: 0.51rem;
@@ -1379,7 +1379,7 @@ footer {
             font-weight: 400;
             font-size: 12px;
             text-transform: none;
-            color: #909090;
+            color: var(--color-ink-3, #909090);
 
             .post-author {
 
@@ -1475,7 +1475,7 @@ footer {
             font-weight: 400;
             font-size: 12px;
             text-transform: none;
-            color: #909090;
+            color: var(--color-ink-3, #909090);
 
             .post-author {
 
@@ -1508,11 +1508,11 @@ footer {
         font-family: 'Lato';
         font-weight: 400;
         text-transform: inherit;
-        color: #2d2d2d;
+        color: var(--color-ink-1, #2d2d2d);
         text-transform: uppercase;
 
         span {
-            color: #131313;
+            color: var(--color-ink-1, #131313);
             font-size: 16px;
             position: relative;
             padding-bottom: 0.51rem;
@@ -1609,11 +1609,11 @@ footer {
         font-family: 'Lato';
         font-weight: 400;
         text-transform: inherit;
-        color: #2d2d2d;
+        color: var(--color-ink-1, #2d2d2d);
         text-transform: uppercase;
 
         span {
-            color: #131313;
+            color: var(--color-ink-1, #131313);
             font-size: 16px;
             position: relative;
             padding-bottom: 0.51rem;
@@ -1715,7 +1715,7 @@ footer {
                 font-weight: 400;
                 font-size: 9px;
                 text-transform: none;
-                color: #909090;
+                color: var(--color-ink-3, #909090);
             }
         }
     }
@@ -1827,7 +1827,7 @@ footer {
     text-transform: uppercase;
 
     span {
-        color: #131313;
+        color: var(--color-ink-1, #131313);
         font-size: 16px;
         position: relative;
         padding-bottom: 0.51rem;
@@ -2124,7 +2124,7 @@ footer {
                     font-size: 26px;
                     text-align: inherit;
                     text-transform: none;
-                    color: #131313;
+                    color: var(--color-ink-1, #131313);
 
 
                     a {
@@ -2154,7 +2154,7 @@ footer {
                     font-weight: 400;
                     font-size: 12px;
                     text-transform: none;
-                    color: #909090;
+                    color: var(--color-ink-3, #909090);
 
                     .post-author {
                         &:after {
@@ -2494,7 +2494,7 @@ footer {
                     text-transform: uppercase;
 
                     span {
-                        color: #131313;
+                        color: var(--color-ink-1, #131313);
                         font-size: 18px;
                         position: relative;
                         padding-bottom: 0.51rem;
@@ -2576,7 +2576,7 @@ footer {
                         font-size: 11px;
                         font-family: 'Lato';
                         font-weight: 700;
-                        color: #131313;
+                        color: var(--color-ink-1, #131313);
 
                         a {
                             font-size: 11px;
@@ -2691,7 +2691,7 @@ footer {
                         font-size: 26px;
                         text-align: inherit;
                         text-transform: none;
-                        color: #131313;
+                        color: var(--color-ink-1, #131313);
 
 
                         a {
@@ -2721,7 +2721,7 @@ footer {
                         font-weight: 400;
                         font-size: 12px;
                         text-transform: none;
-                        color: #909090;
+                        color: var(--color-ink-3, #909090);
 
                         .post-author {
                             &:after {
@@ -2756,11 +2756,11 @@ footer {
         font-family: 'Lato';
         font-weight: 400;
         text-transform: inherit;
-        color: #2d2d2d;
+        color: var(--color-ink-1, #2d2d2d);
         text-transform: uppercase;
 
         span {
-            color: #131313;
+            color: var(--color-ink-1, #131313);
             font-size: 18px;
             position: relative;
             padding-bottom: 0.51rem;
@@ -2917,7 +2917,7 @@ footer {
             color: #2d2d2d;
 
             span {
-                color: #131313;
+                color: var(--color-ink-1, #131313);
                 position: relative;
                 padding: 0 15px 0 24px;
                 background: #fff;
@@ -3185,7 +3185,7 @@ footer {
                 text-transform: uppercase;
 
                 span {
-                    color: #131313;
+                    color: var(--color-ink-1, #131313);
                     font-size: 16px;
                     position: relative;
                     padding-bottom: 0.51rem;
@@ -3409,7 +3409,7 @@ footer {
                     font-size: 26px;
                     text-align: inherit;
                     text-transform: none;
-                    color: #131313;
+                    color: var(--color-ink-1, #131313);
 
                     a {
                         &:hover {
@@ -3436,7 +3436,7 @@ footer {
                     font-weight: 400;
                     font-size: 12px;
                     text-transform: none;
-                    color: #909090;
+                    color: var(--color-ink-3, #909090);
 
                     .post-author {
                         &:after {
@@ -3493,7 +3493,7 @@ footer {
                         font-weight: 400;
                         font-size: 9px;
                         text-transform: none;
-                        color: #909090;
+                        color: var(--color-ink-3, #909090);
 
                         .post-author {
                             font-family: 'Lato';

@@ -330,6 +330,10 @@ $rd-invert-ink: var(--rd-invert-ink);
 		display: flex;
 		flex-direction: column;
 		gap: 18px;
+		// Reader-requested: on the single-column layout the lead story
+		// should read first, above Top News — source order (topnews, lead,
+		// latest) only makes sense in the 3-column desktop grid.
+		@include bd-down($bp-desktop) { order: 2; }
 	}
 
 	&__topnews-head { display: flex; align-items: center; gap: 10px; }
@@ -339,12 +343,18 @@ $rd-invert-ink: var(--rd-invert-ink);
 		display: flex;
 		flex-direction: column;
 		gap: 20px;
+		@include bd-down($bp-desktop) { order: 1; }
 
 		&-media img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: var(--rd-placeholder-bg); }
 		&-body { display: flex; flex-direction: column; gap: 14px; }
 		&-eyebrow { display: flex; align-items: center; gap: 12px; }
 		&-title {
-			font-family: var(--rd-font-display);
+			// Was var(--rd-font-display) ('Newsreader', a redesign-only face) —
+			// visibly mismatched every other article title on the site, which
+			// all use this exact font-headline stack (Georgia/Times New Roman,
+			// since --font-headline itself isn't defined as a custom property
+			// anywhere in the theme, so it always resolves to this fallback).
+			font-family: var(--font-headline, Georgia, serif);
 			font-size: 46px;
 			line-height: 1.06;
 			font-weight: 600;
@@ -363,6 +373,7 @@ $rd-invert-ink: var(--rd-invert-ink);
 		display: flex;
 		flex-direction: column;
 		gap: 20px;
+		@include bd-down($bp-desktop) { order: 3; }
 	}
 }
 

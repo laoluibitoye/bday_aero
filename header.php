@@ -28,6 +28,21 @@
 				document.documentElement.setAttribute( 'data-theme', t );
 			}
 		} catch ( e ) {}
+		// Same "set the state before first paint" reasoning as the theme
+		// read above: script.js's own scroll listener (assets/src/js/script.js,
+		// bdayInitHeader) only attaches after DOMContentLoaded, so a reader
+		// landing already scrolled (browser scroll-restoration on reload or
+		// back-navigation) used to see the full-height header for a moment
+		// before it "jumped" to the condensed .is-scrolled state once that
+		// script ran. This mirrors just the initial-paint half of that
+		// logic (ENTER_THRESHOLD only, no hysteresis needed for a one-time
+		// read) via a class on <html> the CSS can key off immediately;
+		// script.js's own listener takes over for all scrolling after that.
+		try {
+			if ( window.scrollY > 64 ) {
+				document.documentElement.classList.add( 'bd-preload-scrolled' );
+			}
+		} catch ( e ) {}
 	})();
 	</script>
 	<?php wp_head(); ?>

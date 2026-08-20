@@ -83,7 +83,7 @@ $top_news_archive_url = $bdlead_term && ! is_wp_error( $bdlead_term ) ? get_tag_
 
 		<div class="bday-rd-hero__latest">
 			<?php do_action( 'bday_hero_before_recent' ); ?>
-			<span class="bday-rd-kicker">Latest News</span>
+			<span class="bday-rd-kicker">Recent</span>
 			<ol class="bday-rd-numbered-list bday-rd-hero__latest-list">
 				<?php foreach ( $latest_news as $i => $post ) : ?>
 					<li>

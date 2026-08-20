@@ -164,7 +164,7 @@ $bday-border: var(--color-border);
 		a { color: $bday-ink; text-decoration: none; &:hover { color: $bday-red; } }
 	}
 
-	&__excerpt { font-size: 13px; color: $bday-muted; margin-top: 6px; }
+	&__excerpt { font-size: 13px; line-height: 1.55; color: $bday-muted; margin-top: 6px; }
 }
 
 // Video-format post badge (bday_get_card_media(), core/helpers.php) —
@@ -560,7 +560,11 @@ $bday-border: var(--color-border);
 			font-weight: 700;
 			font-size: 15px;
 			line-height: 1.3;
-			color: $bday-ink;
+			// $bday-ink flips to near-white in dark mode; the polaroid
+			// frame above stays hardcoded #fff regardless of theme, so
+			// this needs its own fixed dark color, not the theme-relative
+			// one, or it goes invisible on a dark page.
+			color: #1a1a1a;
 			margin: 0;
 		}
 	}
@@ -866,6 +870,10 @@ $bday-border: var(--color-border);
 	align-items: center;
 	gap: 12px;
 	background: #f3f3f3;
+	// This bar is deliberately always light-gray regardless of theme —
+	// without it, &__match text below inherits $bday-ink, which flips to a
+	// near-white value in dark mode and disappears on this fixed-light bg.
+	color: #1a1a1a;
 	padding: 10px 16px;
 	overflow: hidden;
 
@@ -1200,6 +1208,12 @@ $bday-border: var(--color-border);
 .bday-newsletter-form,
 .bday-newsletter-contextual {
 	background: #fff;
+	// This card is deliberately always-white regardless of site theme (same
+	// as .bday-toon-card__frame's polaroid caption below) — without an
+	// explicit color here its labels/copy inherit $bday-ink, which in dark
+	// mode resolves to a near-white value, producing invisible
+	// white-on-white text.
+	color: #1a1a1a;
 	border: 1px solid $bday-border;
 	border-radius: 12px;
 	padding: 24px;

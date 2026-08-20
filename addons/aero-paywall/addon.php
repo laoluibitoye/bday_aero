@@ -64,6 +64,7 @@ require_once __DIR__ . '/includes/class-account-page.php';
 require_once __DIR__ . '/includes/class-reader-settings-page.php';
 require_once __DIR__ . '/includes/class-nav-button.php';
 require_once __DIR__ . '/includes/class-post-list-badge.php';
+require_once __DIR__ . '/includes/class-admin-search-optimizer.php';
 require_once __DIR__ . '/includes/class-vite-assets.php';
 require_once __DIR__ . '/includes/class-shared-assets.php';
 require_once __DIR__ . '/includes/class-restrictions-picker.php';
@@ -87,6 +88,12 @@ new Bday_Aero_Page_Setup();
 // should stay accurate even while gating itself is switched off.
 $bday_aero_premium_map = new Bday_Aero_Premium_Map();
 new Bday_Aero_Post_List_Badge( $bday_aero_premium_map );
+
+// Reader-reported: editors searching the wp-admin post list caused a
+// server/RDS resource spike — same "always run regardless of the reader-
+// facing gate" reasoning as the premium map above, this is a wp-admin-only
+// query optimization with no reader-facing effect either way.
+new Bday_Aero_Admin_Search_Optimizer();
 
 // Always constructed: activation-attempt/JWKS-verification hooks should
 // run as soon as a license key is configured, independent of the

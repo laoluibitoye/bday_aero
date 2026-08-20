@@ -951,7 +951,12 @@ body {
 // masthead-height/logo-size condensing below, with no background/
 // transparency change and nothing that collapses.
 
-.bd-header.is-scrolled {
+// html.bd-preload-scrolled is the pre-paint fallback set synchronously by
+// header.php's inline bootstrap script (before script.js's own scroll
+// listener attaches) — a reader landing already scrolled sees the
+// condensed header from first paint instead of a jump a few seconds later.
+.bd-header.is-scrolled,
+html.bd-preload-scrolled .bd-header {
 	box-shadow: var(--shadow-sm);
 
 	.bd-header__masthead-row {
@@ -1194,5 +1199,50 @@ body {
 	&:focus-visible {
 		outline: 2px solid var(--color-focus-ring);
 		outline-offset: 2px;
+	}
+}
+
+// --- Account flyout panel: pre-hydration critical CSS ----------------------
+// class-nav-button.php prints .aero-paywall-nav-panel/-backdrop markup
+// straight into this server-rendered header on every page load, but their
+// real positioning/animation CSS lives entirely in the SDK bundle
+// (sdk/src/styles.ts), injected via a <style> tag only once that deferred
+// script executes — a window after first paint where the panel/backdrop
+// render as plain unstyled blocks inline in the header flow. This is just
+// the load-bearing subset (position/visibility/z-index, not colors or
+// child element styling, which the SDK's own stylesheet still owns and
+// will apply once it runs) duplicated here so it's present from first
+// paint regardless of JS timing. Selectors/values must stay in sync with
+// sdk/src/styles.ts's .aero-paywall-nav-backdrop/.aero-paywall-nav-panel
+// rules.
+.aero-paywall-nav-backdrop {
+	position: fixed;
+	inset: 0;
+	opacity: 0;
+	pointer-events: none;
+	z-index: 100000;
+
+	&.aero-paywall-nav-backdrop--visible {
+		opacity: 1;
+		pointer-events: auto;
+	}
+}
+
+.aero-paywall-nav-panel {
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: 380px;
+	max-width: 100vw;
+	transform: translateX(100%);
+	visibility: hidden;
+	z-index: 100001;
+	box-sizing: border-box;
+	overflow-y: auto;
+
+	&.aero-paywall-nav-panel--open {
+		transform: translateX(0);
+		visibility: visible;
 	}
 }
