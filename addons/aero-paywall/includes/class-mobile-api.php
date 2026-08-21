@@ -75,6 +75,8 @@ final class Bday_Aero_Mobile_Api {
 
 	/** @return array{open: bool, stage: string, remaining: int|null, isSubscriber: bool} */
 	private function resolve_entitlement( WP_REST_Request $request, int $post_id ): array {
+		$is_authenticated_reader = false;
+
 		$auth = $request->get_header( 'authorization' ) ?? '';
 		if ( str_starts_with( $auth, 'Bearer ' ) ) {
 			$token    = substr( $auth, 7 );
@@ -102,7 +104,10 @@ final class Bday_Aero_Mobile_Api {
 				}
 				// Signed in but not subscribed: same free-article meter an
 				// anonymous reader gets, not an automatic pass — falls
-				// through to the device-id/meter check below.
+				// through to the device-id/meter check below. Remembered
+				// so the *stage* we hand back once that meter is
+				// exhausted skips register/profile prompts (below).
+				$is_authenticated_reader = true;
 			}
 		}
 
@@ -117,8 +122,24 @@ final class Bday_Aero_Mobile_Api {
 			return array( 'open' => false, 'stage' => 'paid_lock', 'remaining' => 0, 'isSubscriber' => false );
 		}
 
-		$open = ! in_array( $meter['stage'], array( 'paid_lock', 'register_prompt', 'profile_prompt' ), true );
-		return array( 'open' => $open, 'stage' => $meter['stage'], 'remaining' => $meter['remaining'], 'isSubscriber' => false );
+		$stage = $meter['stage'];
+		/**
+		 * Bug found live: a signed-in-but-unsubscribed reader who'd used up
+		 * their free views still got whichever stage the device meter
+		 * naturally computes — register_prompt or profile_prompt, the same
+		 * ones an anonymous, never-registered visitor sees. Those steps
+		 * are already done for this reader; showing "Create a free
+		 * account" to someone already signed in is confusing and, per
+		 * reader feedback, actively hurts conversion (it reads as broken,
+		 * not as a nudge to subscribe). The only gate that ever makes
+		 * sense for an authenticated non-subscriber is "Subscribe."
+		 */
+		if ( $is_authenticated_reader && in_array( $stage, array( 'register_prompt', 'profile_prompt' ), true ) ) {
+			$stage = 'paid_lock';
+		}
+
+		$open = ! in_array( $stage, array( 'paid_lock', 'register_prompt', 'profile_prompt' ), true );
+		return array( 'open' => $open, 'stage' => $stage, 'remaining' => $meter['remaining'], 'isSubscriber' => false );
 	}
 
 	private function redeem_gift( string $token, int $post_id ): bool {
