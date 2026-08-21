@@ -953,9 +953,20 @@ $bday-border: var(--color-border);
 .bday-byline__avatar {
 	border-radius: 50%;
 	flex-shrink: 0;
-	// A non-square uploaded author photo otherwise stretches to fill the
-	// <img>'s forced-square width/height box — object-fit crops instead of
-	// distorting, regardless of the source image's own aspect ratio.
+	// Reader-reported, still reproducing after the first object-fit fix:
+	// a source photo smaller than the registered bday_author_avatar crop
+	// size (300x300) silently fails to generate that crop at all — WP
+	// never upscales a generated size past the original's own dimensions
+	// — so get_avatar_url()'s filter falls back to a differently-shaped
+	// derivative, and object-fit alone can't help if the <img> box itself
+	// isn't actually square (get_avatar()'s width/height HTML attributes
+	// only *suggest* a box; nothing here was forcing it). Explicit,
+	// fixed CSS width/height makes the box unconditionally square
+	// regardless of what aspect ratio the served source turns out to be
+	// — matches the 32px this class is always requested at
+	// (template-parts/single-default.php).
+	width: 32px;
+	height: 32px;
 	object-fit: cover;
 }
 
@@ -1180,10 +1191,33 @@ $bday-border: var(--color-border);
 	&__avatar {
 		border-radius: 50%;
 		flex-shrink: 0;
-		// Same distortion fix as .bday-byline__avatar above.
+		// Same distortion fix as .bday-byline__avatar above — matches the
+		// 48px this class is always requested at (single-default.php).
+		width: 48px;
+		height: 48px;
 		object-fit: cover;
 	}
+}
 
+/**
+ * Reader-reported, still reproducing after the width/height fix directly
+ * above: this element is rendered inside .post-content (single-
+ * default.php), and style.scss's `#article-page main article
+ * .post-content img { height: auto; ... }` is higher specificity (an ID
+ * in the selector) than a lone `.bday-author-bio__avatar` class rule —
+ * it was winning regardless of source order, forcing height back to
+ * auto and reproducing the exact stretched/oval distortion the fix
+ * above was meant to prevent. Matching the legacy selector's own shape
+ * (same fix pattern already used for #article-page's .post-content
+ * color override above) rather than reaching for !important.
+ */
+#article-page main article .post-content .bday-author-bio__avatar {
+	width: 48px;
+	height: 48px;
+	object-fit: cover;
+}
+
+.bday-author-bio {
 	strong {
 		display: block;
 		font-family: var(--font-headline, Georgia, serif);
@@ -1216,6 +1250,13 @@ $bday-border: var(--color-border);
 .bday-byline__author-avatar {
 	border-radius: 50%;
 	flex-shrink: 0;
+	// Same distortion fix as .bday-byline__avatar above — this is the
+	// multi-author byline's per-author avatar (helpers.php), always
+	// requested at 24px, and previously had no object-fit/fixed-size
+	// protection against a non-square source at all.
+	width: 24px;
+	height: 24px;
+	object-fit: cover;
 }
 
 .bday-byline__authors-sep {

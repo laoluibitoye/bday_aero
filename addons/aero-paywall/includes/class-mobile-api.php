@@ -73,11 +73,50 @@ final class Bday_Aero_Mobile_Api {
 		return $this->response( $post, $is_premium, $entitlement['stage'], $entitlement['remaining'], false, $preview, null );
 	}
 
+	/**
+	 * Reader-reported live: an already-logged-in reader still saw the
+	 * register/login gate. Traced to a well-known Apache/CGI/FastCGI
+	 * hosting quirk (common on shared/cPanel hosts, unrelated to this
+	 * theme's own code): the Authorization header is silently stripped
+	 * before it ever reaches PHP unless the server explicitly passes it
+	 * through, so $request->get_header('authorization') alone can come
+	 * back empty even though the reader's browser genuinely sent it —
+	 * every request then falls through to the anonymous/device-based
+	 * path below, regardless of how validly signed-in the reader actually
+	 * is. This checks every place a host might have put that header
+	 * instead of trusting just one, so the fix doesn't also depend on the
+	 * server config being correct.
+	 */
+	private static function get_authorization_header( WP_REST_Request $request ): string {
+		$from_request = $request->get_header( 'authorization' );
+		if ( $from_request ) {
+			return $from_request;
+		}
+		if ( ! empty( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
+			return sanitize_text_field( wp_unslash( $_SERVER['HTTP_AUTHORIZATION'] ) );
+		}
+		// Apache's own name for the header once an internal redirect (e.g.
+		// a rewrite rule already present for something unrelated) has
+		// touched the request — the single most common place a stripped
+		// Authorization header actually turns up.
+		if ( ! empty( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ) {
+			return sanitize_text_field( wp_unslash( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) );
+		}
+		if ( function_exists( 'getallheaders' ) ) {
+			foreach ( getallheaders() as $name => $value ) {
+				if ( 0 === strcasecmp( $name, 'Authorization' ) ) {
+					return sanitize_text_field( wp_unslash( $value ) );
+				}
+			}
+		}
+		return '';
+	}
+
 	/** @return array{open: bool, stage: string, remaining: int|null, isSubscriber: bool} */
 	private function resolve_entitlement( WP_REST_Request $request, int $post_id ): array {
 		$is_authenticated_reader = false;
 
-		$auth = $request->get_header( 'authorization' ) ?? '';
+		$auth = self::get_authorization_header( $request );
 		if ( str_starts_with( $auth, 'Bearer ' ) ) {
 			$token    = substr( $auth, 7 );
 			$base_url = Bday_Aero_Settings::api_base_url();

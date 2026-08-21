@@ -66,7 +66,7 @@ final class Bday_Aero_Content_Gate {
 			esc_html( $preview ),
 			$post_id,
 			esc_attr( $initial_stage ),
-			esc_html__( 'Subscribe to keep reading this article.', 'bday-premium' ),
+			esc_html( self::placeholder_text( $initial_stage ) ),
 			self::mount_points_markup(),
 			$structured_data
 		);
@@ -107,9 +107,40 @@ final class Bday_Aero_Content_Gate {
 				. '</div>',
 			$post_id,
 			esc_attr( $initial_stage ),
-			esc_html__( 'Subscribe to read this article.', 'bday-premium' ),
+			esc_html( self::placeholder_text( $initial_stage ) ),
 			self::mount_points_markup()
 		);
+	}
+
+	/**
+	 * Reader-reported: this placeholder used to be a single hardcoded
+	 * "Subscribe to keep reading" string regardless of $initial_stage —
+	 * harmless for a reader who never sees it (the SDK replaces it within
+	 * one round trip to the entitlement endpoint), but on a slow load
+	 * (shared hosting under load, a cold cache, a slow connection) a
+	 * reader can land on the page during that window and see this text
+	 * as if it were the real, final gate — including an anonymous,
+	 * never-registered reader seeing "Subscribe" instead of "Create a
+	 * free account," which reads as broken and undoes the exact register-
+	 * vs-subscribe distinction the funnel is built around. Reuses the
+	 * same admin-configured copy (Bday_Aero_Settings::prompt_copy()) the
+	 * SDK's own context passes to the client, so whichever stage briefly
+	 * shows here is never wrong, only ever less interactive, than what
+	 * follows once JS hydrates. $initial_stage is only ever a same-paint
+	 * *hint* (Bday_Aero_Meter_Client::check(), not a verified per-reader
+	 * entitlement) — deliberately never anything stronger than that, and
+	 * never a substitute for the SDK's own real check.
+	 */
+	private static function placeholder_text( string $initial_stage ): string {
+		$copy = Bday_Aero_Settings::prompt_copy();
+		// 'unknown' (no device cookie yet — the very first request from a
+		// browser that's never visited before) and 'open' (would mean this
+		// post isn't actually gated, unreachable here since gate_content()
+		// already returned early in that case) both fall back to the
+		// friendliest, most likely-correct stage for a genuinely new
+		// reader: register.
+		$stage = isset( $copy[ $initial_stage ] ) ? $initial_stage : 'register_prompt';
+		return $copy[ $stage ]['headline'] ?? __( 'Subscribe to keep reading this article.', 'bday-premium' );
 	}
 
 	private static function mount_points_markup(): string {
