@@ -1095,18 +1095,6 @@ $rd-invert-ink: var(--rd-invert-ink);
 	&__value { font-family: var(--rd-font-display); font-size: 26px; font-weight: 600; color: $rd-ink; }
 
 	&__label-row { display: flex; align-items: center; gap: 6px; }
-
-	&__live {
-		font-family: var(--font-mono);
-		font-size: 8.5px;
-		font-weight: 700;
-		letter-spacing: 0.1em;
-		color: $rd-accent;
-		border: 1px solid $rd-accent;
-		border-radius: 2px;
-		padding: 1px 4px;
-		line-height: 1.4;
-	}
 }
 
 @keyframes bday-market-pulse-scroll {

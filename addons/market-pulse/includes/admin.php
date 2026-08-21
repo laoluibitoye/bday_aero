@@ -85,7 +85,7 @@ function bday_market_pulse_normalize( array $values ): array {
 function bday_render_market_pulse_tab( array $values ): void {
 	$state = bday_market_pulse_normalize( $values );
 	?>
-	<p class="description">Each row is one figure on the homepage's scrolling market ticker. Leave a row's value blank (or remove it) to drop it from the strip. The row with id "ngn_usd" is the one figure with a live feed (open.er-api.com) — its Value/Note fields here are only the fallback shown if the live feed hasn't responded yet.</p>
+	<p class="description">Each row is one figure on the homepage's scrolling market ticker. Leave a row's value blank (or remove it) to drop it from the strip. Every figure is manually entered — update a value here whenever the desk wants the strip refreshed.</p>
 
 	<table class="widefat striped bday-market-pulse-table" style="max-width:820px;">
 		<thead>
@@ -221,7 +221,7 @@ function bday_sanitize_market_pulse( $input ): array {
 		}
 		$id = sanitize_key( wp_unslash( $raw['id'] ?? '' ) );
 		$items[] = array(
-			'id'        => $id, // '' for a brand-new row is fine — only 'ngn_usd' is ever looked up by id.
+			'id'        => $id, // '' for a brand-new row is fine — no id is looked up specially anymore.
 			'label'     => $label,
 			'value'     => $value,
 			'note'      => sanitize_text_field( wp_unslash( $raw['note'] ?? '' ) ),

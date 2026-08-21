@@ -13,35 +13,20 @@ $pulse = get_option( 'bday_market_pulse', array() );
 $pulse = is_array( $pulse ) ? $pulse : array();
 $state = bday_market_pulse_normalize( $pulse );
 
-// NGN/USD is live where possible (open.er-api.com, refreshed by
-// WP-Cron — includes/live-feed.php) and only falls back to the manually
-// entered value if the feed hasn't returned anything yet. Whichever row
-// carries id 'ngn_usd' (there's normally exactly one, but nothing
-// enforces that) gets the live value merged in.
-$naira_live = function_exists( 'bday_market_pulse_naira_live' ) ? bday_market_pulse_naira_live() : null;
-
+// Every figure here (including NGN/USD) is a plain manually-entered
+// value now — no live feed. See addon.php's docblock for why that was
+// removed (a real contributing cause of intermittent server 502/504s).
 $cells = array();
 foreach ( $state['items'] as $item ) {
-	$value = $item['value'];
-	$note  = $item['note'];
-	$live  = false;
-
-	if ( 'ngn_usd' === $item['id'] && $naira_live ) {
-		$value = $naira_live['value'];
-		$note  = $naira_live['change'];
-		$live  = true;
-	}
-
-	if ( '' === $value ) {
+	if ( '' === $item['value'] ) {
 		continue;
 	}
 
 	$cells[] = array(
 		'label'     => $item['label'],
-		'value'     => $value,
-		'note'      => $note,
+		'value'     => $item['value'],
+		'note'      => $item['note'],
 		'note_type' => $item['note_type'],
-		'live'      => $live,
 	);
 }
 
@@ -61,7 +46,7 @@ if ( empty( $cells ) ) {
  * a bare `function` declaration here would fatal with "cannot redeclare"
  * the second time.
  *
- * @param array<int, array{label: string, value: string, note: string, note_type: string, live: bool}> $cells
+ * @param array<int, array{label: string, value: string, note: string, note_type: string}> $cells
  */
 $bday_market_pulse_render_cells = function ( array $cells, bool $hidden = false ): void {
 	foreach ( $cells as $cell ) {
@@ -78,7 +63,6 @@ $bday_market_pulse_render_cells = function ( array $cells, bool $hidden = false 
 		<div class="bday-rd-market-pulse__cell"<?php echo $hidden ? ' aria-hidden="true"' : ''; ?>>
 			<span class="bday-rd-market-pulse__label-row">
 				<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( $cell['label'] ); ?></span>
-				<?php if ( $cell['live'] ) : ?><span class="bday-rd-market-pulse__live" title="Refreshed automatically">LIVE</span><?php endif; ?>
 			</span>
 			<span class="bday-rd-market-pulse__value"><?php echo esc_html( $cell['value'] ); ?></span>
 			<?php if ( '' !== $cell['note'] ) : ?><span class="bday-rd-kicker <?php echo esc_attr( $note_class ); ?>"><?php echo esc_html( $cell['note'] ); ?></span><?php endif; ?>
