@@ -16,7 +16,7 @@
 	font-style: normal;
 	font-weight: 400 700;
 	font-display: swap;
-	src: url('/wp-content/themes/Bday_Aero/assets/build/fonts/newsreader-variable.woff2') format('woff2');
+	src: url('../fonts/newsreader-variable.woff2') format('woff2');
 }
 
 @font-face {
@@ -24,7 +24,7 @@
 	font-style: italic;
 	font-weight: 400 700;
 	font-display: swap;
-	src: url('/wp-content/themes/Bday_Aero/assets/build/fonts/newsreader-italic-variable.woff2') format('woff2');
+	src: url('../fonts/newsreader-italic-variable.woff2') format('woff2');
 }
 
 @font-face {
@@ -32,7 +32,7 @@
 	font-style: normal;
 	font-weight: 400 700;
 	font-display: swap;
-	src: url('/wp-content/themes/Bday_Aero/assets/build/fonts/inter-tight-variable.woff2') format('woff2');
+	src: url('../fonts/inter-tight-variable.woff2') format('woff2');
 }
 
 .bday-rd {

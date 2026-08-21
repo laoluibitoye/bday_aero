@@ -56,10 +56,31 @@ function bday_typography_build_markup( array $settings ): string {
 
 	$out .= '<style>';
 	if ( ! empty( $settings['header_font'] ) ) {
-		$out .= 'h1,h2,h3,h4,h5,h6,.post-title,.post-title a{font-family:"' . esc_html( $settings['header_font'] ) . '",sans-serif !important;}';
+		// :not(.bday-rd *) — the "Redesign 2026" homepage (homepage-
+		// variants/redesign.php's .bday-rd wrapper) has its own deliberate,
+		// self-contained font system (--rd-font-display/--rd-font-body,
+		// _homepage-redesign.scss) that every .bday-rd-* component reads
+		// from. This blanket h1-h6 !important override predates that
+		// system and was clobbering it wherever a redesign title happens
+		// to sit on an actual heading tag rather than a span/div (found
+		// live: the hero's lead-story <h1> rendered in this admin-picked
+		// font while every sibling title in the same hero, all <span>s,
+		// correctly kept the redesign's own font) — excluded so this
+		// setting stays scoped to the classic templates it was built for.
+		$out .= 'h1:not(.bday-rd *),h2:not(.bday-rd *),h3:not(.bday-rd *),h4:not(.bday-rd *),h5:not(.bday-rd *),h6:not(.bday-rd *),.post-title,.post-title a{font-family:"' . esc_html( $settings['header_font'] ) . '",sans-serif !important;}';
 	}
 	if ( ! empty( $settings['body_font'] ) ) {
-		$out .= 'body,p,.article-text,.post-excerpt,article p{font-family:"' . esc_html( $settings['body_font'] ) . '",sans-serif !important;}';
+		// Same .bday-rd exclusion as header_font above, for `p`/`article p`
+		// specifically — those select paragraph tags directly, including
+		// ones inside the redesign homepage with no font-family rule of
+		// their own to out-cascade this. (The plain `body` selector below
+		// doesn't need the same guard: it only ever matches the single
+		// <body> element itself, and .bday-rd's own font-family rule
+		// already out-prioritizes whatever <body> inherits down to it —
+		// direct rules always beat inherited values regardless of
+		// !important, which only arbitrates between rules matching the
+		// *same* element.)
+		$out .= 'body,p:not(.bday-rd *),.article-text,.post-excerpt,article p:not(.bday-rd *){font-family:"' . esc_html( $settings['body_font'] ) . '",sans-serif !important;}';
 	}
 	if ( ! empty( $settings['post_title_size'] ) || ! empty( $settings['header_line_height'] ) ) {
 		$out .= '.post-title,.post-title a{';
