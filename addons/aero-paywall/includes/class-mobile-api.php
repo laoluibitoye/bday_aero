@@ -56,7 +56,8 @@ final class Bday_Aero_Mobile_Api {
 		// SDK itself calls to decide whether to unlock an article, so
 		// this check mattering here is what actually enforces the scope
 		// setting, not just what the page-load gate renders.
-		$global_lock = 'global_lock' === ( Bday_Aero_Paywall_Config_Client::get()['meter_scope_mode'] ?? 'hybrid' );
+		$scope_mode  = Bday_Aero_Paywall_Config_Client::get()['meter_scope_mode'] ?? 'hybrid';
+		$global_lock = 'global_lock' === $scope_mode;
 		$is_gated    = Bday_Aero_Settings::enabled() && Bday_Aero_License_Client::is_active()
 			&& ( 'hard' === Bday_Aero_Settings::paywall_mode() || $is_premium || $global_lock );
 
@@ -64,6 +65,23 @@ final class Bday_Aero_Mobile_Api {
 		$preview = wp_trim_words( wp_strip_all_tags( $post->post_content ), Bday_Aero_Settings::preview_word_count() );
 
 		if ( ! $is_gated ) {
+			// Reader-asked: "if reading a free article records nothing, how
+			// do we know when a reader has read the number of allowed free
+			// articles?" — same gap and same fix as class-content-gate.php's
+			// maybe_count_ungated_view(): Hybrid mode counts every article
+			// view, not just gated ones, but this endpoint used to answer
+			// 'open' here without ever calling the meter for a non-premium
+			// post. This is the entitlement endpoint the SDK/mobile app
+			// actually calls, so leaving this gap here — even after fixing
+			// the page-render gate — would mean web and mobile never count
+			// a free-article view either way. Fire-and-forget: nothing
+			// about this response depends on the answer, only the count.
+			if ( in_array( $scope_mode, array( 'hybrid', 'global_lock' ), true ) ) {
+				$device_id = $request->get_header( 'x-device-id' ) ?? '';
+				if ( '' !== $device_id ) {
+					Bday_Aero_Meter_Client::record_async( (string) $device_id, $post_id );
+				}
+			}
 			return $this->response( $post, $is_premium, 'open', null, true, $preview, $content );
 		}
 

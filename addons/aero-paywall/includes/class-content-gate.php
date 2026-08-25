@@ -45,6 +45,7 @@ final class Bday_Aero_Content_Gate {
 
 		$is_premium = $this->premium_map->is_premium( $post_id );
 		if ( ! self::is_gated_by_mode( $is_premium ) ) {
+			self::maybe_count_ungated_view( $is_premium, $post_id );
 			return $content;
 		}
 
@@ -101,6 +102,53 @@ final class Bday_Aero_Content_Gate {
 			return true;
 		}
 		return 'global_lock' === ( Bday_Aero_Paywall_Config_Client::get()['meter_scope_mode'] ?? 'hybrid' );
+	}
+
+	/**
+	 * Reader-asked: "if reading a free article records nothing, how do we
+	 * know when a reader has read the number of allowed free articles?"
+	 * Found live while answering that question: under Hybrid scope mode
+	 * (subscription-service's funnel.service.ts's own shouldCount() is
+	 * fully able to count every article view, gated or not — that's the
+	 * whole point of Hybrid, per admin-web's own copy: "every article
+	 * counts, only premium ones gate") the meter was never even called
+	 * for a non-premium post, because is_gated_by_mode() above answers a
+	 * *different* question ("should this specific view be locked") that
+	 * this codebase had collapsed into the same boolean. This is the
+	 * counting question, kept separate on purpose — restricted_only only
+	 * ever counts premium reads (matches its own "free content is never
+	 * touched" description); hybrid and global_lock count every read
+	 * (global_lock's own gating already implies counting, but this stays
+	 * independent so a future scope mode can't silently fall through
+	 * either check).
+	 */
+	private static function should_count_by_mode( bool $is_premium ): bool {
+		if ( $is_premium ) {
+			return true;
+		}
+		$scope_mode = Bday_Aero_Paywall_Config_Client::get()['meter_scope_mode'] ?? 'hybrid';
+		return in_array( $scope_mode, array( 'hybrid', 'global_lock' ), true );
+	}
+
+	/**
+	 * Called only from the "not gated" branch of gate_content() — a gated
+	 * view already counts via resolve_initial_stage()'s own
+	 * Bday_Aero_Meter_Client::check() call further down, so this exists
+	 * purely to cover the gap that check leaves: a free view that Hybrid
+	 * mode should still count toward the reader's limit. Fire-and-forget
+	 * (Bday_Aero_Meter_Client::record_async()) since nothing about this
+	 * response depends on the answer — see that method's own docblock for
+	 * why this must never become a blocking call in this hot a path.
+	 */
+	private static function maybe_count_ungated_view( bool $is_premium, int $post_id ): void {
+		if ( ! self::should_count_by_mode( $is_premium ) ) {
+			return;
+		}
+		$device_id = Bday_Aero_Device_Cookie::get();
+		if ( null === $device_id ) {
+			return;
+		}
+		Bday_Aero_Meter_Client::record_async( $device_id, $post_id );
 	}
 
 	/**
