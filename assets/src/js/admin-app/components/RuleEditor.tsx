@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { RestrictionRule, TaxonomyOption, PostTypeOption } from '../types';
 import { Button, ConfirmDialog } from './Field';
+import { TermPicker } from './TermPicker';
 
 function newRuleId(): string {
   return 'rule-' + Math.random().toString(36).slice(2, 10);
@@ -56,7 +57,7 @@ export function RuleEditor({ rules, onChange, postTypes, taxonomies }: RuleEdito
           </p>
         )}
         {rules.map((rule) => (
-          <RuleRow
+          <RuleGroup
             key={rule.id}
             rule={rule}
             postTypes={postTypes}
@@ -74,6 +75,38 @@ export function RuleEditor({ rules, onChange, postTypes, taxonomies }: RuleEdito
   );
 }
 
+function RuleGroup({
+  rule,
+  postTypes,
+  taxonomies,
+  onChange,
+  onRemove,
+}: {
+  rule: RestrictionRule;
+  postTypes: PostTypeOption[];
+  taxonomies: TaxonomyOption[];
+  onChange: (patch: Partial<RestrictionRule>) => void;
+  onRemove: () => void;
+}): JSX.Element {
+  const selectedTaxonomy = taxonomies.find((tax) => tax.slug === rule.taxonomy);
+
+  return (
+    <div className="aero-rules__group">
+      <RuleRow rule={rule} postTypes={postTypes} taxonomies={taxonomies} onChange={onChange} onRemove={onRemove} />
+      {selectedTaxonomy && (
+        <div className="aero-rules__term-panel">
+          <TermPicker
+            taxonomy={selectedTaxonomy}
+            selected={rule.term_ids}
+            onChange={(term_ids) => onChange({ term_ids })}
+            compact
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RuleRow({
   rule,
   postTypes,
@@ -87,18 +120,9 @@ function RuleRow({
   onChange: (patch: Partial<RestrictionRule>) => void;
   onRemove: () => void;
 }): JSX.Element {
-  const [termFilter, setTermFilter] = useState('');
   const [confirmingRemove, setConfirmingRemove] = useState(false);
   const selectedTaxonomy = taxonomies.find((tax) => tax.slug === rule.taxonomy);
-  const visibleTerms = selectedTaxonomy
-    ? selectedTaxonomy.terms.filter((term) => term.name.toLowerCase().includes(termFilter.toLowerCase()))
-    : [];
   const postTypeLabel = postTypes.find((pt) => pt.slug === rule.post_type)?.label ?? rule.post_type;
-
-  function toggleTerm(id: number): void {
-    const term_ids = rule.term_ids.includes(id) ? rule.term_ids.filter((t) => t !== id) : [...rule.term_ids, id];
-    onChange({ term_ids });
-  }
 
   return (
     <div className="aero-rules__row" role="row">
@@ -125,27 +149,8 @@ function RuleRow({
             </option>
           ))}
         </select>
-        {selectedTaxonomy && (
-          <div className="aero-rules__term-picker">
-            <input
-              type="search"
-              placeholder={`Search ${selectedTaxonomy.label}…`}
-              value={termFilter}
-              onChange={(e) => setTermFilter(e.target.value)}
-            />
-            <div className="aero-rules__term-list">
-              {visibleTerms.map((term) => (
-                <label key={term.id}>
-                  <input
-                    type="checkbox"
-                    checked={rule.term_ids.includes(term.id)}
-                    onChange={() => toggleTerm(term.id)}
-                  />
-                  {term.name}
-                </label>
-              ))}
-            </div>
-          </div>
+        {rule.term_ids.length > 0 && (
+          <span className="aero-rules__term-count">{rule.term_ids.length} selected</span>
         )}
       </span>
 

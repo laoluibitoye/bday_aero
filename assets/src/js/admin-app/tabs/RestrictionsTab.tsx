@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Settings, RestrictionRule } from '../types';
+import { Settings, RestrictionRule, TaxonomyOption } from '../types';
 import { Card, Button, NumberField } from '../components/Field';
 import { RuleEditor } from '../components/RuleEditor';
+import { TermPicker } from '../components/TermPicker';
 import { saveSettings, saveRestrictionRules } from '../api';
 
 interface Props {
@@ -41,13 +42,6 @@ export function RestrictionsTab({ settings, patchSettings, rules, setRules, onTo
   const categoryTaxonomy = boot.taxonomies.find((t) => t.slug === 'category');
   const premiumCategoryIds = settings.aero_paywall_premium_terms.category;
 
-  function togglePremiumCategory(termId: number): void {
-    const next = premiumCategoryIds.includes(termId)
-      ? premiumCategoryIds.filter((id) => id !== termId)
-      : [...premiumCategoryIds, termId];
-    patchSettings({ aero_paywall_premium_terms: { category: next } });
-  }
-
   return (
     <div className="aero-tab">
       <Card title="Restricted content types" description="Only content of these types can ever be marked premium.">
@@ -70,14 +64,11 @@ export function RestrictionsTab({ settings, patchSettings, rules, setRules, onTo
           title="Premium categories"
           description="In Soft mode, any post assigned to a checked category is premium — the everyday way to make a whole section subscriber-only without touching individual posts or writing a rule below. A post's own “Force premium”/“Force free” override always wins over this."
         >
-          <div className="aero-checkbox-grid">
-            {categoryTaxonomy.terms.map((term) => (
-              <label key={term.id} className="aero-checkbox-grid__item">
-                <input type="checkbox" checked={premiumCategoryIds.includes(term.id)} onChange={() => togglePremiumCategory(term.id)} />
-                {term.name}
-              </label>
-            ))}
-          </div>
+          <TermPicker
+            taxonomy={categoryTaxonomy}
+            selected={premiumCategoryIds}
+            onChange={(ids) => patchSettings({ aero_paywall_premium_terms: { category: ids } })}
+          />
         </Card>
       )}
 
@@ -119,32 +110,18 @@ function ExceptionsEditor({
   onChange,
 }: {
   value: Record<string, number[]>;
-  taxonomies: { slug: string; label: string; terms: { id: number; name: string }[] }[];
+  taxonomies: TaxonomyOption[];
   onChange: (value: Record<string, number[]>) => void;
 }): JSX.Element {
-  function toggleTerm(taxonomy: string, termId: number): void {
-    const current = value[taxonomy] ?? [];
-    const next = current.includes(termId) ? current.filter((id) => id !== termId) : [...current, termId];
-    onChange({ ...value, [taxonomy]: next });
-  }
-
   return (
     <div className="aero-exceptions">
       {taxonomies.map((tax) => (
         <div key={tax.slug} className="aero-exceptions__group">
-          <h4>{tax.label}</h4>
-          <div className="aero-checkbox-grid">
-            {tax.terms.map((term) => (
-              <label key={term.id} className="aero-checkbox-grid__item">
-                <input
-                  type="checkbox"
-                  checked={(value[tax.slug] ?? []).includes(term.id)}
-                  onChange={() => toggleTerm(tax.slug, term.id)}
-                />
-                {term.name}
-              </label>
-            ))}
-          </div>
+          <TermPicker
+            taxonomy={tax}
+            selected={value[tax.slug] ?? []}
+            onChange={(ids) => onChange({ ...value, [tax.slug]: ids })}
+          />
         </div>
       ))}
     </div>

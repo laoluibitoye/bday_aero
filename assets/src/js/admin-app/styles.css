@@ -675,6 +675,12 @@
   background: var(--aero-card-bg);
 }
 
+.aero-rules__group {
+  display: flex;
+  flex-direction: column;
+  background: var(--aero-card-bg);
+}
+
 .aero-rules__taxonomy-cell {
   display: flex;
   flex-direction: column;
@@ -691,22 +697,14 @@
   color: var(--aero-text);
 }
 
-.aero-rules__term-picker input[type='search'] {
-  width: 100%;
-  padding: 4px 8px;
-  font-size: 12px;
-  border: 1px solid var(--aero-border);
-  border-radius: 4px;
+.aero-rules__term-count {
+  font-size: 11.5px;
+  color: var(--aero-text-muted);
 }
 
-.aero-rules__term-list {
-  max-height: 120px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: 6px;
-  font-size: 12px;
+.aero-rules__term-panel {
+  padding: var(--aero-space-3);
+  border-top: 1px dashed var(--aero-border);
 }
 
 .aero-rules__number-cell {
@@ -738,10 +736,207 @@
   color: var(--aero-danger);
 }
 
-.aero-exceptions__group h4 {
+.aero-exceptions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--aero-space-5);
+}
+
+/* Term picker — shared by Premium categories, Restriction exceptions, and the per-rule
+   taxonomy/term cell. Distinguishes categories from tags with a small colored kind badge next
+   to the taxonomy's own label, and always keeps a live "what's selected" side panel visible so
+   picking from a taxonomy with hundreds or thousands of terms never means scrolling back up to
+   check what's already checked. */
+.aero-term-picker {
+  border: 1px solid var(--aero-border);
+  border-radius: var(--aero-radius);
+  overflow: hidden;
+}
+
+.aero-term-picker__header {
+  display: flex;
+  align-items: center;
+  gap: var(--aero-space-2);
+  padding: var(--aero-space-2) var(--aero-space-3);
+  background: var(--aero-bg);
+  border-bottom: 1px solid var(--aero-border);
+}
+
+.aero-term-picker__header h4 {
+  margin: 0;
   font-size: 13px;
-  margin: 0 0 var(--aero-space-2);
   color: var(--aero-ink);
+}
+
+.aero-term-picker__badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #fff;
+  background: var(--aero-text-muted);
+}
+
+/* Same accent used for "Category" chips throughout wp-admin's own taxonomy UI; tags get the
+   theme's secondary accent so the two never look interchangeable at a glance. */
+.aero-term-picker__badge--category {
+  background: #2271b1;
+}
+
+.aero-term-picker__badge--post_tag {
+  background: #8a4b9a;
+}
+
+.aero-term-picker__count {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--aero-text-muted);
+  white-space: nowrap;
+}
+
+.aero-term-picker__body {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: var(--aero-space-3);
+  padding: var(--aero-space-3);
+}
+
+.aero-term-picker--compact .aero-term-picker__body {
+  grid-template-columns: 1fr;
+}
+
+.aero-term-picker__search {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 12.5px;
+  border: 1px solid var(--aero-border);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.aero-term-picker__actions {
+  display: flex;
+  gap: var(--aero-space-2);
+  margin-top: 6px;
+}
+
+.aero-term-picker__action {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11.5px;
+  color: var(--aero-accent);
+  cursor: pointer;
+}
+
+.aero-term-picker__action:disabled {
+  color: var(--aero-text-muted);
+  cursor: default;
+}
+
+.aero-term-picker__list {
+  margin-top: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12.5px;
+}
+
+.aero-term-picker--compact .aero-term-picker__list {
+  max-height: 140px;
+}
+
+.aero-term-picker__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.aero-term-picker__empty {
+  font-size: 12px;
+  color: var(--aero-text-muted);
+  margin: 8px 0 0;
+}
+
+.aero-term-picker__hint {
+  font-size: 11px;
+  color: var(--aero-text-muted);
+  margin: 6px 0 0;
+}
+
+.aero-term-picker__selected-col {
+  border-left: 1px solid var(--aero-border);
+  padding-left: var(--aero-space-3);
+}
+
+.aero-term-picker--compact .aero-term-picker__selected-col {
+  border-left: none;
+  border-top: 1px solid var(--aero-border);
+  padding-left: 0;
+  padding-top: var(--aero-space-2);
+  margin-top: var(--aero-space-2);
+}
+
+.aero-term-picker__selected-col h5 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--aero-text-muted);
+}
+
+.aero-term-picker__chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.aero-term-picker--compact .aero-term-picker__chips {
+  flex-direction: row;
+  flex-wrap: wrap;
+  max-height: none;
+}
+
+.aero-term-picker__chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: var(--aero-bg);
+  font-size: 12px;
+}
+
+.aero-term-picker__chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aero-term-picker__chip button {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  line-height: 1;
+  font-size: 14px;
+  color: var(--aero-text-muted);
+  cursor: pointer;
+}
+
+.aero-term-picker__chip button:hover {
+  color: var(--aero-danger);
 }
 
 .aero-metering-grid {
