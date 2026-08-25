@@ -80,8 +80,27 @@ final class Bday_Aero_Content_Gate {
 		return self::is_gated_by_mode( $this->premium_map->is_premium( $post_id ) );
 	}
 
+	/**
+	 * Reader-reported live: with "Paywall scope" set to Global lock on the
+	 * admin console, a reader could still read past their funnel
+	 * threshold. Root cause: meter_scope_mode (subscription-service's
+	 * `GET /public/paywall-config`, fetched here via
+	 * Bday_Aero_Paywall_Config_Client) was already being read for other
+	 * purposes but never actually consulted by the gating decision — this
+	 * method only ever engaged the gate for a post explicitly marked
+	 * premium (or when the separate WordPress-only "hard mode" toggle is
+	 * on), with no awareness of the scope setting at all. Under
+	 * restricted_only/hybrid, that's already the intended behavior
+	 * ("only premium articles ever get gated" — admin-web's own copy for
+	 * both those modes) — global_lock is the one mode that means every
+	 * article, not just premium ones, should go through the same
+	 * entitlement/meter check once a reader's free views run out.
+	 */
 	private static function is_gated_by_mode( bool $is_premium ): bool {
-		return 'hard' === Bday_Aero_Settings::paywall_mode() || $is_premium;
+		if ( 'hard' === Bday_Aero_Settings::paywall_mode() || $is_premium ) {
+			return true;
+		}
+		return 'global_lock' === ( Bday_Aero_Paywall_Config_Client::get()['meter_scope_mode'] ?? 'hybrid' );
 	}
 
 	/**

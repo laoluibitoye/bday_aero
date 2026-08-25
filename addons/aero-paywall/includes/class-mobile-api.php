@@ -47,8 +47,18 @@ final class Bday_Aero_Mobile_Api {
 		}
 
 		$is_premium = $this->premium_map->is_premium( $post_id );
-		$is_gated   = Bday_Aero_Settings::enabled() && Bday_Aero_License_Client::is_active()
-			&& ( 'hard' === Bday_Aero_Settings::paywall_mode() || $is_premium );
+		// Same fix as class-content-gate.php's is_gated_by_mode(): a
+		// non-premium post used to always short-circuit straight to
+		// 'open' below with no meter check at all, regardless of
+		// meter_scope_mode — meaning "Global lock" (every article gated
+		// once a reader's free views run out, not just premium ones) had
+		// no effect here whatsoever. This is the entitlement endpoint the
+		// SDK itself calls to decide whether to unlock an article, so
+		// this check mattering here is what actually enforces the scope
+		// setting, not just what the page-load gate renders.
+		$global_lock = 'global_lock' === ( Bday_Aero_Paywall_Config_Client::get()['meter_scope_mode'] ?? 'hybrid' );
+		$is_gated    = Bday_Aero_Settings::enabled() && Bday_Aero_License_Client::is_active()
+			&& ( 'hard' === Bday_Aero_Settings::paywall_mode() || $is_premium || $global_lock );
 
 		$content = apply_filters( 'the_content', $post->post_content );
 		$preview = wp_trim_words( wp_strip_all_tags( $post->post_content ), Bday_Aero_Settings::preview_word_count() );
