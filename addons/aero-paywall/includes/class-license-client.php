@@ -21,6 +21,7 @@ final class Bday_Aero_License_Client {
 	private const STATE_OPTION      = 'aero_paywall_license_state';
 	private const FAILURES_OPTION   = 'aero_paywall_license_failures';
 	private const ACTIVATED_OPTION  = 'aero_paywall_license_activated';
+	private const REASON_OPTION     = 'aero_paywall_license_inactive_reason';
 	private const CACHE_TTL         = 12 * HOUR_IN_SECONDS;
 	private const FAILURE_GRACE     = 5;
 
@@ -97,6 +98,7 @@ final class Bday_Aero_License_Client {
 		$license_key = Bday_Aero_Settings::license_key();
 		$base_url    = Bday_Aero_Settings::licensing_api_base_url();
 		if ( '' === $license_key || '' === $base_url ) {
+			update_option( self::REASON_OPTION, 'not_configured' );
 			return false;
 		}
 
@@ -115,22 +117,56 @@ final class Bday_Aero_License_Client {
 		);
 
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			update_option( self::REASON_OPTION, 'api_unreachable' );
 			return false;
 		}
 
 		$body  = json_decode( wp_remote_retrieve_body( $response ), true );
 		$token = $body['data']['token'] ?? null;
 		if ( ! is_string( $token ) || '' === $token ) {
+			update_option( self::REASON_OPTION, 'api_unreachable' );
 			return false;
 		}
 
 		$claims = Bday_Aero_Jwks_Client::verify( $token, $base_url, 'license_jwks' );
 		if ( null === $claims ) {
+			update_option( self::REASON_OPTION, 'invalid_signature' );
 			return false;
 		}
 
 		$domain = $claims['domain'] ?? null;
 		$valid  = $claims['valid'] ?? false;
-		return $valid && $domain === wp_parse_url( home_url(), PHP_URL_HOST );
+
+		if ( $domain !== wp_parse_url( home_url(), PHP_URL_HOST ) ) {
+			update_option( self::REASON_OPTION, 'domain_mismatch' );
+			return false;
+		}
+		if ( ! $valid ) {
+			update_option( self::REASON_OPTION, 'expired' );
+			return false;
+		}
+
+		delete_option( self::REASON_OPTION );
+		return true;
+	}
+
+	/**
+	 * Purely informational, for the wp-admin visibility notice
+	 * (class-admin-ui.php's maybe_render_license_notice) — never consulted
+	 * by is_active() itself, so it cannot change the fail-open behavior
+	 * documented at the top of this file. Returns null when gating is
+	 * actually active (nothing to report); otherwise the specific reason
+	 * recorded the last time validate() ran, or 'no_key' when no license
+	 * key is configured at all.
+	 */
+	public static function inactive_reason(): ?string {
+		if ( self::is_active() ) {
+			return null;
+		}
+		if ( '' === Bday_Aero_Settings::license_key() ) {
+			return 'no_key';
+		}
+		$reason = get_option( self::REASON_OPTION, '' );
+		return '' !== $reason ? $reason : 'unknown';
 	}
 }

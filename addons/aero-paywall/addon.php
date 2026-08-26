@@ -54,6 +54,7 @@ require_once __DIR__ . '/includes/class-dashboard-stats-client.php';
 require_once __DIR__ . '/includes/class-content-gate.php';
 require_once __DIR__ . '/includes/class-sdk-loader.php';
 require_once __DIR__ . '/includes/class-jwks-client.php';
+require_once __DIR__ . '/includes/class-entitlement-resolver.php';
 require_once __DIR__ . '/includes/class-license-client.php';
 require_once __DIR__ . '/includes/class-mobile-api.php';
 require_once __DIR__ . '/includes/class-wp-user-resolver.php';

@@ -49,25 +49,46 @@ final class Bday_Aero_Content_Gate {
 			return $content;
 		}
 
-		$initial_stage  = $this->resolve_initial_stage( $post_id );
+		/**
+		 * Task D fix: previously this render never checked the reader's own
+		 * JWT at all — it always emitted the preview/placeholder markup and
+		 * relied entirely on the SDK's later client-side fetch (against
+		 * class-mobile-api.php's REST route) to reveal the real content to
+		 * an entitled reader. Any reader whose browser couldn't complete
+		 * that fetch (JS disabled, an ad-blocker filter matching a URL
+		 * containing "paywall", a restrictive corporate CSP) saw the locked
+		 * placeholder forever, even as an actively paying subscriber. Reads
+		 * the SDK's own access-token cookie (see
+		 * Bday_Aero_Entitlement_Resolver) and, for a verified, actively-
+		 * subscribed reader, renders the full article directly here —
+		 * skipping the preview/placeholder/SDK-mount-points path entirely.
+		 * Anonymous/guest metering is untouched: no cookie (or an
+		 * unauthenticated/non-subscribed one) falls straight through to the
+		 * unchanged placeholder path below, which still needs the
+		 * client-side device-id flow.
+		 */
+		$entitlement = Bday_Aero_Entitlement_Resolver::resolve_for_current_request();
+		if ( null !== $entitlement && ! empty( $entitlement['isSubscriber'] ) ) {
+			return $content;
+		}
+
 		$structured_data = Bday_Aero_Settings::jsonld_enabled() ? self::structured_data() : '';
 
 		if ( 'hard' === Bday_Aero_Settings::paywall_mode() ) {
-			return self::render_hard_wall( $post_id, $initial_stage ) . $structured_data;
+			return self::render_hard_wall( $post_id ) . $structured_data;
 		}
 
 		$preview = self::build_preview( $content, Bday_Aero_Settings::preview_word_count() );
 
 		return sprintf(
 			'<div class="aero-paywall-preview">%1$s</div>'
-				. '<div class="aero-paywall-locked" data-aero-post-id="%2$d" data-aero-initial-stage="%3$s">'
-				. '<p class="aero-paywall-locked-placeholder">%4$s</p>'
-				. '%5$s'
-				. '</div>%6$s',
+				. '<div class="aero-paywall-locked" data-aero-post-id="%2$d">'
+				. '<p class="aero-paywall-locked-placeholder">%3$s</p>'
+				. '%4$s'
+				. '</div>%5$s',
 			esc_html( $preview ),
 			$post_id,
-			esc_attr( $initial_stage ),
-			esc_html( self::placeholder_text( $initial_stage ) ),
+			esc_html( self::placeholder_text() ),
 			self::mount_points_markup(),
 			$structured_data
 		);
@@ -132,10 +153,11 @@ final class Bday_Aero_Content_Gate {
 
 	/**
 	 * Called only from the "not gated" branch of gate_content() — a gated
-	 * view already counts via resolve_initial_stage()'s own
-	 * Bday_Aero_Meter_Client::check() call further down, so this exists
-	 * purely to cover the gap that check leaves: a free view that Hybrid
-	 * mode should still count toward the reader's limit. Fire-and-forget
+	 * view already counts via class-mobile-api.php's resolve_entitlement()
+	 * (its own Bday_Aero_Meter_Client::check() call, made when the SDK's
+	 * client-side entitlement fetch hits the REST route), so this exists
+	 * purely to cover the gap that leaves: a free view that Hybrid mode
+	 * should still count toward the reader's limit. Fire-and-forget
 	 * (Bday_Aero_Meter_Client::record_async()) since nothing about this
 	 * response depends on the answer — see that method's own docblock for
 	 * why this must never become a blocking call in this hot a path.
@@ -166,15 +188,14 @@ final class Bday_Aero_Content_Gate {
 		return implode( ' ', array_slice( $words, 0, max( 0, $word_count ) ) );
 	}
 
-	private static function render_hard_wall( int $post_id, string $initial_stage ): string {
+	private static function render_hard_wall( int $post_id ): string {
 		return sprintf(
-			'<div class="aero-paywall-locked aero-paywall-hard-wall" data-aero-post-id="%1$d" data-aero-initial-stage="%2$s">'
-				. '<p class="aero-paywall-locked-placeholder">%3$s</p>'
-				. '%4$s'
+			'<div class="aero-paywall-locked aero-paywall-hard-wall" data-aero-post-id="%1$d">'
+				. '<p class="aero-paywall-locked-placeholder">%2$s</p>'
+				. '%3$s'
 				. '</div>',
 			$post_id,
-			esc_attr( $initial_stage ),
-			esc_html( self::placeholder_text( $initial_stage ) ),
+			esc_html( self::placeholder_text() ),
 			self::mount_points_markup()
 		);
 	}
@@ -186,28 +207,24 @@ final class Bday_Aero_Content_Gate {
 	 * one round trip to the entitlement endpoint), but on a slow load
 	 * (shared hosting under load, a cold cache, a slow connection) a
 	 * reader can land on the page during that window and see this text
-	 * as if it were the real, final gate — including an anonymous,
-	 * never-registered reader seeing "Subscribe" instead of "Create a
-	 * free account," which reads as broken and undoes the exact register-
-	 * vs-subscribe distinction the funnel is built around. Reuses the
-	 * same admin-configured copy (Bday_Aero_Settings::prompt_copy()) the
-	 * SDK's own context passes to the client, so whichever stage briefly
-	 * shows here is never wrong, only ever less interactive, than what
-	 * follows once JS hydrates. $initial_stage is only ever a same-paint
-	 * *hint* (Bday_Aero_Meter_Client::check(), not a verified per-reader
-	 * entitlement) — deliberately never anything stronger than that, and
-	 * never a substitute for the SDK's own real check.
+	 * as if it were the real, final gate.
+	 *
+	 * Task J1/J3: this used to branch on $initial_stage, a same-paint
+	 * *hint* from a blocking server-to-server meter call
+	 * (resolve_initial_stage(), now removed — confirmed nothing in
+	 * sdk/src ever read the data-aero-initial-stage attribute it existed
+	 * only to stamp, so it was pure latency/reliability risk for no
+	 * functional benefit). Without that hint, this can no longer guess a
+	 * per-reader stage — doing so risked showing "Create a free account"
+	 * to a reader who is actually already signed in but just not
+	 * subscribed, which reads as broken. Falls back to neutral,
+	 * admin-configured copy (Bday_Aero_Settings::prompt_copy()) that
+	 * doesn't presume anonymous-guest status; the SDK still replaces this
+	 * with the reader's real, verified stage within one round trip.
 	 */
-	private static function placeholder_text( string $initial_stage ): string {
+	private static function placeholder_text(): string {
 		$copy = Bday_Aero_Settings::prompt_copy();
-		// 'unknown' (no device cookie yet — the very first request from a
-		// browser that's never visited before) and 'open' (would mean this
-		// post isn't actually gated, unreachable here since gate_content()
-		// already returned early in that case) both fall back to the
-		// friendliest, most likely-correct stage for a genuinely new
-		// reader: register.
-		$stage = isset( $copy[ $initial_stage ] ) ? $initial_stage : 'register_prompt';
-		return $copy[ $stage ]['headline'] ?? __( 'Subscribe to keep reading this article.', 'bday-premium' );
+		return $copy['paid_lock']['headline'] ?? __( 'Subscribe to keep reading this article.', 'bday-premium' );
 	}
 
 	private static function mount_points_markup(): string {
@@ -244,16 +261,6 @@ final class Bday_Aero_Content_Gate {
 				)
 			)
 		);
-	}
-
-	/** Advisory only — a same-paint hint for the SDK; never changes what markup is emitted above. */
-	private function resolve_initial_stage( int $post_id ): string {
-		$device_id = Bday_Aero_Device_Cookie::get();
-		if ( null === $device_id ) {
-			return 'unknown';
-		}
-		$meter = Bday_Aero_Meter_Client::check( $device_id, $post_id );
-		return $meter['stage'] ?? 'unknown';
 	}
 }
 

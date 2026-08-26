@@ -66,28 +66,65 @@ final class Bday_Aero_Admin_Ui {
 	}
 
 	/**
-	 * "Enabled but not actually licensed" is otherwise invisible in
-	 * wp-admin — gating and the SDK are silently off (License_Client's
-	 * fail-open behavior, by design) with nothing telling an admin why.
-	 * Skipped while the dev-mode bypass notice (addon.php) is already
-	 * showing.
+	 * Gating being off for ANY reason (not enabled, no license key,
+	 * expired/revoked license, domain mismatch, licensing service
+	 * unreachable) is otherwise invisible in wp-admin — is_active()'s
+	 * fail-open behavior is intentional and unchanged by this notice, it
+	 * just makes the resulting "everything is ungated" state visible
+	 * instead of silent. Skipped while the dev-mode bypass notice
+	 * (addon.php) is already showing — dev mode makes is_active() true
+	 * (gating DOES run, just unverified), so it isn't a "gating is off"
+	 * state and gets its own, differently-worded notice.
 	 */
 	public function maybe_render_license_notice(): void {
-		if ( ! Bday_Aero_Settings::enabled() || Bday_Aero_License_Client::is_dev_mode_bypass_active() ) {
+		if ( Bday_Aero_License_Client::is_dev_mode_bypass_active() ) {
 			return;
 		}
-		if ( Bday_Aero_License_Client::is_active() ) {
+
+		$enabled = Bday_Aero_Settings::enabled();
+		if ( $enabled && Bday_Aero_License_Client::is_active() ) {
 			return;
 		}
 
 		Bday_Aero_Shared_Assets::enqueue();
 		$connection_url = admin_url( 'admin.php?page=' . self::PAGE_SLUG . '#connection' );
+
+		if ( ! $enabled ) {
+			$headline = esc_html__( 'AeroPaywall is not enabled', 'bday-aero' );
+		} else {
+			$headline = esc_html__( 'AeroPaywall is enabled but not licensed', 'bday-aero' );
+		}
+
 		echo '<div class="notice notice-warning"><p class="aero-admin-notice">'
 			. '<span class="aero-admin-notice__icon" aria-hidden="true">&#128274;</span>'
-			. '<span>' . esc_html__( 'AeroPaywall is enabled but not licensed', 'bday-aero' ) . '</span>'
-			. '<span>&mdash; ' . esc_html__( 'content gating and the reader SDK are inactive until a valid license key is set.', 'bday-aero' ) . ' '
-			. '<a href="' . esc_url( $connection_url ) . '">' . esc_html__( 'Add a license key', 'bday-aero' ) . '</a></span>'
+			. '<span>' . $headline . '</span>'
+			. '<span>&mdash; ' . self::inactive_reason_detail( $enabled ) . ' '
+			. '<a href="' . esc_url( $connection_url ) . '">' . esc_html__( 'Review licensing settings', 'bday-aero' ) . '</a></span>'
 			. '</p></div>';
+	}
+
+	/** Reason-specific wording for maybe_render_license_notice(); always ends by stating the site-wide reader impact plainly. */
+	private static function inactive_reason_detail( bool $enabled ): string {
+		$impact = esc_html__( 'content gating and the reader SDK are inactive — all content is rendering fully ungated, site-wide, for every visitor.', 'bday-aero' );
+
+		if ( ! $enabled ) {
+			return $impact;
+		}
+
+		switch ( Bday_Aero_License_Client::inactive_reason() ) {
+			case 'no_key':
+			case 'not_configured':
+				return esc_html__( 'no license key is configured.', 'bday-aero' ) . ' ' . $impact;
+			case 'domain_mismatch':
+				return esc_html__( 'the license key is bound to a different domain.', 'bday-aero' ) . ' ' . $impact;
+			case 'expired':
+				return esc_html__( 'the license has expired or been revoked.', 'bday-aero' ) . ' ' . $impact;
+			case 'api_unreachable':
+			case 'invalid_signature':
+				return esc_html__( 'the licensing service could not be reached or verified.', 'bday-aero' ) . ' ' . $impact;
+			default:
+				return $impact;
+		}
 	}
 
 	public function register_menu(): void {

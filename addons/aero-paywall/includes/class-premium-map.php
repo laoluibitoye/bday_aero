@@ -22,11 +22,90 @@ final class Bday_Aero_Premium_Map {
 	private const META_KEY   = '_aero_paywall_premium_override';
 	private const CACHE_TTL  = 12 * HOUR_IN_SECONDS;
 
+	/** Retry hooks, and the transient that drives the "sync failed" admin notice — see sync_to_system_b()/sync_restriction_rules_to_system_b(). */
+	private const RETRY_HOOK_PREMIUM_MAP       = 'bday_aero_premium_map_retry_sync';
+	private const RETRY_HOOK_RESTRICTION_RULES = 'bday_aero_restriction_rules_retry_sync';
+	private const SYNC_FAILED_TRANSIENT        = 'bday_aero_premium_sync_failed';
+
 	public function __construct() {
 		add_action( 'add_meta_boxes', array( $this, 'register_metabox' ) );
 		add_action( 'save_post', array( $this, 'handle_save_post' ) );
 		add_action( 'update_option_' . Bday_Aero_Settings::PREMIUM_TERMS, array( $this, 'invalidate_and_sync' ) );
 		add_action( 'update_option_' . Bday_Aero_Settings::RESTRICTION_RULES, array( $this, 'invalidate_and_sync' ) );
+		add_action( self::RETRY_HOOK_PREMIUM_MAP, array( $this, 'retry_premium_map_sync' ) );
+		add_action( self::RETRY_HOOK_RESTRICTION_RULES, array( $this, 'retry_restriction_rules_sync' ) );
+		add_action( 'admin_notices', array( $this, 'maybe_render_sync_failed_notice' ) );
+	}
+
+	/**
+	 * Both sync_to_system_b() and sync_restriction_rules_to_system_b() fire
+	 * wp_remote_post() and, previously, never looked at the response — a
+	 * failed sync (network blip, subscription-service deploy, bad API key)
+	 * meant the premium-map/restriction-rules subscription-service had on
+	 * file silently went stale with nothing logged and no way to know short
+	 * of manually diffing the two systems. This now logs, schedules exactly
+	 * one retry 5 minutes out (not a retry loop — if that single retry also
+	 * fails, it's logged too and the next natural sync trigger picks it up),
+	 * and surfaces a wp-admin notice until a sync next succeeds.
+	 */
+	private function handle_sync_response( $response, string $context, string $retry_hook ): bool {
+		$failed = is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response );
+		if ( ! $failed ) {
+			delete_transient( self::SYNC_FAILED_TRANSIENT );
+			return true;
+		}
+
+		$error_detail = is_wp_error( $response )
+			? $response->get_error_message()
+			: 'HTTP ' . wp_remote_retrieve_response_code( $response );
+		error_log( sprintf( '[AeroPaywall] %s failed: %s', $context, $error_detail ) );
+
+		set_transient(
+			self::SYNC_FAILED_TRANSIENT,
+			array(
+				'context' => $context,
+				'time'    => time(),
+			),
+			DAY_IN_SECONDS
+		);
+
+		if ( ! wp_next_scheduled( $retry_hook ) ) {
+			wp_schedule_single_event( time() + 300, $retry_hook );
+		}
+
+		return false;
+	}
+
+	/**
+	 * The single scheduled retry (see handle_sync_response()) must actually
+	 * re-run the HTTP call, not just re-hit the cache: Bday_Query_Cache::
+	 * remember() caches whatever the producer returns — including the
+	 * `true` these producers always return regardless of whether the
+	 * wp_remote_post() inside them succeeded — for the full CACHE_TTL, so
+	 * without forgetting the key first a retry against a still-cached
+	 * "success" would be a silent no-op.
+	 */
+	public function retry_premium_map_sync(): void {
+		Bday_Query_Cache::forget( 'aero_paywall', 'premium_map_synced' );
+		$this->sync_to_system_b();
+	}
+
+	public function retry_restriction_rules_sync(): void {
+		Bday_Query_Cache::forget( 'aero_paywall', 'restriction_rules_synced' );
+		$this->sync_restriction_rules_to_system_b();
+	}
+
+	/** Renders the "sync to subscription-service failed" notice set by handle_sync_response(), cleared automatically the next time a sync succeeds. */
+	public function maybe_render_sync_failed_notice(): void {
+		$failure = get_transient( self::SYNC_FAILED_TRANSIENT );
+		if ( ! is_array( $failure ) || empty( $failure['time'] ) ) {
+			return;
+		}
+
+		$when = wp_date( 'Y-m-d H:i:s', (int) $failure['time'] );
+		echo '<div class="notice notice-warning"><p>'
+			. esc_html__( 'Premium classification sync to subscription-service failed as of ', 'bday-aero' ) . esc_html( $when ) . '.'
+			. '</p></div>';
 	}
 
 	public function register_metabox(): void {
@@ -180,7 +259,7 @@ final class Bday_Aero_Premium_Map {
 					return true;
 				}
 
-				wp_remote_post(
+				$response = wp_remote_post(
 					$base_url . '/connector/premium-map',
 					array(
 						'timeout' => 5,
@@ -195,6 +274,12 @@ final class Bday_Aero_Premium_Map {
 							)
 						),
 					)
+				);
+
+				$this->handle_sync_response(
+					$response,
+					sprintf( 'premium-map sync (%d post IDs)', count( $premium_post_ids ) ),
+					self::RETRY_HOOK_PREMIUM_MAP
 				);
 
 				return true;
@@ -307,7 +392,7 @@ final class Bday_Aero_Premium_Map {
 					$rules
 				);
 
-				wp_remote_post(
+				$response = wp_remote_post(
 					$base_url . '/connector/restriction-rules',
 					array(
 						'timeout' => 5,
@@ -322,6 +407,12 @@ final class Bday_Aero_Premium_Map {
 							)
 						),
 					)
+				);
+
+				$this->handle_sync_response(
+					$response,
+					sprintf( 'restriction-rules sync (%d rules)', count( $rules ) ),
+					self::RETRY_HOOK_RESTRICTION_RULES
 				);
 
 				return true;
