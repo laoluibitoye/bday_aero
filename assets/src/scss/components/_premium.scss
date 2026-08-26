@@ -204,6 +204,19 @@ $bday-border: var(--color-border);
 	@media (max-width: 991px) { grid-template-columns: 1fr; }
 }
 
+// Reader-requested: a wider article column / narrower sidebar specifically
+// on the single article page (#article-page.bday-two-col) — the plain
+// .bday-two-col ratio above is shared by the homepage variants, page_1, and
+// single-podcast, so it's left untouched; this only overrides the article
+// page. A fixed-width sidebar rather than another fr-ratio: .bday-sidebar's
+// ad zone (bday_ad_zone('sidebar', ...)) renders a 300px-wide unit, and a
+// wider fr-based sidebar column just adds empty space beside it rather than
+// giving the article any more room — a fixed rail sized to that ad gives
+// 100% of any extra container width to the article column instead.
+#article-page.bday-two-col {
+	grid-template-columns: 1fr 300px;
+}
+
 /* ---- Rail (other news + columnists/opinion) ---- */
 .bday-columnists-row {
 	display: grid;

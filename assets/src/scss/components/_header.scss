@@ -467,6 +467,23 @@ html {
 	white-space: nowrap;
 }
 
+// Icon-only account link in the masthead below tablet — same "label appears
+// once there's room" pattern .bd-header__menu-toggle-label/.bd-header__
+// search-toggle-label already use. Scoped to the masthead instance only
+// (not the .bd-menu-overlay__actions copy of this same markup, which has
+// plenty of room once the hamburger menu is open and keeps its label at
+// every width). With .bd-header__subscribe-now also hidden in the masthead
+// at this width, the masthead-right column on mobile was three full-text
+// controls (Subscribe Now pill, this Sign In/name pill, the hamburger icon)
+// squeezed beside a centered logo — crowding it enough to hurt visibility.
+.bd-header__masthead-right .aero-paywall-nav-trigger-label {
+	display: none;
+
+	@include bd-up($bp-tablet) {
+		display: inline;
+	}
+}
+
 .bd-header__login {
 	font-family: var(--font-ui);
 	font-size: var(--text-sm);
@@ -684,7 +701,10 @@ body {
 
 // Same visual weight as .bd-header__subscribe above — the new dedicated
 // CTA next to the sign-in trigger, linking straight to the redesigned
-// /subscribe/ landing page rather than a query-string tab hint.
+// /subscribe/ landing page rather than a query-string tab hint. This same
+// class is reused for a second instance inside .bd-menu-overlay__actions
+// (header.php) — the rules below only apply below, so that copy is
+// unaffected and always visible once the hamburger menu is open.
 .bd-header__subscribe-now {
 	display: inline-flex;
 	align-items: center;
@@ -709,6 +729,21 @@ body {
 	&:focus-visible {
 		outline: 2px solid var(--color-focus-ring);
 		outline-offset: 2px;
+	}
+}
+
+// Reader-reported: in the masthead, this full "Subscribe Now" pill plus the
+// sign-in pill plus the hamburger icon were all rendering together beside a
+// centered logo on mobile — three full-width controls with no room budgeted
+// for them, hurting the masthead's visibility/legibility at that width.
+// Scoped to the masthead instance only (not the .bd-menu-overlay__actions
+// copy above, which stays visible at every width) — the hamburger menu
+// remains a one-tap path to this exact CTA, so nothing is actually lost.
+.bd-header__masthead-right .bd-header__subscribe-now {
+	display: none;
+
+	@include bd-up($bp-tablet) {
+		display: inline-flex;
 	}
 }
 
