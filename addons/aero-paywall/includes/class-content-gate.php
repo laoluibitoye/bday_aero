@@ -74,7 +74,7 @@ final class Bday_Aero_Content_Gate {
 
 		$structured_data = Bday_Aero_Settings::jsonld_enabled() ? self::structured_data() : '';
 
-		if ( 'hard' === Bday_Aero_Settings::paywall_mode() ) {
+		if ( 'hard_wall' === ( Bday_Aero_Paywall_Config_Client::get()['meter_scope_mode'] ?? 'hybrid' ) ) {
 			return self::render_hard_wall( $post_id ) . $structured_data;
 		}
 
@@ -119,10 +119,11 @@ final class Bday_Aero_Content_Gate {
 	 * entitlement/meter check once a reader's free views run out.
 	 */
 	private static function is_gated_by_mode( bool $is_premium ): bool {
-		if ( 'hard' === Bday_Aero_Settings::paywall_mode() || $is_premium ) {
+		if ( $is_premium ) {
 			return true;
 		}
-		return 'global_lock' === ( Bday_Aero_Paywall_Config_Client::get()['meter_scope_mode'] ?? 'hybrid' );
+		$scope_mode = Bday_Aero_Paywall_Config_Client::get()['meter_scope_mode'] ?? 'hybrid';
+		return in_array( $scope_mode, array( 'hard_wall', 'global_lock' ), true );
 	}
 
 	/**

@@ -4,17 +4,17 @@ import { ShieldIcon, DashboardIcon, PlugIcon, LockIcon, PaletteIcon, MessageIcon
 import { DashboardTab } from './tabs/DashboardTab';
 import { WizardTab } from './tabs/WizardTab';
 import { ConnectionTab } from './tabs/ConnectionTab';
-import { RestrictionsTab } from './tabs/RestrictionsTab';
+import { GatingTab } from './tabs/GatingTab';
 import { AppearanceTab } from './tabs/AppearanceTab';
 import { PaywallCopyTab } from './tabs/PaywallCopyTab';
 import { AdvancedTab } from './tabs/AdvancedTab';
 
-type TabId = 'dashboard' | 'wizard' | 'connection' | 'restrictions' | 'appearance' | 'paywallCopy' | 'advanced';
+type TabId = 'dashboard' | 'wizard' | 'connection' | 'gating' | 'appearance' | 'paywallCopy' | 'advanced';
 
 const NAV_ITEMS: Array<{ id: TabId; label: string; icon: (props: { size?: number }) => JSX.Element }> = [
   { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon },
   { id: 'connection', label: 'Connection', icon: PlugIcon },
-  { id: 'restrictions', label: 'Restrictions', icon: LockIcon },
+  { id: 'gating', label: 'Gating', icon: LockIcon },
   { id: 'appearance', label: 'Appearance', icon: PaletteIcon },
   { id: 'paywallCopy', label: 'Paywall Copy', icon: MessageIcon },
   { id: 'advanced', label: 'Advanced', icon: SlidersIcon },
@@ -162,12 +162,14 @@ export function App(): JSX.Element {
           {activeTab === 'connection' && (
             <ConnectionTab settings={settings} patchSettings={patchSettings} onToast={showToast} onSaved={markSaved} />
           )}
-          {activeTab === 'restrictions' && (
-            <RestrictionsTab
+          {activeTab === 'gating' && (
+            <GatingTab
               settings={settings}
               patchSettings={patchSettings}
               rules={rules}
               setRules={setRules}
+              connectorSettings={connectorSettings}
+              setConnectorSettings={setConnectorSettings}
               onToast={showToast}
               onSaved={markSaved}
             />

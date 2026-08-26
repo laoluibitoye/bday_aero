@@ -53,7 +53,7 @@ export function DashboardTab({ settings, requiredPages, setRequiredPages, onToas
           okLabel="Paywall enabled"
           badLabel="Paywall disabled"
           detail={settings.aero_paywall_enabled ? 'Gating content site-wide' : 'Every reader sees full content right now'}
-          onClick={() => onNavigate('restrictions')}
+          onClick={() => onNavigate('gating')}
         />
         <StatusCard
           ok={connectionOk}

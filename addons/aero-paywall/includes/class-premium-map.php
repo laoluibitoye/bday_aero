@@ -124,6 +124,11 @@ final class Bday_Aero_Premium_Map {
 		$value = get_post_meta( $post->ID, self::META_KEY, true ) ?: 'inherit';
 		wp_nonce_field( 'bday_aero_premium_override', 'bday_aero_premium_override_nonce' );
 
+		printf(
+			'<p class="bday-aero-effective-status" style="font-weight:600;margin:0 0 10px;">%s</p>',
+			esc_html( self::effective_status_label( $post->ID ) )
+		);
+
 		$options = array(
 			'inherit' => 'Inherit from category/rules',
 			'premium' => 'Force premium',
@@ -139,6 +144,40 @@ final class Bday_Aero_Premium_Map {
 				esc_html( $label )
 			);
 		}
+	}
+
+	/**
+	 * Read-only, resolved fresh on every metabox render — never
+	 * saved/stored anywhere. Reuses is_premium() (the exact same call
+	 * class-content-gate.php makes for real gating, so this can never drift
+	 * from what actually happens on render) plus
+	 * Bday_Aero_Restriction_Rules::match_rule_for_post() to surface which
+	 * capping rule (if any) is the one actually in effect, so an editor
+	 * sees the real resolved answer without having to work out the
+	 * classification precedence (per-post override -> restriction rule ->
+	 * premium category -> exceptions) themselves.
+	 */
+	private function effective_status_label( int $post_id ): string {
+		if ( ! $this->is_premium( $post_id ) ) {
+			return __( 'Effective status: Free — not gated.', 'bday-aero' );
+		}
+
+		$rule           = Bday_Aero_Restriction_Rules::match_rule_for_post( $post_id );
+		$number_allowed = $rule['number_allowed'] ?? null;
+
+		if ( null !== $number_allowed ) {
+			$number_allowed = (int) $number_allowed;
+			if ( 0 === $number_allowed ) {
+				return __( 'Effective status: Premium — locked immediately.', 'bday-aero' );
+			}
+			return sprintf(
+				/* translators: %d: number of free reads allowed before this post locks. */
+				_n( 'Effective status: Premium — locked after %d free read.', 'Effective status: Premium — locked after %d free reads.', $number_allowed, 'bday-aero' ),
+				$number_allowed
+			);
+		}
+
+		return __( 'Effective status: Premium.', 'bday-aero' );
 	}
 
 	public function handle_save_post( int $post_id ): void {

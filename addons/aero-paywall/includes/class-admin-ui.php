@@ -212,7 +212,6 @@ final class Bday_Aero_Admin_Ui {
 				Bday_Aero_Settings::PRIVATE_MODE_ENFORCEMENT   => Bday_Aero_Settings::private_mode_enforcement(),
 				Bday_Aero_Settings::RESTRICTED_POST_TYPES      => $restricted_post_types,
 				Bday_Aero_Settings::PREVIEW_WORD_COUNT         => Bday_Aero_Settings::preview_word_count(),
-				Bday_Aero_Settings::PAYWALL_MODE               => Bday_Aero_Settings::paywall_mode(),
 				Bday_Aero_Settings::BYPASS_ROLES               => Bday_Aero_Settings::bypass_roles(),
 				Bday_Aero_Settings::JSONLD_ENABLED             => Bday_Aero_Settings::jsonld_enabled(),
 				Bday_Aero_Settings::RESTRICTION_EXCEPTIONS     => Bday_Aero_Settings::restriction_exceptions(),
@@ -317,12 +316,7 @@ final class Bday_Aero_Admin_Ui {
 			return;
 		}
 
-		$previous_paywall_mode = Bday_Aero_Settings::paywall_mode();
-		$saved                 = $this->sanitize_and_save( $decoded );
-
-		if ( isset( $saved[ Bday_Aero_Settings::PAYWALL_MODE ] ) && $saved[ Bday_Aero_Settings::PAYWALL_MODE ] !== $previous_paywall_mode ) {
-			$this->sync_paywall_mode_to_backend( $saved[ Bday_Aero_Settings::PAYWALL_MODE ] );
-		}
+		$saved = $this->sanitize_and_save( $decoded );
 
 		wp_send_json_success( array( 'settings' => $saved ) );
 	}
@@ -369,14 +363,6 @@ final class Bday_Aero_Admin_Ui {
 				: 'soft';
 			$saved[ Bday_Aero_Settings::PRIVATE_MODE_ENFORCEMENT ] = $value;
 			update_option( Bday_Aero_Settings::PRIVATE_MODE_ENFORCEMENT, $value );
-		}
-
-		if ( array_key_exists( Bday_Aero_Settings::PAYWALL_MODE, $input ) ) {
-			$value = in_array( $input[ Bday_Aero_Settings::PAYWALL_MODE ], array( 'soft', 'hard' ), true )
-				? $input[ Bday_Aero_Settings::PAYWALL_MODE ]
-				: 'soft';
-			$saved[ Bday_Aero_Settings::PAYWALL_MODE ] = $value;
-			update_option( Bday_Aero_Settings::PAYWALL_MODE, $value );
 		}
 
 		if ( array_key_exists( Bday_Aero_Settings::PREVIEW_WORD_COUNT, $input ) ) {
@@ -476,31 +462,5 @@ final class Bday_Aero_Admin_Ui {
 			$result[ sanitize_key( (string) $taxonomy ) ] = array_map( 'intval', $ids );
 		}
 		return $result;
-	}
-
-	private function sync_paywall_mode_to_backend( string $paywall_mode ): void {
-		$base_url = Bday_Aero_Settings::api_base_url();
-		$api_key  = Bday_Aero_Settings::api_key();
-		if ( '' === $base_url || '' === $api_key ) {
-			return;
-		}
-
-		wp_remote_request(
-			$base_url . '/connector/settings',
-			array(
-				'method'  => 'PATCH',
-				'timeout' => 8,
-				'headers' => array(
-					'Content-Type' => 'application/json',
-					'X-Api-Key'    => $api_key,
-				),
-				'body'    => wp_json_encode(
-					array(
-						'key'   => 'meter_scope_mode',
-						'value' => 'hard' === $paywall_mode ? 'hard_wall' : 'hybrid',
-					)
-				),
-			)
-		);
 	}
 }

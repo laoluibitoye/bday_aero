@@ -1119,3 +1119,171 @@
   border-radius: 999px;
   padding: 3px 11px;
 }
+
+/* Gating mode selector — 4 full-sentence options, so a vertical list of
+   Card-wrapped radio rows reads better here than .aero-segmented (that
+   control's own doc comment says it's meant for 2-3 short choices, and its
+   480px max-width doesn't leave room for a whole description per option). */
+.aero-gating-mode {
+  display: flex;
+  flex-direction: column;
+  gap: var(--aero-space-2);
+}
+
+.aero-gating-mode__option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: var(--aero-space-3) var(--aero-space-4);
+  border: 1px solid var(--aero-border);
+  border-radius: var(--aero-radius);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.aero-gating-mode__option input[type='radio'] {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.aero-gating-mode__option.is-selected {
+  border-color: var(--aero-accent);
+  background: rgba(227, 6, 19, 0.06);
+}
+
+.aero-gating-mode__option:focus-within {
+  box-shadow: var(--aero-focus-ring);
+}
+
+.aero-gating-mode__label {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--aero-ink);
+}
+
+.aero-gating-mode__description {
+  display: block;
+  font-size: 12.5px;
+  color: var(--aero-text-muted);
+  margin-top: 2px;
+  line-height: 1.45;
+}
+
+.aero-gating-mode__option--custom {
+  border-style: dashed;
+  cursor: default;
+}
+
+.aero-gating-mode__custom-dot {
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  border-radius: 50%;
+  border: 1.5px dashed var(--aero-text-muted);
+  flex-shrink: 0;
+}
+
+/* Per-category access table (Gating tab) — same row/head styling language
+   as .aero-rules__table above, since it's a friendlier view over the same
+   rules data, not a different feature. */
+.aero-category-overrides {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--aero-border);
+  border: 1px solid var(--aero-border);
+  border-radius: var(--aero-radius);
+  overflow: hidden;
+}
+
+.aero-category-overrides__row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--aero-space-3);
+  align-items: center;
+  background: var(--aero-card-bg);
+  padding: var(--aero-space-3);
+}
+
+.aero-category-overrides__row--head {
+  background: var(--aero-bg);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--aero-text-muted);
+}
+
+.aero-category-overrides__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--aero-ink);
+}
+
+.aero-category-overrides__control {
+  display: flex;
+  align-items: center;
+  gap: var(--aero-space-4);
+  flex-wrap: wrap;
+}
+
+.aero-category-overrides__option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.aero-category-overrides__count {
+  width: 56px;
+  padding: 4px 6px;
+  border: 1px solid var(--aero-border);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--aero-card-bg);
+  color: var(--aero-text);
+}
+
+/* Advanced disclosure (Gating tab) — no existing <details> pattern found
+   elsewhere in this app, so this is a plain native <details>/<summary>
+   dressed with the same card typography as Card's own h2 title. */
+.aero-advanced {
+  border: 1px solid var(--aero-border);
+  border-radius: var(--aero-radius-lg);
+  background: var(--aero-card-bg);
+  padding: var(--aero-space-4) var(--aero-space-5);
+}
+
+.aero-advanced__summary {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--aero-ink);
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  list-style: none;
+}
+
+.aero-advanced__summary::-webkit-details-marker {
+  display: none;
+}
+
+.aero-advanced__summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 8px;
+  color: var(--aero-text-muted);
+  transition: transform 0.15s ease;
+}
+
+.aero-advanced[open] .aero-advanced__summary::before {
+  transform: rotate(90deg);
+}
+
+.aero-advanced__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--aero-space-4);
+  margin-top: var(--aero-space-4);
+}

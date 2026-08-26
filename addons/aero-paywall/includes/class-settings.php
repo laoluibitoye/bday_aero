@@ -34,7 +34,6 @@ final class Bday_Aero_Settings {
 	public const APPLE_CLIENT_ID            = 'aero_paywall_apple_client_id';
 	public const RESTRICTION_RULES          = 'aero_paywall_restriction_rules';
 	public const PREVIEW_WORD_COUNT         = 'aero_paywall_preview_word_count';
-	public const PAYWALL_MODE               = 'aero_paywall_paywall_mode';
 	public const BYPASS_ROLES               = 'aero_paywall_bypass_roles';
 	public const JSONLD_ENABLED             = 'aero_paywall_jsonld_enabled';
 	public const RESTRICTION_EXCEPTIONS     = 'aero_paywall_restriction_exceptions';
@@ -135,11 +134,6 @@ final class Bday_Aero_Settings {
 
 	public static function preview_word_count(): int {
 		return (int) get_option( self::PREVIEW_WORD_COUNT, 120 );
-	}
-
-	/** 'soft' | 'hard' */
-	public static function paywall_mode(): string {
-		return (string) get_option( self::PAYWALL_MODE, 'soft' );
 	}
 
 	/** @return string[] */

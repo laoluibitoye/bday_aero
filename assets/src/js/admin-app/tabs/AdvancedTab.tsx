@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Settings, ConnectorSettings } from '../types';
-import { Card, TextField, Toggle, SegmentedControl, NumberField, Button } from '../components/Field';
+import { Card, TextField, Toggle, NumberField, Button } from '../components/Field';
 import { saveSettings, getConnectorSettings, updateConnectorSetting } from '../api';
 import { urlLooksInvalid } from '../validation';
 
@@ -25,15 +25,7 @@ export function AdvancedTab({
 }: Props): JSX.Element {
   const [saving, setSaving] = useState(false);
   const [savingMetering, setSavingMetering] = useState(false);
-  const boot = window.aeroPaywallAdmin;
   const thresholds = connectorSettings.funnel_thresholds ?? { stage2: 2, stage3: 3, stage4: 4 };
-
-  function toggleBypassRole(slug: string): void {
-    const next = settings.aero_paywall_bypass_roles.includes(slug)
-      ? settings.aero_paywall_bypass_roles.filter((r) => r !== slug)
-      : [...settings.aero_paywall_bypass_roles, slug];
-    patchSettings({ aero_paywall_bypass_roles: next });
-  }
 
   async function handleSave(): Promise<void> {
     setSaving(true);
@@ -73,20 +65,12 @@ export function AdvancedTab({
   return (
     <div className="aero-tab">
       <Card title="Free-article metering" description="Enforced by the Subscription Service, not stored in WordPress — changes here apply immediately across web and mobile.">
-        <div className="aero-metering-grid">
-          <NumberField
-            label="Free articles allowed"
-            value={connectorSettings.meter_limit ?? 3}
-            min={0}
-            onChange={(v) => saveMeteringField('meter_limit', v)}
-          />
-          <NumberField
-            label="Reset period (days)"
-            value={connectorSettings.meter_cycle_days ?? 30}
-            min={1}
-            onChange={(v) => saveMeteringField('meter_cycle_days', v)}
-          />
-        </div>
+        <NumberField
+          label="Reset period (days)"
+          value={connectorSettings.meter_cycle_days ?? 30}
+          min={1}
+          onChange={(v) => saveMeteringField('meter_cycle_days', v)}
+        />
         <div className="aero-metering-grid">
           <NumberField
             label="Register prompt at"
@@ -107,44 +91,9 @@ export function AdvancedTab({
             onChange={(v) => saveMeteringField('funnel_thresholds', { ...thresholds, stage4: v })}
           />
         </div>
-        <Toggle
-          label="Combined restrictions"
-          checked={connectorSettings.restrictions_combine_mode ?? false}
-          onChange={(v) => saveMeteringField('restrictions_combine_mode', v)}
-          description="Use a single free-article count across every restriction rule, instead of a separate count per rule."
-        />
-        <Toggle
-          label="IP address fallback"
-          checked={connectorSettings.meter_ip_fallback_enabled ?? false}
-          onChange={(v) => saveMeteringField('meter_ip_fallback_enabled', v)}
-          description="Also count reads by IP address, so clearing cookies alone doesn't reset a reader's free-article count. Off by default — a shared office/campus IP would otherwise share one allowance."
-        />
         <Button variant="ghost" onClick={refreshMetering} disabled={savingMetering}>
           Refresh from server
         </Button>
-      </Card>
-
-      <Card title="Paywall mode" description="Hard mode locks the entire site, not just premium content, with no free preview at all.">
-        <SegmentedControl
-          label="Mode"
-          value={settings.aero_paywall_paywall_mode}
-          onChange={(v) => patchSettings({ aero_paywall_paywall_mode: v as Settings['aero_paywall_paywall_mode'] })}
-          options={[
-            { value: 'soft', label: 'Soft', description: 'Preview then lock (default)' },
-            { value: 'hard', label: 'Hard', description: 'Lock every page immediately' },
-          ]}
-        />
-      </Card>
-
-      <Card title="Bypass restrictions" description="These roles always see full content, regardless of any restriction above.">
-        <div className="aero-checkbox-grid">
-          {Object.entries(boot.roles).map(([slug, name]) => (
-            <label key={slug} className="aero-checkbox-grid__item">
-              <input type="checkbox" checked={settings.aero_paywall_bypass_roles.includes(slug)} onChange={() => toggleBypassRole(slug)} />
-              {name}
-            </label>
-          ))}
-        </div>
       </Card>
 
       <Card title="Search engines">
@@ -160,21 +109,11 @@ export function AdvancedTab({
         />
       </Card>
 
-      <Card title="Ad-free & private browsing">
+      <Card title="Ad-free">
         <Toggle
           label="Ad-free for subscribers"
           checked={settings.aero_paywall_adfree_enabled}
           onChange={(v) => patchSettings({ aero_paywall_adfree_enabled: v })}
-        />
-        <SegmentedControl
-          label="Private-browsing guard"
-          value={settings.aero_paywall_private_mode_enforcement}
-          onChange={(v) => patchSettings({ aero_paywall_private_mode_enforcement: v as Settings['aero_paywall_private_mode_enforcement'] })}
-          options={[
-            { value: 'off', label: 'Off' },
-            { value: 'soft', label: 'Soft prompt' },
-            { value: 'hard', label: 'Hard block' },
-          ]}
         />
       </Card>
 

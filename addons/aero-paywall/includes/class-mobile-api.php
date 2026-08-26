@@ -57,9 +57,13 @@ final class Bday_Aero_Mobile_Api {
 		// this check mattering here is what actually enforces the scope
 		// setting, not just what the page-load gate renders.
 		$scope_mode  = Bday_Aero_Paywall_Config_Client::get()['meter_scope_mode'] ?? 'hybrid';
-		$global_lock = 'global_lock' === $scope_mode;
+		// 'hard_wall' folded in here alongside 'global_lock' — both mean
+		// "gate every article, not just premium ones," now that the former
+		// WP-local paywall_mode toggle's hard-mode value has been retired in
+		// favor of meter_scope_mode being the single source of truth.
+		$global_lock = in_array( $scope_mode, array( 'global_lock', 'hard_wall' ), true );
 		$is_gated    = Bday_Aero_Settings::enabled() && Bday_Aero_License_Client::is_active()
-			&& ( 'hard' === Bday_Aero_Settings::paywall_mode() || $is_premium || $global_lock );
+			&& ( $is_premium || $global_lock );
 
 		$content = apply_filters( 'the_content', $post->post_content );
 		$preview = wp_trim_words( wp_strip_all_tags( $post->post_content ), Bday_Aero_Settings::preview_word_count() );

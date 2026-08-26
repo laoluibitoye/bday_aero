@@ -52,7 +52,6 @@ export interface Settings {
   aero_paywall_private_mode_enforcement: 'off' | 'soft' | 'hard';
   aero_paywall_restricted_post_types: string[];
   aero_paywall_preview_word_count: number;
-  aero_paywall_paywall_mode: 'soft' | 'hard';
   aero_paywall_bypass_roles: string[];
   aero_paywall_jsonld_enabled: boolean;
   aero_paywall_restriction_exceptions: Record<string, number[]>;
