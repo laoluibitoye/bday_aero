@@ -49,7 +49,12 @@ final class Bday_Aero_Premium_Map {
 	 * and surfaces a wp-admin notice until a sync next succeeds.
 	 */
 	private function handle_sync_response( $response, string $context, string $retry_hook ): bool {
-		$failed = is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response );
+		// subscription-service's connector endpoints are plain @Post routes
+		// with no @HttpCode override, so Nest's default success status is
+		// 201 Created, not 200 — checking for exactly 200 flagged every
+		// successful sync as a failure.
+		$status = wp_remote_retrieve_response_code( $response );
+		$failed = is_wp_error( $response ) || $status < 200 || $status >= 300;
 		if ( ! $failed ) {
 			delete_transient( self::SYNC_FAILED_TRANSIENT );
 			return true;
