@@ -74,10 +74,10 @@ if ( have_posts() ) :
 				</div>
 
 				<?php if ( ! $is_gated ) :
-					$categories = get_the_category( $post_id );
-					$primary_category = $categories[0] ?? null;
-					if ( $primary_category ) :
-						$more_episodes = bday_get_posts( array( 'post_type' => 'podcast', 'category_name' => $primary_category->slug, 'post__not_in' => array( $post_id ), 'numberposts' => 3, 'cache_namespace' => 'podcast' ) );
+					$series_terms = wp_get_post_terms( $post_id, 'podcast_series' );
+					$primary_series = ( ! is_wp_error( $series_terms ) && ! empty( $series_terms ) ) ? $series_terms[0] : null;
+					if ( $primary_series ) :
+						$more_episodes = bday_get_posts( array( 'post_type' => 'podcast', 'tax_query' => array( array( 'taxonomy' => 'podcast_series', 'field' => 'term_id', 'terms' => $primary_series->term_id ) ), 'post__not_in' => array( $post_id ), 'numberposts' => 3, 'cache_namespace' => 'podcast' ) );
 						if ( ! empty( $more_episodes ) ) :
 							?>
 							<div class="bday-ymal">

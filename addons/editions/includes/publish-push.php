@@ -6,14 +6,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action( 'transition_post_status', 'bday_editions_on_publish', 10, 3 );
 
 /**
- * Fires only on an actual draft/pending/future → publish transition
- * (never on every save — same reasoning as addons/follow-notify's
- * identically-shaped hook), and only pushes when both a publication term
- * and the PDF object key are actually set — an edition an editor is still
- * assembling shouldn't sync a broken/empty mapping.
+ * Fires on a draft/pending/future → publish transition (same reasoning as
+ * addons/follow-notify's identically-shaped hook) — and also on a plain
+ * save of an already-published edition, which matters now that the PDF
+ * metabox supports re-uploading a replacement file (Phase: wp-admin PDF
+ * upload): without this second case, correcting a bad PDF on a live
+ * edition would silently never reach subscription-service, and readers
+ * would keep getting signed URLs for the old object key. Still only
+ * pushes when both a publication term and the PDF object key are
+ * actually set — an edition an editor is still assembling shouldn't sync
+ * a broken/empty mapping.
  */
 function bday_editions_on_publish( string $new_status, string $old_status, WP_Post $post ): void {
-	if ( 'publish' === $old_status || 'publish' !== $new_status ) {
+	$is_publish_transition  = 'publish' !== $old_status && 'publish' === $new_status;
+	$is_republish_of_live   = 'publish' === $old_status && 'publish' === $new_status;
+	if ( ! $is_publish_transition && ! $is_republish_of_live ) {
 		return;
 	}
 	if ( 'bday_edition' !== $post->post_type ) {

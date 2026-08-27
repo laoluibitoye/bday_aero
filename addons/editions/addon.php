@@ -14,11 +14,14 @@
  * whatever an editor adds later — a real taxonomy, not a fixed list in
  * code, so "there will likely be more editions in the future" needs zero
  * code changes). Each edition's PDF lives on an external storage
- * platform (never uploaded to WordPress — Phase 10's decision), referenced
- * by a URL/object-key meta field; publishing pushes that mapping to
- * subscription-service's /connector/edition-sync, which is what actually
- * gates and signs downloads (Phase 10's ArchiveEntitlementService,
- * unchanged by this addon).
+ * platform, referenced by an object-key meta field; publishing pushes
+ * that mapping to subscription-service's /connector/edition-sync, which
+ * is what actually gates and signs downloads (Phase 10's
+ * ArchiveEntitlementService, unchanged by this addon). The object key can
+ * either be uploaded straight from the PDF metabox (streamed through to
+ * the storage platform, never written to WordPress) or pasted in directly
+ * for a file already sitting in the bucket — the latter is also what the
+ * bulk-import screen uses to create many past editions at once.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -29,3 +32,4 @@ require_once __DIR__ . '/includes/cpt.php';
 require_once __DIR__ . '/includes/metabox.php';
 require_once __DIR__ . '/includes/publish-push.php';
 require_once __DIR__ . '/includes/homepage.php';
+require_once __DIR__ . '/includes/bulk-import.php';

@@ -12,9 +12,10 @@
  * (addons/cartoons/), e-paper (Phase 10), and now audio podcasts. Episode
  * audio is a hosted URL (SoundCloud/Podcast-host embed or direct file),
  * not a WordPress media upload — same "don't self-host heavy media"
- * posture as bday-live's YouTube embed and the video facade. Registered
- * with category/tag support specifically so episodes can participate in
- * Phase 7's follow-a-taxonomy system exactly like standard posts.
+ * posture as bday-live's YouTube embed and the video facade. Grouped by
+ * its own `podcast_series` taxonomy (not the article category/tag system —
+ * a show/series isn't an article section) so episodes sort and archive by
+ * series, mirroring addons/editions' edition_publication.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
