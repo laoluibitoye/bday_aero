@@ -48,6 +48,13 @@ function bday_edition_render_legacy_wizard_page(): void {
 		<p>Moves legacy e-paper posts (category <code>e-paper</code>/<code>e-edition</code>, PDF pasted as a public URL — no login or subscription check on that path today) onto the same secure, signed-download system already used by E-Editions. Safe to re-run at any point; already-migrated posts are skipped automatically.</p>
 
 		<ol class="bday-legacy-wizard__steps">
+			<li id="bday-wizard-step-0" class="bday-legacy-wizard__step">
+				<h2>0. Check connections</h2>
+				<p>Confirms the full upload path works before migrating anything real: WordPress reaching subscription-service (base URL + API key), and subscription-service reaching your S3 bucket (an actual write-then-read test, not just checking the credentials are present). Run this first if editions aren't showing their PDF.</p>
+				<button type="button" class="button button-primary" id="bday-wizard-storage-test">Test AWS/S3 connection</button>
+				<div id="bday-wizard-storage-result" class="bday-legacy-wizard__result" aria-live="polite"></div>
+			</li>
+
 			<li id="bday-wizard-step-1" class="bday-legacy-wizard__step">
 				<h2>1. Scan</h2>
 				<p>Counts legacy posts and how many still need migrating. Makes no changes.</p>
@@ -131,6 +138,23 @@ function bday_edition_render_legacy_wizard_page(): void {
 			var body = new URLSearchParams( Object.assign( { action: action, _ajax_nonce: nonce }, data || {} ) );
 			return fetch( ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body } )
 				.then( function ( r ) { return r.json(); } );
+		}
+
+		var storageTestBtn = document.getElementById( 'bday-wizard-storage-test' );
+		if ( storageTestBtn ) {
+			storageTestBtn.addEventListener( 'click', function () {
+				storageTestBtn.disabled = true;
+				var out = document.getElementById( 'bday-wizard-storage-result' );
+				out.textContent = 'Testing…';
+				post( 'bday_edition_legacy_storage_test' ).then( function ( res ) {
+					storageTestBtn.disabled = false;
+					var ok = res.success && res.data && res.data.ok;
+					out.innerHTML = '<span class="bday-legacy-wizard__status-' + ( ok ? 'migrated' : 'failed' ) + '">'
+						+ ( ok ? '✓ ' : '✗ ' )
+						+ escapeHtml( ( res.data && res.data.message ) || 'Unknown error.' )
+						+ '</span>';
+				} );
+			} );
 		}
 
 		var scanBtn = document.getElementById( 'bday-wizard-scan' );
@@ -269,6 +293,76 @@ function bday_edition_render_legacy_wizard_page(): void {
 	</script>
 	<?php
 }
+
+add_action(
+	'wp_ajax_bday_edition_legacy_storage_test',
+	static function (): void {
+		check_ajax_referer( BDAY_EDITION_LEGACY_WIZARD_NONCE );
+		if ( ! current_user_can( 'edit_others_posts' ) ) {
+			wp_send_json_error( array( 'message' => 'Permission denied.' ), 403 );
+		}
+
+		$base_url = (string) get_option( 'aero_paywall_api_base_url', '' );
+		$api_key  = (string) get_option( 'aero_paywall_api_key', '' );
+		if ( '' === $base_url || '' === $api_key ) {
+			wp_send_json_success(
+				array(
+					'ok'      => false,
+					'message' => 'The Aero Paywall API base URL and/or API key aren\'t set yet — configure those first (Settings → Connection tab), then re-run this test.',
+				)
+			);
+		}
+
+		// Reaching subscription-service at all (any 2xx/4xx response, not a
+		// connection failure) already confirms the WordPress-to-backend leg
+		// works; only the response body (or a non-2xx/4xx status) tells us
+		// about the backend-to-S3 leg, which is what the request actually
+		// tests server-side via PdfStorageService::testConnection().
+		$response = wp_remote_get(
+			rtrim( $base_url, '/' ) . '/connector/storage-status',
+			array(
+				'timeout' => 15,
+				'headers' => array( 'X-Api-Key' => $api_key ),
+			)
+		);
+		if ( is_wp_error( $response ) ) {
+			wp_send_json_success(
+				array(
+					'ok'      => false,
+					'message' => 'Could not reach subscription-service at "' . $base_url . '": ' . $response->get_error_message() . ' — check the base URL is correct and reachable from this server.',
+				)
+			);
+		}
+
+		$status = wp_remote_retrieve_response_code( $response );
+		if ( 401 === $status || 403 === $status ) {
+			wp_send_json_success(
+				array(
+					'ok'      => false,
+					'message' => 'subscription-service rejected the request (HTTP ' . $status . ') — the API key doesn\'t match CONNECTOR_API_KEY on that service.',
+				)
+			);
+		}
+		if ( 200 !== $status ) {
+			wp_send_json_success(
+				array(
+					'ok'      => false,
+					'message' => 'subscription-service returned an unexpected HTTP ' . $status . ' — check its logs for what /connector/storage-status hit.',
+				)
+			);
+		}
+
+		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+		$body = is_array( $data['data'] ?? null ) ? $data['data'] : array();
+
+		wp_send_json_success(
+			array(
+				'ok'      => ! empty( $body['ok'] ),
+				'message' => (string) ( $body['message'] ?? 'subscription-service returned no message.' ),
+			)
+		);
+	}
+);
 
 add_action(
 	'wp_ajax_bday_edition_legacy_scan',

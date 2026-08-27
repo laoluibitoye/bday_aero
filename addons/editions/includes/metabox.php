@@ -44,11 +44,19 @@ add_action(
 		$uploaded_key = bday_edition_upload_pdf_if_present( $post_id );
 		if ( null !== $uploaded_key ) {
 			update_post_meta( $post_id, '_bday_edition_object_key', $uploaded_key );
-			return;
+		} elseif ( isset( $_POST['object_key'] ) ) {
+			update_post_meta( $post_id, '_bday_edition_object_key', sanitize_text_field( wp_unslash( $_POST['object_key'] ) ) );
 		}
 
-		if ( isset( $_POST['object_key'] ) ) {
-			update_post_meta( $post_id, '_bday_edition_object_key', sanitize_text_field( wp_unslash( $_POST['object_key'] ) ) );
+		// Publishing and uploading the PDF in the same click fires this
+		// handler AFTER transition_post_status (publish-push.php's own
+		// hook) already ran with the object key still empty — see that
+		// file's docblock. Calling the sync directly here, now that the
+		// object key above is guaranteed current, is what actually makes a
+		// brand-new edition reach subscription-service on its first
+		// publish instead of requiring a second, separate save.
+		if ( function_exists( 'bday_edition_sync_to_subscription_service' ) ) {
+			bday_edition_sync_to_subscription_service( get_post( $post_id ) );
 		}
 	}
 );

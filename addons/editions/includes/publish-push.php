@@ -12,18 +12,40 @@ add_action( 'transition_post_status', 'bday_editions_on_publish', 10, 3 );
  * metabox supports re-uploading a replacement file (Phase: wp-admin PDF
  * upload): without this second case, correcting a bad PDF on a live
  * edition would silently never reach subscription-service, and readers
- * would keep getting signed URLs for the old object key. Still only
- * pushes when both a publication term and the PDF object key are
- * actually set — an edition an editor is still assembling shouldn't sync
- * a broken/empty mapping.
+ * would keep getting signed URLs for the old object key.
+ *
+ * NOTE: this alone is not sufficient for a brand-new edition that's
+ * uploaded-and-published in one click — wp_insert_post() fires
+ * transition_post_status (this hook) *before* save_post_{post_type}
+ * (metabox.php's save_post_bday_edition, which is what actually uploads
+ * the file and sets _bday_edition_object_key), so on that very first
+ * publish the object key isn't set yet and this function returns early
+ * having synced nothing. metabox.php's save handler calls
+ * bday_edition_sync_to_subscription_service() directly, right after
+ * setting the object key, to cover exactly that case — this hook remains
+ * for the republish-without-touching-the-metabox path (e.g. re-assigning
+ * the publication term alone).
  */
 function bday_editions_on_publish( string $new_status, string $old_status, WP_Post $post ): void {
-	$is_publish_transition  = 'publish' !== $old_status && 'publish' === $new_status;
-	$is_republish_of_live   = 'publish' === $old_status && 'publish' === $new_status;
+	$is_publish_transition = 'publish' !== $old_status && 'publish' === $new_status;
+	$is_republish_of_live  = 'publish' === $old_status && 'publish' === $new_status;
 	if ( ! $is_publish_transition && ! $is_republish_of_live ) {
 		return;
 	}
-	if ( 'bday_edition' !== $post->post_type ) {
+	bday_edition_sync_to_subscription_service( $post );
+}
+
+/**
+ * The actual /connector/edition-sync push — pulled out of
+ * bday_editions_on_publish() so metabox.php's save handler can call it
+ * directly right after setting the object key (see that function's
+ * docblock for why the transition_post_status hook alone misses a
+ * brand-new edition's first publish). Safe to call unconditionally on any
+ * save; no-ops quietly if the post isn't a published bday_edition or is
+ * still missing an object key/publication term.
+ */
+function bday_edition_sync_to_subscription_service( WP_Post $post ): void {
+	if ( 'bday_edition' !== $post->post_type || 'publish' !== $post->post_status ) {
 		return;
 	}
 
