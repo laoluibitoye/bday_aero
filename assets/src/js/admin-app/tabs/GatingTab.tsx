@@ -91,8 +91,8 @@ export function GatingTab({
       </Card>
 
       <Card
-        title="Gating mode"
-        description="How AeroPaywall decides what counts toward a reader's free-article limit, and what actually gets locked once they hit it. Enforced by the Subscription Service — changes here apply immediately across web and mobile."
+        title="Paywall scope"
+        description="Which articles count toward a reader's free limit, and which ones actually get gated. Enforced by the Subscription Service — changes here apply immediately across web and mobile."
       >
         <GatingModeSelector
           value={connectorSettings.meter_scope_mode}

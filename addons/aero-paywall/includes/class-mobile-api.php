@@ -197,18 +197,33 @@ final class Bday_Aero_Mobile_Api {
 
 		$stage = $meter['stage'];
 		/**
-		 * Bug found live: a signed-in-but-unsubscribed reader who'd used up
-		 * their free views still got whichever stage the device meter
-		 * naturally computes — register_prompt or profile_prompt, the same
-		 * ones an anonymous, never-registered visitor sees. Those steps
-		 * are already done for this reader; showing "Create a free
-		 * account" to someone already signed in is confusing and, per
-		 * reader feedback, actively hurts conversion (it reads as broken,
-		 * not as a nudge to subscribe). The only gate that ever makes
-		 * sense for an authenticated non-subscriber is "Subscribe."
+		 * Reader-reported/audited bug: this used to collapse BOTH
+		 * register_prompt and profile_prompt straight to paid_lock for any
+		 * authenticated reader, on the reasoning that "those steps are
+		 * already done for this reader." That's only true of
+		 * register_prompt — being signed in *is* having registered, so
+		 * that ask is genuinely satisfied and the reader should be let
+		 * through to keep reading (not stopped at a Subscribe wall they
+		 * haven't earned yet). profile_prompt (funnel stage 3, "Last Name/
+		 * Phone/Company") is a *different* ask that registering alone does
+		 * not satisfy — collapsing it the same way meant a reader who
+		 * registered at stage 2 got jumped straight to the stage-4
+		 * Subscribe gate the very next time their count landed in the
+		 * stage-3 band, never actually seeing the profile prompt or
+		 * getting to read past it. profileComplete (subscription-service's
+		 * EntitlementClaimsService, baked into every token it issues) is
+		 * the real, persisted signal for whether this reader has actually
+		 * done stage 3 — only once that's true does profile_prompt open up
+		 * too; until then it stays exactly what the device meter says, so
+		 * the reader keeps seeing the prompt (and keeps being asked to
+		 * complete it) instead of being routed around it.
 		 */
-		if ( $is_authenticated_reader && in_array( $stage, array( 'register_prompt', 'profile_prompt' ), true ) ) {
-			$stage = 'paid_lock';
+		if ( $is_authenticated_reader ) {
+			if ( 'register_prompt' === $stage ) {
+				$stage = 'open';
+			} elseif ( 'profile_prompt' === $stage && ! empty( $entitlement['claims']['profileComplete'] ) ) {
+				$stage = 'open';
+			}
 		}
 
 		$open = ! in_array( $stage, array( 'paid_lock', 'register_prompt', 'profile_prompt' ), true );

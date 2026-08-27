@@ -8,24 +8,29 @@ interface GatingModeOption {
   description: string;
 }
 
-// Descriptions for restricted_only/hybrid/global_lock are lifted near-verbatim from admin-web's
-// SCOPE_MODE_OPTIONS (app/dashboard/settings/page.tsx) so both consoles describe the same
-// meter_scope_mode value identically. hard_wall has no free-preview state at all — SDK/backend
-// treat it as "every restricted article is locked for every non-subscriber, no metering."
+// Labels and descriptions here must stay byte-identical to admin-web's own
+// SCOPE_MODE_OPTIONS (app/dashboard/settings/page.tsx) — reader-audited bug:
+// this used to use different display names for the same meter_scope_mode
+// value ("Premium Only"/"Metered"/"Full Paywall" here vs "Restricted only"/
+// "Hybrid (recommended)"/"Global lock" there), so a WP admin and an
+// admin-web staffer describing the same setting to each other were using
+// different vocabulary for it. hard_wall has no free-preview state at all —
+// SDK/backend treat it as "every restricted article is locked for every
+// non-subscriber, no metering."
 export const GATING_MODE_OPTIONS: GatingModeOption[] = [
   {
     value: 'restricted_only',
-    label: 'Premium Only',
-    description: 'Only premium-marked articles ever count or get gated. Free content is never touched.',
+    label: 'Restricted only',
+    description: 'Only premium-marked articles count toward the limit and get gated. Free content is never touched.',
   },
   {
     value: 'hybrid',
-    label: 'Metered',
-    description: 'Every article a reader views counts toward their limit, but only premium articles are ever gated by it.',
+    label: 'Hybrid (recommended)',
+    description: 'Every article a reader views counts toward their limit, but only premium articles ever get gated by it.',
   },
   {
     value: 'global_lock',
-    label: 'Full Paywall',
+    label: 'Global lock',
     description: 'Every article counts and every article is gated once the limit is hit — including free content.',
   },
   {
