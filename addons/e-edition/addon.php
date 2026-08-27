@@ -19,3 +19,4 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/includes/pdf-viewer.php';
+require_once __DIR__ . '/includes/legacy-redirect.php';

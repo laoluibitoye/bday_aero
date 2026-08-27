@@ -92,6 +92,27 @@ function bday_edition_upload_pdf_if_present( int $post_id ): ?string {
 		return null;
 	}
 
+	return bday_edition_upload_bytes( $post_id, $file_body );
+}
+
+/**
+ * Shared upload path: streams raw PDF bytes to subscription-service's
+ * /connector/edition-pdf (which writes them to the archive bucket and mints
+ * the object key). Used by the metabox upload above and by the legacy-post
+ * migration script, so there is exactly one code path that talks to the
+ * connector endpoint.
+ *
+ * Returns the new object key on success, null on any failure (an admin
+ * notice is queued via bday_edition_queue_upload_notice()).
+ */
+function bday_edition_upload_bytes( int $post_id, string $bytes ): ?string {
+	$base_url = (string) get_option( 'aero_paywall_api_base_url', '' );
+	$api_key  = (string) get_option( 'aero_paywall_api_key', '' );
+	if ( '' === $base_url || '' === $api_key ) {
+		bday_edition_queue_upload_notice( 'The PDF upload could not be sent — the Aero Paywall API connection is not configured.' );
+		return null;
+	}
+
 	$response = wp_remote_post(
 		rtrim( $base_url, '/' ) . '/connector/edition-pdf?postId=' . $post_id,
 		array(
@@ -103,7 +124,7 @@ function bday_edition_upload_pdf_if_present( int $post_id ): ?string {
 				'Content-Type' => 'application/pdf',
 				'X-Api-Key'    => $api_key,
 			),
-			'body'    => $file_body,
+			'body'    => $bytes,
 		)
 	);
 
