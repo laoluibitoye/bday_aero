@@ -55,12 +55,15 @@ final class Bday_Aero_Meter_Client {
 			$base_url . '/meter/check',
 			array(
 				'body'    => wp_json_encode(
-					array(
-						'deviceId' => $device_id,
-						'postId'   => (string) $post_id,
+					array_merge(
+						array(
+							'deviceId' => $device_id,
+							'postId'   => (string) $post_id,
+						),
+						self::current_traffic_context()
 					)
 				),
-				'headers' => array( 'Content-Type' => 'application/json' ),
+				'headers' => self::forwarded_headers(),
 				// Was 5s — too long for a synchronous call the page can't
 				// render without an answer to; shortened per
 				// RESOURCE_SAFETY_AUDIT.md 1.1.
@@ -132,15 +135,78 @@ final class Bday_Aero_Meter_Client {
 			$base_url . '/meter/check',
 			array(
 				'body'     => wp_json_encode(
-					array(
-						'deviceId' => $device_id,
-						'postId'   => (string) $post_id,
+					array_merge(
+						array(
+							'deviceId' => $device_id,
+							'postId'   => (string) $post_id,
+						),
+						self::current_traffic_context()
 					)
 				),
-				'headers'  => array( 'Content-Type' => 'application/json' ),
+				'headers'  => self::forwarded_headers(),
 				'timeout'  => 0.01,
 				'blocking' => false,
 			)
 		);
+	}
+
+	/**
+	 * Traffic-source instrumentation (admin analytics breakdown) — derived
+	 * from the current server-side request, since both call sites above run
+	 * synchronously within the reader's own page request. referrerHost is a
+	 * bare hostname only (never the full referrer URL, which can carry
+	 * query strings/paths from the referring site), or omitted for direct
+	 * traffic/an unparseable referrer. UTM params are read from the
+	 * article's own query string, exactly as the reader's URL had them.
+	 *
+	 * @return array{referrerHost?: string, utmSource?: string, utmMedium?: string, utmCampaign?: string}
+	 */
+	private static function current_traffic_context(): array {
+		$context = array();
+
+		$referrer = isset( $_SERVER['HTTP_REFERER'] ) ? (string) $_SERVER['HTTP_REFERER'] : '';
+		if ( '' !== $referrer ) {
+			$host = wp_parse_url( $referrer, PHP_URL_HOST );
+			if ( is_string( $host ) && '' !== $host ) {
+				$context['referrerHost'] = $host;
+			}
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only, not a state-changing request.
+		if ( ! empty( $_GET['utm_source'] ) ) {
+			$context['utmSource'] = sanitize_text_field( wp_unslash( $_GET['utm_source'] ) );
+		}
+		if ( ! empty( $_GET['utm_medium'] ) ) {
+			$context['utmMedium'] = sanitize_text_field( wp_unslash( $_GET['utm_medium'] ) );
+		}
+		if ( ! empty( $_GET['utm_campaign'] ) ) {
+			$context['utmCampaign'] = sanitize_text_field( wp_unslash( $_GET['utm_campaign'] ) );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		return $context;
+	}
+
+	/**
+	 * Forwards the reader's real User-Agent so subscription-service's
+	 * device-type classification (admin analytics) reflects the actual
+	 * reader, not WordPress's own outbound HTTP client string. Deliberately
+	 * does NOT forward X-Forwarded-For / the reader's IP here — that feeds
+	 * subscription-service's crawler-verification and org-IP-bypass
+	 * *security* decisions (see TRUSTED_PROXY_HOPS in subscription-service's
+	 * main.ts), and adding a new proxy hop here would silently change what
+	 * hop count operators need configured; changing that is a deliberate,
+	 * separate decision, not a side effect of an analytics feature.
+	 *
+	 * @return array<string, string>
+	 */
+	private static function forwarded_headers(): array {
+		$headers = array( 'Content-Type' => 'application/json' );
+
+		if ( ! empty( $_SERVER['HTTP_USER_AGENT'] ) ) {
+			$headers['User-Agent'] = sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) );
+		}
+
+		return $headers;
 	}
 }

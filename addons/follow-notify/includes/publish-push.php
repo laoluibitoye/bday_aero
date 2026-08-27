@@ -36,8 +36,13 @@ function bday_follow_notify_on_publish( string $new_status, string $old_status, 
 		return;
 	}
 
-	$categories = wp_get_post_categories( $post->ID, array( 'fields' => 'ids' ) );
-	$tags       = wp_get_post_tags( $post->ID, array( 'fields' => 'ids' ) );
+	// Full term objects, not just ids — the admin console's category
+	// breakdown needs a human-readable label (get_the_category() is the
+	// full-object form of wp_get_post_categories(), keyed the same way).
+	$category_terms = get_the_category( $post->ID );
+	$categories     = wp_list_pluck( $category_terms, 'term_id' );
+	$category_names = wp_list_pluck( $category_terms, 'name' );
+	$tags           = wp_get_post_tags( $post->ID, array( 'fields' => 'ids' ) );
 	if ( empty( $categories ) && empty( $tags ) ) {
 		return;
 	}
@@ -60,7 +65,10 @@ function bday_follow_notify_on_publish( string $new_status, string $old_status, 
 					'url'              => get_permalink( $post ),
 					'imageUrl'         => $image_url ?: null,
 					'categoryTermIds'  => array_map( 'strval', $categories ),
+					'categoryLabels'   => array_values( $category_names ),
 					'tagTermIds'       => array_map( 'strval', $tags ),
+					'authorId'         => (string) $post->post_author,
+					'authorName'       => get_the_author_meta( 'display_name', $post->post_author ),
 				)
 			),
 		)
