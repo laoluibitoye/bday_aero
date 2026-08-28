@@ -219,9 +219,19 @@ final class Bday_Aero_Mobile_Api {
 		 * complete it) instead of being routed around it.
 		 */
 		if ( $is_authenticated_reader ) {
+			// The native mobile app has no "complete your profile" surface at all —
+			// registration only ever collects email/password/firstName, never the
+			// lastName+phone+company profileComplete requires — so that claim can never
+			// become true for a mobile account. Without this, a mobile reader would get
+			// permanently stuck at "Complete your profile" the moment their count crossed
+			// into the stage-3 band, with no way in the app to ever clear it. Mobile users
+			// are told apart by the X-App-Channel header the app sends on every entitlement
+			// request (wpClient.ts's wpEntitledGet) — the web SDK never sends it, so its
+			// profileComplete-gated funnel (comment above) is completely unaffected.
+			$is_mobile = 'mobile' === $request->get_header( 'x-app-channel' );
 			if ( 'register_prompt' === $stage ) {
 				$stage = 'open';
-			} elseif ( 'profile_prompt' === $stage && ! empty( $entitlement['claims']['profileComplete'] ) ) {
+			} elseif ( 'profile_prompt' === $stage && ( $is_mobile || ! empty( $entitlement['claims']['profileComplete'] ) ) ) {
 				$stage = 'open';
 			}
 		}
