@@ -2,7 +2,7 @@
 /**
  * Section Name: E-editions
  * Section Slug: editions
- * Description: A full-width grid of recent edition covers, each with its own View + Past editions actions (different publications have different archives, so one shared action pair at the section's end didn't make sense).
+ * Description: A horizontally-scrolling carousel, one card per publication, each showing that publication's latest edition with its own View + Past editions actions (different publications have different archives, so one shared action pair at the section's end didn't make sense). Reuses the News Carousel add-on's track/prev/next/dots markup and JS (assets/src/js/script.js) rather than a second bespoke carousel implementation — any element matching `.bday-news-carousel` gets the same swipe/drag/arrow behavior automatically.
  * Default Enabled: yes
  *
  * Gated by Homepage Modules' "E-Editions row" toggle, same as the classic
@@ -23,28 +23,41 @@ if ( empty( $cards ) ) {
 	return;
 }
 ?>
-<section class="bday-rd-editions" data-screen-label="E-editions">
+<section class="bday-rd-editions bday-news-carousel" data-screen-label="E-editions">
 	<div class="bday-container">
 		<div class="bday-rd-section-head">
 			<h2>E-editions</h2>
 			<span class="bday-rd-rule"></span>
 		</div>
-		<div class="bday-rd-editions__grid">
-			<?php foreach ( $cards as $card ) : $edition = $card['edition']; $publication = $card['publication']; $has_thumb = has_post_thumbnail( $edition->ID ); ?>
-				<div class="bday-rd-edition-card<?php echo $has_thumb ? '' : ' bday-rd-edition-card--no-thumb'; ?>">
-					<a href="<?php echo esc_url( get_permalink( $edition ) ); ?>" class="bday-rd-edition-card__media">
-						<?php if ( $has_thumb ) : ?><?php echo bday_get_thumbnail( $edition->ID, 'pdf_thumbnail' ); ?><?php endif; ?>
-					</a>
-					<span class="bday-rd-edition-card__name"><?php echo esc_html( $publication ? $publication->name : get_the_title( $edition ) ); ?></span>
-					<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( bday_format_date( $edition->post_date ) ); ?></span>
-					<div class="bday-rd-edition-card__actions">
-						<a href="<?php echo esc_url( get_permalink( $edition ) ); ?>" class="bday-rd-btn bday-rd-btn--solid">View</a>
-						<?php if ( $publication ) : ?>
-							<a href="<?php echo esc_url( get_term_link( $publication ) ); ?>" class="bday-rd-btn bday-rd-btn--outline">Past editions</a>
-						<?php endif; ?>
+		<div class="bday-news-carousel__nav">
+			<button type="button" class="bday-news-carousel__prev" aria-label="Previous">‹</button>
+			<button type="button" class="bday-news-carousel__next" aria-label="Next">›</button>
+		</div>
+		<div class="bday-news-carousel__track bday-rd-editions__track">
+			<?php foreach ( $cards as $index => $card ) : $edition = $card['edition']; $publication = $card['publication']; $has_thumb = has_post_thumbnail( $edition->ID ); ?>
+				<div class="bday-news-carousel__item bday-rd-editions__item<?php echo 0 === $index ? ' is-active' : ''; ?>">
+					<div class="bday-rd-edition-card<?php echo $has_thumb ? '' : ' bday-rd-edition-card--no-thumb'; ?>">
+						<a href="<?php echo esc_url( get_permalink( $edition ) ); ?>" class="bday-rd-edition-card__media">
+							<?php if ( $has_thumb ) : ?><?php echo bday_get_thumbnail( $edition->ID, 'pdf_thumbnail' ); ?><?php endif; ?>
+						</a>
+						<span class="bday-rd-edition-card__name"><?php echo esc_html( $publication ? $publication->name : get_the_title( $edition ) ); ?></span>
+						<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( bday_format_date( $edition->post_date ) ); ?></span>
+						<div class="bday-rd-edition-card__actions">
+							<a href="<?php echo esc_url( get_permalink( $edition ) ); ?>" class="bday-rd-btn bday-rd-btn--solid">View</a>
+							<?php if ( $publication ) : ?>
+								<a href="<?php echo esc_url( get_term_link( $publication ) ); ?>" class="bday-rd-btn bday-rd-btn--outline">Past editions</a>
+							<?php endif; ?>
+						</div>
 					</div>
 				</div>
 			<?php endforeach; ?>
 		</div>
+		<?php if ( count( $cards ) > 1 ) : ?>
+			<div class="bday-news-carousel__dots">
+				<?php foreach ( $cards as $index => $card ) : ?>
+					<button type="button" class="bday-news-carousel__dot<?php echo 0 === $index ? ' is-active' : ''; ?>" data-index="<?php echo (int) $index; ?>" aria-label="<?php echo esc_attr( 'Go to ' . ( $card['publication']->name ?? '' ) ); ?>"></button>
+				<?php endforeach; ?>
+			</div>
+		<?php endif; ?>
 	</div>
 </section>

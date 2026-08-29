@@ -1433,6 +1433,30 @@ $bday-border: var(--color-border);
 
 .bday-pagination { margin: 24px 0; text-align: center; }
 
+// Reader-requested: page-number pagination replaced sitewide with a single "Load more" button
+// (core/helpers.php's bday_render_load_more_button(), assets/src/js/script.js's click handler).
+.bday-load-more {
+	margin: 32px 0;
+	text-align: center;
+
+	&__button {
+		font-family: inherit;
+		font-size: 14px;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+		padding: 12px 32px;
+		border-radius: 999px;
+		border: 1px solid $bday-border;
+		background: var(--color-bg);
+		color: $bday-ink;
+		cursor: pointer;
+		transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+
+		&:hover:not(:disabled) { border-color: $bday-red; color: $bday-red; }
+		&:disabled { opacity: 0.6; cursor: default; }
+	}
+}
+
 .bday-archive-title { font-size: 1.8rem; font-weight: 800; margin: 24px 0; }
 
 .bday-archive-header {

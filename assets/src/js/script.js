@@ -696,4 +696,56 @@ document.addEventListener('DOMContentLoaded', function () {
 			{ passive: true }
 		);
 	}
+
+	// "Load more" pagination (core/helpers.php's bday_render_load_more_button()) — every archive/
+	// gallery/e-edition listing in the theme now ends in one of these instead of page-number
+	// links. Deliberately not a bespoke AJAX endpoint: the button's data-next-url is a completely
+	// normal `?paged=N` page, same one a page-number link would have navigated to — this just
+	// fetches that page's HTML and lifts the matching container's children out of it, so the
+	// fetched page's own render logic (including its own "next" button, already pointing at
+	// paged=N+1) is reused rather than duplicated here.
+	document.querySelectorAll('[data-bday-load-more]').forEach(function (wrapper) {
+		var button = wrapper.querySelector('.bday-load-more__button');
+		if (!button) return;
+
+		button.addEventListener('click', function () {
+			var nextUrl = wrapper.dataset.nextUrl;
+			var targetSelector = wrapper.dataset.target;
+			if (!nextUrl || !targetSelector) return;
+
+			var target = document.querySelector(targetSelector);
+			if (!target) return;
+
+			button.disabled = true;
+			var originalLabel = button.textContent;
+			button.textContent = 'Loading…';
+
+			fetch(nextUrl)
+				.then(function (res) {
+					return res.text();
+				})
+				.then(function (html) {
+					var doc = new DOMParser().parseFromString(html, 'text/html');
+					var fetchedTarget = doc.querySelector(targetSelector);
+					if (fetchedTarget) {
+						Array.prototype.forEach.call(fetchedTarget.children, function (child) {
+							target.appendChild(document.importNode(child, true));
+						});
+					}
+
+					var fetchedWrapper = doc.querySelector('[data-bday-load-more]');
+					if (fetchedWrapper && fetchedWrapper.dataset.nextUrl) {
+						wrapper.dataset.nextUrl = fetchedWrapper.dataset.nextUrl;
+						button.disabled = false;
+						button.textContent = originalLabel;
+					} else {
+						wrapper.remove();
+					}
+				})
+				.catch(function () {
+					button.disabled = false;
+					button.textContent = originalLabel;
+				});
+		});
+	});
 });

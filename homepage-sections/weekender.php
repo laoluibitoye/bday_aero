@@ -2,7 +2,7 @@
 /**
  * Section Name: Off the Clock
  * Section Slug: weekender
- * Description: Weekender / Life & Arts / Sports / Reports, side by side. Gated by Homepage Modules' "Magazine row" toggle, same as the classic homepage.
+ * Description: An admin-editable set of lifestyle categories side by side (Appearance -> BusinessDay Theme -> Off the Clock), defaulting to Cooking / Sports / Life & Arts. Gated by Homepage Modules' "Magazine row" toggle, same as the classic homepage.
  * Default Enabled: yes
  */
 if ( ! defined( 'ABSPATH' ) ) {

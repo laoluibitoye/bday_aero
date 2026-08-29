@@ -2,7 +2,7 @@
 /**
  * Section Name: Watch & Listen
  * Section Slug: watch-listen
- * Description: Two media-card rows — "Watch Today's Videos" (the "top-video" category) and "Latest Shows" (podcast episodes), reader-requested to read as an actual media section rather than a feature-plus-list layout. The video row is gated by Homepage Modules' "BD TV row" toggle, the show row by its "Toon of the Day + Podcast" toggle — same two toggles the classic homepage's separate rows already use.
+ * Description: Two media-card rows — "Videos to Watch" (the "top-video" category, landscape thumbnails) and "Podcasts" (podcast episodes), reader-requested to read as an actual media section rather than a feature-plus-list layout. The video row is gated by Homepage Modules' "BD TV row" toggle, the show row by its "Toon of the Day + Podcast" toggle — same two toggles the classic homepage's separate rows already use.
  * Default Enabled: yes
  */
 if ( ! defined( 'ABSPATH' ) ) {
@@ -26,7 +26,7 @@ if ( empty( $videos ) && empty( $episodes ) ) {
 
 		<?php if ( ! empty( $videos ) ) : ?>
 			<div class="bday-rd-watch-listen__subhead">
-				<h3>Watch Today's Videos</h3>
+				<h3>Videos to Watch</h3>
 				<a href="<?php echo esc_url( bday_category_url( 'top-video' ) ); ?>" class="bday-rd-kicker bday-rd-kicker--accent">All videos →</a>
 			</div>
 			<div class="bday-rd-watch-listen__video-grid">
@@ -42,7 +42,7 @@ if ( empty( $videos ) && empty( $episodes ) ) {
 
 		<?php if ( ! empty( $episodes ) ) : ?>
 			<div class="bday-rd-watch-listen__subhead">
-				<h3>Latest Shows</h3>
+				<h3>Podcasts</h3>
 				<?php if ( post_type_exists( 'podcast' ) ) : ?>
 					<a href="<?php echo esc_url( (string) get_post_type_archive_link( 'podcast' ) ); ?>" class="bday-rd-kicker bday-rd-kicker--accent">All episodes →</a>
 				<?php endif; ?>

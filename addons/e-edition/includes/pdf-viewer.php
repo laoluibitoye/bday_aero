@@ -42,7 +42,7 @@ function bday_render_e_edition_grid(): void {
 			<?php endforeach; ?>
 		</div>
 		<div class="bday-pagination">
-			<?php echo paginate_links( array( 'mid_size' => 2, 'total' => $results->max_num_pages, 'next_text' => '»', 'prev_text' => '«' ) ); ?>
+			<?php bday_render_load_more_button( '.bday-card-grid', $paged, $results->max_num_pages ); ?>
 		</div>
 	</div>
 	<?php

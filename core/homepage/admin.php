@@ -52,6 +52,7 @@ add_action(
 					'interview',
 					'weekender',
 					'partner-content',
+					'ysot',
 					'events',
 					'bottom-widgets-hooks',
 					'latest-stories',

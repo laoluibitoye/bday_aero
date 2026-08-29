@@ -51,7 +51,7 @@ $results = Bday_Query_Cache::query( 'listing', md5( wp_json_encode( $query_args 
 			<?php endwhile; ?>
 		</div>
 		<div class="bday-pagination">
-			<?php echo paginate_links( array( 'total' => $results->max_num_pages, 'current' => $paged, 'mid_size' => 2, 'prev_text' => '«', 'next_text' => '»' ) ); ?>
+			<?php bday_render_load_more_button( '.bday-card-grid', $paged, $results->max_num_pages ); ?>
 		</div>
 		<?php wp_reset_postdata(); ?>
 	<?php else : ?>

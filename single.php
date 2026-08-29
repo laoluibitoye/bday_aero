@@ -12,8 +12,13 @@ get_header();
 if ( have_posts() ) :
 	the_post();
 
+	// 'e-paper' is the real, live category slug every other e-edition code path in this theme
+	// uses (core/homepage/data.php, addons/e-edition/includes/legacy-redirect.php,
+	// single-bday_edition.php) — this check only ever matched the legacy 'e-edition' slug, so a
+	// post actually filed under 'e-paper' silently rendered as a normal article instead of the
+	// PDF-viewer template. 'e-edition' is kept as a fallback for any older post still carrying it.
 	$cats = wp_get_post_categories( get_the_ID(), array( 'fields' => 'slugs' ) );
-	if ( in_array( 'e-edition', $cats, true ) && Bday_Addon_Loader::is_enabled( 'e-edition' ) ) {
+	if ( array_intersect( array( 'e-paper', 'e-edition' ), $cats ) && Bday_Addon_Loader::is_enabled( 'e-edition' ) ) {
 		get_template_part( 'template-parts/single', 'edition' );
 	} else {
 		get_template_part( 'template-parts/single', 'default' );

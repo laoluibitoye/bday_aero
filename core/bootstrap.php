@@ -29,6 +29,7 @@ require_once BDAY_THEME_DIR . 'core/options/field-types/render.php';
 require_once BDAY_THEME_DIR . 'core/options/class-options-framework.php';
 require_once BDAY_THEME_DIR . 'core/options/core-tabs.php';
 require_once BDAY_THEME_DIR . 'core/homepage/admin.php';
+require_once BDAY_THEME_DIR . 'core/homepage/off-the-clock-admin.php';
 require_once BDAY_THEME_DIR . 'core/custom-code.php';
 require_once BDAY_THEME_DIR . 'core/nav-menu.php';
 require_once BDAY_THEME_DIR . 'core/staff.php';

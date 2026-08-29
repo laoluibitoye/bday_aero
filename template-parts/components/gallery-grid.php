@@ -76,7 +76,7 @@ _prime_post_caches( $gallery_query->posts, false, true );
 	</div>
 	<?php if ( $paginate ) : ?>
 		<div class="bday-pagination">
-			<?php echo paginate_links( array( 'mid_size' => 2, 'total' => $gallery_query->max_num_pages, 'next_text' => '»', 'prev_text' => '«' ) ); ?>
+			<?php bday_render_load_more_button( '.' . $grid_class . '__grid', $paged, $gallery_query->max_num_pages ); ?>
 		</div>
 	<?php endif; ?>
 </section>

@@ -782,7 +782,10 @@ $rd-invert-ink: var(--rd-invert-ink);
 		text-decoration: none;
 		color: $rd-ink;
 
-		img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; }
+		// Reader-requested: was forcing a portrait 3:4 crop via CSS regardless of the underlying
+		// medium_rectangle (284x165, ~1.72:1) image — this is a landscape video-thumbnail row, not
+		// a poster/cover grid, so the crop should read as landscape (16:9) to match.
+		img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
 
 		h4 { font-family: var(--rd-font-display); font-size: 16px; line-height: 1.25; font-weight: 600; margin: 0; }
 		&:hover h4 { color: $rd-accent; }

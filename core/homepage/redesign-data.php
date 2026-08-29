@@ -72,22 +72,21 @@ function bday_get_redesign_homepage_data(): array {
 	$data['rd_videos'] = bday_get_posts( array( 'category_name' => 'top-video', 'numberposts' => 5, 'cache_namespace' => 'homepage' ) );
 	$data['rd_latest'] = bday_get_posts( array( 'tag' => 'bdrecent', 'numberposts' => 8, 'cache_namespace' => 'homepage' ) );
 
-	// "Cooking" — a real category (not one of bday_get_homepage_data()'s
-	// existing topic_* keys), fetched here since Off the Clock is the only
-	// section that needs it.
-	$data['topic_cooking'] = bday_get_posts( array( 'category_name' => 'cooking', 'numberposts' => 3, 'cache_namespace' => 'homepage' ) );
-
-	// Four columns, four real taxonomies — "Reports" (a fifth candidate
-	// category the source design also listed) is dropped here rather than
-	// left in as a fifth array_filter() entry: it has zero posts in this
-	// database, and Cooking already fills the section's fourth slot.
+	// Off the Clock's columns are now an admin-editable list (Appearance -> BusinessDay Theme ->
+	// Off the Clock — see core/homepage/off-the-clock-admin.php), not a hardcoded PHP array.
+	// Weekender was reader-requested removed from the default set; Cooking/Sports/Life & Arts are
+	// the new defaults, and an admin can add further lifestyle categories as they come online.
 	$data['rd_weekender_cols'] = array_values(
 		array_filter(
-			array(
-				array( 'label' => 'Weekender', 'url' => bday_category_url( 'weekender' ), 'posts' => $data['weekender'] ),
-				array( 'label' => 'Life & Arts', 'url' => bday_category_url( 'life-arts' ), 'posts' => $data['topic_life_arts'] ),
-				array( 'label' => 'Sports', 'url' => bday_category_url( 'sports' ), 'posts' => $data['topic_sports'] ),
-				array( 'label' => 'Cooking', 'url' => bday_category_url( 'cooking' ), 'posts' => $data['topic_cooking'] ),
+			array_map(
+				static function ( array $row ): array {
+					return array(
+						'label' => $row['label'],
+						'url'   => bday_category_url( $row['category_slug'] ),
+						'posts' => bday_get_posts( array( 'category_name' => $row['category_slug'], 'numberposts' => 3, 'cache_namespace' => 'homepage' ) ),
+					);
+				},
+				bday_off_the_clock_categories()
 			),
 			static fn( array $col ): bool => ! empty( $col['posts'] )
 		)
@@ -118,6 +117,7 @@ function bday_get_redesign_homepage_data(): array {
 	$data['rd_investigates'] = bday_get_posts( array( 'tag' => 'bdinvestigates', 'numberposts' => 4, 'cache_namespace' => 'homepage' ) );
 	$data['rd_interview']    = bday_get_posts( array( 'tag' => 'bd-interview', 'numberposts' => 4, 'cache_namespace' => 'homepage' ) );
 	$data['rd_partner']      = bday_get_posts( array( 'tag' => 'sponsored', 'numberposts' => 4, 'cache_namespace' => 'homepage' ) );
+	$data['rd_ysot']         = bday_get_posts( array( 'category_name' => 'yaba-school-of-thought', 'numberposts' => 7, 'cache_namespace' => 'homepage' ) );
 	$data['rd_gallery']      = bday_get_posts(
 		array(
 			'tax_query'       => array(
@@ -215,36 +215,42 @@ function bday_get_redesign_desk_tiles( int $count = 6 ): array {
 }
 
 /**
- * The design's E-editions rail is a horizontally-scrolling list of the
- * most recent edition covers (hint-placeholder-count="8" in the source
- * artifact) — not one card per publication. Every edition post carries
- * its own publication via the edition_publication taxonomy, so this
- * fetches the N most recent editions overall and reads each one's own
- * term for its label, rather than capping the rail at one card per
- * publication (which is what addons/editions/includes/homepage.php's
- * *separate* classic-homepage row deliberately does instead — that one
- * stays untouched).
+ * The E-editions carousel: one card per publication (edition_publication taxonomy term), each
+ * showing that publication's single most recent edition — reader-requested, so the rail is a
+ * carousel of "what's the latest issue of each real publication" rather than a chronological feed
+ * that could show the same publication more than once and skip others entirely. Matches
+ * addons/editions/includes/homepage.php's classic-homepage row logic exactly, just rendered here
+ * as the redesign variant's own carousel (that classic row stays untouched, still used on the
+ * classic/weekend homepage variants).
  *
  * @return array<int, array{edition: WP_Post, publication: WP_Term|null}>
  */
-function bday_get_redesign_editions( int $count = 8 ): array {
+function bday_get_redesign_editions(): array {
 	if ( ! post_type_exists( 'bday_edition' ) ) {
 		return array();
 	}
 
-	$editions = bday_get_posts(
-		array(
-			'post_type'       => 'bday_edition',
-			'numberposts'     => $count,
-			'cache_namespace' => 'homepage',
-		)
-	);
+	$publications = get_terms( array( 'taxonomy' => 'edition_publication', 'hide_empty' => true ) );
+	if ( is_wp_error( $publications ) || empty( $publications ) ) {
+		return array();
+	}
 
 	$cards = array();
-	foreach ( $editions as $edition ) {
-		$terms       = get_the_terms( $edition->ID, 'edition_publication' );
-		$publication = ( is_array( $terms ) && ! empty( $terms ) ) ? $terms[0] : null;
-		$cards[]     = array( 'edition' => $edition, 'publication' => $publication );
+	foreach ( $publications as $publication ) {
+		$latest = bday_get_posts(
+			array(
+				'post_type'       => 'bday_edition',
+				'numberposts'     => 1,
+				'tax_query'       => array(
+					array( 'taxonomy' => 'edition_publication', 'field' => 'term_id', 'terms' => $publication->term_id ),
+				),
+				'cache_namespace' => 'homepage',
+			)
+		);
+		if ( empty( $latest ) ) {
+			continue;
+		}
+		$cards[] = array( 'edition' => $latest[0], 'publication' => $publication );
 	}
 
 	return $cards;

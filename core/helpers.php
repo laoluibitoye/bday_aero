@@ -96,6 +96,102 @@ function bday_card_html( WP_Post $post, array $args = array() ): string {
 }
 
 /**
+ * The "Opinion-style" homepage section: one lead card (thumbnail, title, excerpt, a kicker line)
+ * plus a grid of shorter pieces each with the author's avatar — shared by Opinion, Partner &
+ * Sponsored Content, and YSoT, so restyling one restyles all three consistently rather than
+ * hand-rolling the same markup three times. `author_position` is the one real layout difference
+ * between them: Opinion shows the avatar/name above the title (byline-first), while Partner &
+ * Sponsored Content and YSoT show it under the excerpt instead (reader-requested, so a partnered
+ * post doesn't read as if the author is the headline).
+ *
+ * $args:
+ *   posts            WP_Post[]  required — posts[0] is the lead, up to 6 more form the grid
+ *   heading          string     section <h2> text
+ *   see_more_url     string     link target for the section-head "See more" kicker
+ *   see_more_label   string     default 'See more →'
+ *   lead_kicker      string     text before " · <date>" under the lead card, default 'Editorial'
+ *   author_position  string     'above' (Opinion's default) or 'below' the excerpt
+ *   screen_label     string     data-screen-label on the <section>, for analytics
+ */
+function bday_render_editorial_grid_section( array $args ): void {
+	$args = wp_parse_args(
+		$args,
+		array(
+			'posts'           => array(),
+			'heading'         => '',
+			'see_more_url'    => '',
+			'see_more_label'  => 'See more →',
+			'lead_kicker'     => 'Editorial',
+			'author_position' => 'above',
+			'screen_label'    => '',
+		)
+	);
+
+	$posts = $args['posts'];
+	if ( empty( $posts ) ) {
+		return;
+	}
+
+	$lead = $posts[0];
+	$grid = array_slice( $posts, 1, 6 );
+	?>
+	<section class="bday-rd-opinion" data-screen-label="<?php echo esc_attr( $args['screen_label'] ); ?>">
+		<div class="bday-container">
+			<div class="bday-rd-section-head">
+				<h2><?php echo esc_html( $args['heading'] ); ?></h2>
+				<span class="bday-rd-rule"></span>
+				<?php if ( $args['see_more_url'] ) : ?>
+					<a href="<?php echo esc_url( $args['see_more_url'] ); ?>" class="bday-rd-kicker bday-rd-kicker--accent"><?php echo esc_html( $args['see_more_label'] ); ?></a>
+				<?php endif; ?>
+			</div>
+			<div class="bday-rd-opinion__grid">
+				<a href="<?php echo esc_url( get_permalink( $lead ) ); ?>" class="bday-rd-opinion__lead">
+					<?php if ( has_post_thumbnail( $lead->ID ) ) : ?><?php echo bday_get_thumbnail( $lead->ID, 'medium_standard' ); ?><?php endif; ?>
+					<h3><?php echo esc_html( get_the_title( $lead ) ); ?></h3>
+					<p><?php echo esc_html( wp_trim_words( get_the_excerpt( $lead ), 22 ) ); ?></p>
+					<span class="bday-rd-kicker bday-rd-kicker--accent"><?php echo esc_html( $args['lead_kicker'] ); ?> · <?php echo esc_html( bday_format_date( $lead->post_date ) ); ?></span>
+				</a>
+				<div class="bday-rd-opinion__list">
+					<?php foreach ( $grid as $post ) : ?>
+						<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-rd-opinion__item bday-rd-opinion__item--author-<?php echo esc_attr( $args['author_position'] ); ?>">
+							<?php if ( 'above' === $args['author_position'] ) : ?>
+								<span class="bday-rd-opinion__author"><?php echo get_avatar( $post->post_author, 40 ); ?><span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( get_the_author_meta( 'display_name', $post->post_author ) ); ?></span></span>
+							<?php endif; ?>
+							<h4><?php echo esc_html( get_the_title( $post ) ); ?></h4>
+							<p><?php echo esc_html( wp_trim_words( get_the_excerpt( $post ), 16 ) ); ?></p>
+							<?php if ( 'below' === $args['author_position'] ) : ?>
+								<span class="bday-rd-opinion__author"><?php echo get_avatar( $post->post_author, 32 ); ?><span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( get_the_author_meta( 'display_name', $post->post_author ) ); ?></span></span>
+							<?php endif; ?>
+						</a>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		</div>
+	</section>
+	<?php
+}
+
+/**
+ * A "Load more" button replacing page-number pagination sitewide (reader-requested — no
+ * `?paged=2` links anywhere in the theme anymore). Deliberately not a new AJAX/REST endpoint:
+ * `assets/src/js/load-more.js` just fetches the next page's full URL (a plain, cacheable GET,
+ * identical to what a page-number link would have loaded) and lifts the matching
+ * `$target_selector` element's children out of it — every pagination call site already renders a
+ * normal, cacheable page for `?paged=N`, so this reuses that instead of standing up a parallel
+ * "fetch just the fragment" endpoint for the same content.
+ */
+function bday_render_load_more_button( string $target_selector, int $current_page, int $max_pages ): void {
+	if ( $max_pages <= $current_page ) {
+		return;
+	}
+	?>
+	<div class="bday-load-more" data-bday-load-more data-target="<?php echo esc_attr( $target_selector ); ?>" data-next-url="<?php echo esc_url( get_pagenum_link( $current_page + 1 ) ); ?>">
+		<button type="button" class="bday-load-more__button">Load more</button>
+	</div>
+	<?php
+}
+
+/**
  * Points at the e-paper category archive rather than a guessed page slug
  * Points at the real Today's Paper page (templates/template-todays-
  * paper.php, addons/todays-paper/) when a Page using that template
