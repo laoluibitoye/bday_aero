@@ -49,12 +49,17 @@ if ( post_type_exists( 'bday_edition' ) ) {
 	}
 }
 
+// Scoped to posts flagged *as of today* (see includes/metabox.php's `_bday_todays_paper_date`
+// stamp) — without this, a post flagged on a previous day and never explicitly unflagged would
+// keep accumulating on this page forever instead of being a same-day curation.
 $bday_marked_posts = bday_get_posts(
 	array(
 		'post_type'       => 'post',
 		'numberposts'     => -1,
-		'meta_key'        => '_bday_todays_paper',
-		'meta_value'      => '1',
+		'meta_query'      => array(
+			array( 'key' => '_bday_todays_paper', 'value' => '1' ),
+			array( 'key' => '_bday_todays_paper_date', 'value' => current_time( 'Y-m-d' ) ),
+		),
 		'cache_namespace' => 'todays_paper',
 	)
 );

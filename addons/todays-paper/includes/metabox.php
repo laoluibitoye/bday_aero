@@ -55,7 +55,15 @@ add_action(
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return;
 		}
-		update_post_meta( $post_id, '_bday_todays_paper', isset( $_POST['todays_paper'] ) ? '1' : '' );
+		$flagged = isset( $_POST['todays_paper'] );
+		update_post_meta( $post_id, '_bday_todays_paper', $flagged ? '1' : '' );
+		// Stamped fresh every time the box is (re)checked — the page/feed only ever shows posts
+		// flagged *as of today*, so a post left checked from a previous day silently drops off
+		// without an editor having to remember to uncheck it. Re-saving the post with the box
+		// still checked (even unchanged) re-stamps it back to today.
+		if ( $flagged ) {
+			update_post_meta( $post_id, '_bday_todays_paper_date', current_time( 'Y-m-d' ) );
+		}
 
 		$size = is_string( $_POST['todays_paper_size'] ?? null ) ? sanitize_key( $_POST['todays_paper_size'] ) : 'small';
 		if ( ! array_key_exists( $size, bday_todays_paper_sizes() ) ) {
