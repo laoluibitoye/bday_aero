@@ -52,7 +52,18 @@ final class Bday_Aero_Page_Setup {
 				'content'  => '',
 				'template' => 'templates/template-newsletter-opt-in.php',
 			),
+			'corporate_subscription' => array(
+				'label'    => 'Corporate Subscription',
+				'content'  => '',
+				'template' => 'templates/template-corporate-subscription.php',
+			),
 		);
+	}
+
+	/** URL of one of the auto-created pages above, if it exists yet — used by template-subscribe.php's "Corporate Subscription" button. */
+	public static function url_for( string $key ): ?string {
+		$page = self::find_marked_page( $key );
+		return $page ? get_permalink( $page ) : null;
 	}
 
 	/** @return array<int, array{key: string, label: string, exists: bool, url: string|null}> */

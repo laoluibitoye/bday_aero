@@ -215,6 +215,17 @@ $bday-border: var(--color-border);
 // 100% of any extra container width to the article column instead.
 #article-page.bday-two-col {
 	grid-template-columns: 1fr 300px;
+
+	// Bug fix: this ID+class selector out-specifies the plain .bday-two-col rule above, so its
+	// 991px collapse-to-one-column never applied here — the fixed 300px sidebar track survived at
+	// every viewport width, including phone widths where .desktop-only hides the sidebar content
+	// but CSS grid still reserves its declared 300px track (a fixed length, not `auto`, so a
+	// display:none child doesn't collapse it). On a ~375-414px phone that left as little as
+	// ~75-115px of actual width for the article column — the direct cause of the article page
+	// looking cramped/broken on mobile.
+	@media (max-width: 991px) {
+		grid-template-columns: 1fr;
+	}
 }
 
 /* ---- Rail (other news + columnists/opinion) ---- */
@@ -936,7 +947,22 @@ $bday-border: var(--color-border);
 .bday-article-main {
 	// WSJ-style redesign (reader-requested): headline stepped up from
 	// 2rem, eyebrow/dek added above/below it.
-	.post-title { font-size: 2.5rem; line-height: 1.1; font-weight: 800; margin-top: 10px; }
+	// Bug fix: this had no mobile step-down at all — a flat 2.5rem (40px) headline at every
+	// viewport width, which (combined with the sidebar-grid bug above squeezing the actual
+	// content column) is what made phone headlines wrap so awkwardly.
+	.post-title {
+		font-size: 2.5rem;
+		line-height: 1.1;
+		font-weight: 800;
+		margin-top: 10px;
+
+		@media (max-width: 767px) {
+			font-size: 1.75rem;
+		}
+		@media (max-width: 480px) {
+			font-size: 1.5rem;
+		}
+	}
 
 	.bday-video-embed iframe { width: 100%; height: 480px; border: 0; }
 }
@@ -1026,6 +1052,11 @@ $bday-border: var(--color-border);
 
 .bday-byline {
 	align-items: center;
+	// Bug fix: no wrap at all on a row holding avatar/author(s), date, read time, and a
+	// margin-left:auto bookmark button — on a narrow phone (worsened by the sidebar-grid and
+	// headline bugs above squeezing the column further) this had nowhere to go but overflow.
+	flex-wrap: wrap;
+	row-gap: 6px;
 	font-size: 12.5px;
 	color: $bday-muted;
 	margin: 14px 0 20px;

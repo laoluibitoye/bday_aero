@@ -185,6 +185,18 @@ $bday_faqs = array(
 			the_post();
 			the_content();
 		endif;
+
+		// Sales-assisted "talk to us" path for a company sizing up options before committing —
+		// distinct from the Corporate toggle above, which is instant self-serve checkout for a
+		// reader who already knows their plan (see template-corporate-subscription.php's docblock).
+		$bday_corporate_subscription_url = class_exists( 'Bday_Aero_Page_Setup' ) ? Bday_Aero_Page_Setup::url_for( 'corporate_subscription' ) : null;
+		if ( $bday_corporate_subscription_url ) :
+			?>
+			<p class="bday-subscribe-plans__corporate-cta" style="text-align:center;margin-top:24px;font-size:15px;">
+				Need 20+ seats? <a href="<?php echo esc_url( $bday_corporate_subscription_url ); ?>" style="font-weight:700;">Talk to our corporate sales team →</a>
+			</p>
+			<?php
+		endif;
 		?>
 	</div>
 </section>

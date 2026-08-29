@@ -32,6 +32,7 @@ require_once __DIR__ . '/includes/cpt.php';
 require_once __DIR__ . '/includes/metabox.php';
 require_once __DIR__ . '/includes/publish-push.php';
 require_once __DIR__ . '/includes/homepage.php';
+require_once __DIR__ . '/includes/flipbook-reader.php';
 require_once __DIR__ . '/includes/bulk-import.php';
 require_once __DIR__ . '/includes/legacy-migration-core.php';
 require_once __DIR__ . '/includes/legacy-migration-wizard.php';
