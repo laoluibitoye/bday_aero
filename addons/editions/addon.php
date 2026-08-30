@@ -13,15 +13,20 @@
  * (e-paper, she-means-business, real-estate-digest, weekender, and
  * whatever an editor adds later — a real taxonomy, not a fixed list in
  * code, so "there will likely be more editions in the future" needs zero
- * code changes). Each edition's PDF lives on an external storage
- * platform, referenced by an object-key meta field; publishing pushes
- * that mapping to subscription-service's /connector/edition-sync, which
- * is what actually gates and signs downloads (Phase 10's
- * ArchiveEntitlementService, unchanged by this addon). The object key can
- * either be uploaded straight from the PDF metabox (streamed through to
- * the storage platform, never written to WordPress) or pasted in directly
- * for a file already sitting in the bucket — the latter is also what the
- * bulk-import screen uses to create many past editions at once.
+ * code changes). Each edition's PDF lives in this site's own local
+ * secure-epapers/ folder (secure-storage.php, blocked from direct access
+ * at the web-server level — see that file's docblock), referenced by an
+ * object-key meta field shaped "local:{postId}:{filename}"; publishing
+ * pushes that mapping to subscription-service's /connector/edition-sync,
+ * which is what actually gates and signs downloads (Phase 10's
+ * ArchiveEntitlementService, unchanged by this addon — only *where* the
+ * bytes live changed, not who decides if a reader can have them).
+ * download-endpoint.php serves the file once subscription-service hands
+ * the reader a signed link. The object key can either be uploaded straight
+ * from the PDF metabox (moved into the secure folder) or referenced by
+ * filename for a file already dropped in there directly (FileZilla/SFTP) —
+ * an older S3-backed storage path still exists for already-migrated
+ * content and is documented where it's dormant (metabox.php).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -29,6 +34,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/includes/cpt.php';
+require_once __DIR__ . '/includes/secure-storage.php';
+require_once __DIR__ . '/includes/download-endpoint.php';
 require_once __DIR__ . '/includes/metabox.php';
 require_once __DIR__ . '/includes/publish-push.php';
 require_once __DIR__ . '/includes/homepage.php';
