@@ -7,14 +7,18 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Local-filesystem storage for e-edition PDFs — replaces S3 as the default
  * going forward (S3/PdfStorageService on the subscription-service side is
  * left fully intact for already-migrated content, just no longer the path
- * new uploads take). Files live in wp-content/uploads/secure-epapers/,
- * uploaded either via this addon's metabox or dropped in directly (FileZilla)
- * and referenced by filename. The folder must NEVER be reachable by a
- * direct request — that block is an Nginx `location` rule the operator adds
- * to the server config (this repo has no access to it), NOT anything PHP
- * can enforce on its own under Nginx (.htaccess is an Apache-only
- * mechanism and does nothing here). Everything in this file is defense in
- * depth on top of that server-level block, never a substitute for it.
+ * new uploads take). Files live in wp-content/uploads/secure-epapers/ by
+ * default, uploaded either via this addon's metabox or dropped in directly
+ * (FileZilla) and referenced by filename. The folder must NEVER be
+ * reachable by a direct request. Two ways to get there, see
+ * bday_edition_secure_dir() below: an Nginx `location` rule the operator
+ * adds to the server config (this repo has no access to it — .htaccess is
+ * an Apache-only mechanism and does nothing under Nginx), or — the
+ * stronger option, no server config needed at all — pointing
+ * BDAY_EDITION_SECURE_DIR at a folder outside the site's public document
+ * root entirely, where no URL can ever reach it regardless of Nginx/CDN
+ * config. Everything else in this file is defense in depth on top of
+ * whichever of those two is in use, never a substitute for either.
  *
  * Storage-type convention, shared with subscription-service's
  * parseLocalObjectKey() (src/editions/local-object-key.util.ts) — keep the
@@ -31,8 +35,23 @@ const BDAY_EDITION_SECURE_SUBDIR = 'secure-epapers';
  * Resolves (and lazily creates) the secure folder. Safe to call on every
  * request that needs it — wp_mkdir_p() and the index.php write are both
  * cheap no-ops once the folder already exists.
+ *
+ * Defaults to wp-content/uploads/secure-epapers/, which needs an Nginx
+ * `location` rule blocking it (that server config isn't reachable from
+ * here). If BDAY_EDITION_SECURE_DIR is defined in wp-config.php — an
+ * absolute path OUTSIDE the site's public document root, e.g.
+ * '/var/www/secure-epapers' — that's used instead, and no server rule is
+ * needed at all: a path outside the docroot has no URL that maps to it,
+ * regardless of Nginx/CDN/load-balancer config. The directory must
+ * already exist and be writable by the PHP-FPM user (this only creates
+ * it under the default uploads-based location, never at an arbitrary
+ * operator-supplied absolute path — see the wp_mkdir_p() call below).
  */
 function bday_edition_secure_dir(): string {
+	if ( defined( 'BDAY_EDITION_SECURE_DIR' ) && '' !== BDAY_EDITION_SECURE_DIR ) {
+		return untrailingslashit( BDAY_EDITION_SECURE_DIR );
+	}
+
 	$dir = trailingslashit( wp_upload_dir()['basedir'] ) . BDAY_EDITION_SECURE_SUBDIR;
 	wp_mkdir_p( $dir );
 
