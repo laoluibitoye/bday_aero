@@ -111,14 +111,23 @@ function bday_todays_paper_tier( WP_Post $post ): array {
 				<div class="bday-todays-paper-page__edition-body">
 					<h2>The Print Edition</h2>
 					<p><?php echo esc_html( bday_format_date( $bday_epaper_edition->post_date ) ); ?></p>
-					<button
-						type="button"
-						class="bday-btn-link"
-						data-bd-edition-download
-						data-bd-edition-publication="e-paper"
-						data-bd-edition-date="<?php echo esc_attr( get_the_date( 'Y-m-d', $bday_epaper_edition ) ); ?>"
-					>Download today's edition</button>
-					<p class="bday-todays-paper-page__edition-status" data-bd-edition-status role="status"></p>
+					<?php
+					// Same open/gated branch as single-bday_edition.php — see
+					// bday_edition_type_is_restricted()'s docblock.
+					$bday_epaper_direct_url = ! bday_edition_type_is_restricted() ? bday_edition_build_signed_download_url( $bday_epaper_edition->ID ) : null;
+					?>
+					<?php if ( null !== $bday_epaper_direct_url ) : ?>
+						<a class="bday-btn-link" href="<?php echo esc_url( $bday_epaper_direct_url ); ?>" target="_blank" rel="noopener">Download today's edition</a>
+					<?php else : ?>
+						<button
+							type="button"
+							class="bday-btn-link"
+							data-bd-edition-download
+							data-bd-edition-publication="e-paper"
+							data-bd-edition-date="<?php echo esc_attr( get_the_date( 'Y-m-d', $bday_epaper_edition ) ); ?>"
+						>Download today's edition</button>
+						<p class="bday-todays-paper-page__edition-status" data-bd-edition-status role="status"></p>
+					<?php endif; ?>
 				</div>
 			</div>
 		<?php endif; ?>

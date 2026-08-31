@@ -134,3 +134,60 @@ function bday_edition_signing_secret(): string {
 	}
 	return $secret;
 }
+
+/**
+ * Whether bday_edition is currently one of aero-paywall's "Restricted
+ * Post Types" (the same generic per-content-type gating switch every
+ * other post type uses, via class-content-gate.php/class-premium-map.php)
+ * — reader-requested: removing a content type from that list should make
+ * it fully open, no login/entitlement check at all, exactly like any
+ * other unrestricted type; adding it back restores full gating. Before
+ * this, e-editions ignored that setting entirely and were always gated
+ * via subscription-service's archive-window check regardless of it —
+ * this function plus bday_edition_build_signed_download_url() below are
+ * what closes that gap.
+ *
+ * Fails closed (treated as restricted) if the aero-paywall add-on isn't
+ * active at all — Bday_Aero_Settings won't even be loaded in that case,
+ * and "no paywall add-on configured" should never silently mean "every
+ * edition is world-readable."
+ */
+function bday_edition_type_is_restricted(): bool {
+	if ( ! class_exists( 'Bday_Aero_Settings' ) ) {
+		return true;
+	}
+	return in_array( 'bday_edition', Bday_Aero_Settings::restricted_post_types(), true );
+}
+
+/**
+ * Self-issued counterpart to subscription-service's
+ * WordpressEditionLinkService::buildUrl() — same HMAC-over-"{postId}.{exp}"
+ * scheme, same shared secret, same download-endpoint.php route, just
+ * minted directly by WordPress instead of by subscription-service after
+ * an entitlement check. Only ever used for an edition bday_edition_type_
+ * is_restricted() says is NOT currently gated — deliberately skips
+ * calling subscription-service at all, since the whole point is "no
+ * entitlement check applies to this content type right now." Only works
+ * for a "local:" edition (S3-backed editions have no WP-side signing
+ * capability — subscription-service is the only thing that can presign
+ * against the bucket); returns null for anything else, and the caller
+ * falls back to the normal gated SDK flow in that case.
+ */
+function bday_edition_build_signed_download_url( int $post_id, int $ttl_seconds = 300 ): ?string {
+	$object_key = (string) get_post_meta( $post_id, '_bday_edition_object_key', true );
+	$local      = bday_edition_parse_local_object_key( $object_key );
+	if ( null === $local ) {
+		return null;
+	}
+
+	$exp = time() + $ttl_seconds;
+	$sig = hash_hmac( 'sha256', $post_id . '.' . $exp, bday_edition_signing_secret() );
+
+	return add_query_arg(
+		array(
+			'exp' => $exp,
+			'sig' => $sig,
+		),
+		rest_url( 'aeropaywall/v1/edition-download/' . $post_id )
+	);
+}

@@ -694,6 +694,29 @@ $bday-border: var(--color-border);
 	&:hover { background: $bday-red; color: #fff; }
 }
 
+// Log in / Upgrade CTA the SDK (edition-download.ts) appends into a
+// [data-bd-edition-status] element on a blocked "Read Edition" click —
+// used on both single-bday_edition.php and template-todays-paper.php, so
+// styled here globally rather than scoped to either page's own BEM block.
+// Previously a bare inline text link right next to the message, easy to
+// miss — now a full-width block button on its own line, larger and
+// bolder than the theme's other small .bday-btn-link uses (a genuine CTA
+// after a hard stop, not a secondary "see more" link).
+.bday-edition-status-message {
+	display: block;
+}
+
+.bday-edition-status-link.bday-btn-link {
+	display: block;
+	width: fit-content;
+	margin: 10px auto 0;
+	padding: 10px 22px;
+	font-size: 14px;
+	font-weight: 700;
+	background: $bday-red;
+	&:hover { background: #2a2a2a; }
+}
+
 /* ---- Events ---- */
 .bday-event-card {
 	border: 1px solid $bday-border;
