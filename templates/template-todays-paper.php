@@ -117,7 +117,7 @@ function bday_todays_paper_tier( WP_Post $post ): array {
 					$bday_epaper_direct_url = ! bday_edition_type_is_restricted() ? bday_edition_build_signed_download_url( $bday_epaper_edition->ID ) : null;
 					?>
 					<?php if ( null !== $bday_epaper_direct_url ) : ?>
-						<a class="bday-btn-link" href="<?php echo esc_url( $bday_epaper_direct_url ); ?>" target="_blank" rel="noopener">Download today's edition</a>
+						<a class="bday-btn-link" href="<?php echo esc_url( bday_edition_reader_url( $bday_epaper_direct_url ) ); ?>" data-bd-edition-open target="_blank" rel="noopener">Download today's edition</a>
 					<?php else : ?>
 						<button
 							type="button"

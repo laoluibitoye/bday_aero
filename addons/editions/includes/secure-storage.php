@@ -191,3 +191,17 @@ function bday_edition_build_signed_download_url( int $post_id, int $ttl_seconds 
 		rest_url( 'aeropaywall/v1/edition-download/' . $post_id )
 	);
 }
+
+/**
+ * Wraps a signed PDF URL (bday_edition_build_signed_download_url(), or
+ * subscription-service's own equivalent) in flipbook-reader.php's
+ * `?bday_reader=1&pdf=` query — the same page-flip viewer the gated
+ * click-to-fetch path (sdk/src/edition-download.ts) opens, so an
+ * unrestricted edition's server-rendered link opens identically instead
+ * of navigating straight to the raw PDF (which a browser just downloads/
+ * displays as a bare file, and which is trivially shareable as a plain
+ * file link rather than opening through the reader experience).
+ */
+function bday_edition_reader_url( string $signed_pdf_url ): string {
+	return home_url( '/?bday_reader=1&pdf=' . rawurlencode( $signed_pdf_url ) );
+}

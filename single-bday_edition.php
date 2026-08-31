@@ -40,7 +40,8 @@ if ( have_posts() ) :
 				<?php if ( null !== $direct_url ) : ?>
 					<a
 						class="bday-btn-link bday-edition-single__read-btn"
-						href="<?php echo esc_url( $direct_url ); ?>"
+						href="<?php echo esc_url( bday_edition_reader_url( $direct_url ) ); ?>"
+						data-bd-edition-open
 						target="_blank"
 						rel="noopener"
 					>Read Edition</a>
