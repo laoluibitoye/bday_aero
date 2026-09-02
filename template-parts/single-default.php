@@ -114,9 +114,28 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 		</button>
 
 		<article data-bd-article-body>
-			<?php if ( has_post_format( 'video' ) ) : ?>
+			<?php
+			/**
+			 * Reader-reported: the article page only ever showed this embed
+			 * for a post explicitly set to WordPress's own "Video" Post
+			 * Format (a separate control in core's own sidebar panel) — so
+			 * an editor who filled in either video ID field in this theme's
+			 * own Video Meta box, without also knowing to flip that
+			 * unrelated core toggle, saw the card facade work everywhere but
+			 * never the article itself. Now driven by whichever ID is
+			 * actually set (matching the Featured Video field's own promise
+			 * of working "whether or not the post itself is a Video-format
+			 * post"), not by the post format — _youtube_id wins if both are
+			 * set, since it's the field editors expect to control this.
+			 */
+			$bday_article_video_id = get_post_meta( $post_id, '_youtube_id', true );
+			if ( ! $bday_article_video_id ) {
+				$bday_article_video_id = get_post_meta( $post_id, '_featured_video_id', true );
+			}
+			?>
+			<?php if ( $bday_article_video_id ) : ?>
 				<div class="bday-video-embed">
-					<iframe src="https://www.youtube.com/embed/<?php echo esc_attr( get_post_meta( $post_id, '_youtube_id', true ) ); ?>" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+					<iframe src="https://www.youtube.com/embed/<?php echo esc_attr( $bday_article_video_id ); ?>" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
 				</div>
 			<?php else : ?>
 				<figure><?php echo bday_get_thumbnail( $post_id, 'featured', 'post-thumbnail' ); ?></figure>
