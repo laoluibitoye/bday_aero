@@ -21,8 +21,12 @@
  *    and the same data-bd-edition-* button contract
  *    sdk/src/edition-download.ts already handles unconditionally on every
  *    page load. No new download code.
- *  - The marked-story list comes from addons/todays-paper/'s own
- *    `_bday_todays_paper` post meta (editors check a box on any post).
+ *  - The marked-story list comes from addons/todays-paper/includes/
+ *    query.php's bday_todays_paper_posts_for_date() (shared with
+ *    templates/template-epaper-articles.php's date-picker version of this
+ *    same page) — posts flagged via `_bday_todays_paper` post meta AND
+ *    published today; a post flagged today but published on an earlier
+ *    day does not appear here.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -49,52 +53,15 @@ if ( post_type_exists( 'bday_edition' ) ) {
 	}
 }
 
-// Scoped to posts flagged *as of today* (see includes/metabox.php's `_bday_todays_paper_date`
-// stamp) — without this, a post flagged on a previous day and never explicitly unflagged would
-// keep accumulating on this page forever instead of being a same-day curation.
-$bday_marked_posts = bday_get_posts(
-	array(
-		'post_type'       => 'post',
-		'numberposts'     => -1,
-		'meta_query'      => array(
-			array( 'key' => '_bday_todays_paper', 'value' => '1' ),
-			array( 'key' => '_bday_todays_paper_date', 'value' => current_time( 'Y-m-d' ) ),
-		),
-		'cache_namespace' => 'todays_paper',
-	)
+// Publish-date scoped (bday_todays_paper_posts_for_date(), addons/todays-
+// paper/includes/query.php) — a post flagged for today's paper is only
+// shown here if it was also *published* today; flagging an older post
+// today does not surface it, and nothing accumulates across days.
+$bday_marked_posts = bday_todays_paper_posts_for_date(
+	(int) current_time( 'Y' ),
+	(int) current_time( 'n' ),
+	(int) current_time( 'j' )
 );
-
-/**
- * Reader-requested masonry: each marked post carries its own display-size
- * tier (addons/todays-paper/includes/metabox.php's new "Display size"
- * field, `_bday_todays_paper_size` meta) — an editor picks how much
- * visual weight a story gets, independent of which section it's grouped
- * under. Maps each tier to one of the theme's already-registered image
- * sizes (core/theme-setup.php) rather than a new crop; 'no-image' skips
- * bday_card_html()'s media block entirely via CSS (see
- * .bday-todays-paper-masonry--no-image in _premium.scss), not a second
- * code path here.
- *
- * @return array{class: string, image_size: string}
- */
-function bday_todays_paper_tier( WP_Post $post ): array {
-	$tier = (string) get_post_meta( $post->ID, '_bday_todays_paper_size', true ) ?: 'small';
-	$map  = array(
-		'large'    => 'featured',
-		'medium'   => 'top_story',
-		'small'    => 'medium_rectangle',
-		'xsmall'   => 'small',
-		'no-image' => 'small',
-	);
-	if ( ! isset( $map[ $tier ] ) ) {
-		$tier = 'small';
-	}
-	return array(
-		'tier'       => $tier,
-		'class'      => 'bday-todays-paper-card bday-todays-paper-card--' . $tier,
-		'image_size' => $map[ $tier ],
-	);
-}
 ?>
 <section class="bday-todays-paper-page">
 	<div class="bday-container">
@@ -132,27 +99,7 @@ function bday_todays_paper_tier( WP_Post $post ): array {
 			</div>
 		<?php endif; ?>
 
-		<?php if ( ! empty( $bday_marked_posts ) ) : ?>
-			<div class="bday-todays-paper-masonry">
-				<?php foreach ( $bday_marked_posts as $bday_post ) :
-					$bday_tier = bday_todays_paper_tier( $bday_post );
-					?>
-					<?php
-					echo bday_card_html(
-						$bday_post,
-						array(
-							'show_byline'  => true,
-							'show_excerpt' => in_array( $bday_tier['tier'], array( 'large', 'medium' ), true ),
-							'card_class'   => $bday_tier['class'],
-							'size'         => $bday_tier['image_size'],
-						)
-					);
-					?>
-				<?php endforeach; ?>
-			</div>
-		<?php else : ?>
-			<p class="bday-todays-paper-page__empty">Nothing has been marked for today's paper yet — check back soon.</p>
-		<?php endif; ?>
+		<?php bday_todays_paper_render_masonry( $bday_marked_posts, "Nothing has been marked for today's paper yet — check back soon." ); ?>
 	</div>
 </section>
 <?php

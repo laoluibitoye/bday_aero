@@ -23,3 +23,4 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/includes/metabox.php';
 require_once __DIR__ . '/includes/bulk-actions.php';
+require_once __DIR__ . '/includes/query.php';
