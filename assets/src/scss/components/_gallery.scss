@@ -188,7 +188,10 @@
 	}
 
 	&__cover {
-		margin: 0 0 var(--space-4, 16px);
+		// Reader-requested: smaller than the full 480px reading-column
+		// width this block previously stretched to fill.
+		max-width: 260px;
+		margin: 0 auto var(--space-4, 16px);
 		border-radius: var(--radius-md, 8px);
 		overflow: hidden;
 		box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.15));
@@ -228,5 +231,11 @@
 		margin-top: var(--space-4, 16px);
 		color: var(--color-steel, #6e7175);
 		text-decoration: underline;
+	}
+
+	&__articles {
+		margin-top: var(--space-8, 40px);
+		padding-top: var(--space-6, 24px);
+		border-top: 1px solid $bday-border;
 	}
 }

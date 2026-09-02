@@ -1815,104 +1815,40 @@ $bday-border: var(--color-border);
 	}
 }
 
-/* ---- E-Paper Articles calendar (templates/template-epaper-articles.php,
-   bday_todays_paper_render_calendar() in addons/todays-paper/includes/
-   query.php) — a plain server-rendered month grid, every day a real link
-   (?date=Y-m-d), no JS required to browse. */
-.bday-epaper-calendar {
+/* ---- E-Paper Articles date picker (templates/template-epaper-
+   articles.php, bday_todays_paper_render_date_picker() in addons/
+   todays-paper/includes/query.php) — reader-requested simplification:
+   previously paired with a full month-grid calendar, dropped in favor of
+   just the native date input (which opens its own picker UI and can jump
+   any distance back in one interaction) — centered on the page since
+   it's now the page's only date control, not a corner of a wider block. */
+.bday-epaper-date-picker {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
 	max-width: 360px;
-	margin: 20px 0 32px;
+	margin: 20px auto 32px;
 
-	&__nav {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin-bottom: 10px;
-	}
-
-	&__nav-link {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 32px;
-		height: 32px;
-		border-radius: 50%;
-		font-size: 1.2rem;
-		line-height: 1;
+	&__label {
+		font-size: 0.85rem;
+		font-weight: 700;
 		color: $bday-ink;
-		text-decoration: none;
-
-		&:hover { background: var(--color-bg-raised, #f2f2f2); }
+		white-space: nowrap;
 	}
 
-	&__month {
-		font-weight: 700;
-		font-size: 0.95rem;
-	}
-
-	&__jump {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		margin-bottom: 14px;
-
-		input[type="date"] {
-			flex: 1;
-			padding: 6px 8px;
-			border: 1px solid $bday-border;
-			border-radius: 5px;
-			font-size: 0.85rem;
-			color: $bday-ink;
-		}
-	}
-
-	&__jump-btn {
-		margin-top: 0;
-		padding: 7px 14px;
-	}
-
-	&__grid {
-		display: grid;
-		grid-template-columns: repeat(7, 1fr);
-		gap: 4px;
-		text-align: center;
-	}
-
-	&__weekday {
-		font-size: 0.7rem;
-		font-weight: 700;
-		color: $bday-muted;
-		text-transform: uppercase;
-		padding-bottom: 6px;
-	}
-
-	&__day {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		aspect-ratio: 1;
-		border-radius: 50%;
+	input[type="date"] {
+		flex: 1;
+		padding: 7px 10px;
+		border: 1px solid $bday-border;
+		border-radius: 5px;
 		font-size: 0.85rem;
 		color: $bday-ink;
-		text-decoration: none;
+	}
 
-		&:hover { background: var(--color-bg-raised, #f2f2f2); }
-
-		&--blank {
-			visibility: hidden;
-		}
-
-		&--today {
-			font-weight: 700;
-			box-shadow: inset 0 0 0 1px $bday-red;
-		}
-
-		&--selected {
-			background: $bday-red;
-			color: #fff;
-
-			&:hover { background: $bday-red; }
-		}
+	&__submit {
+		margin-top: 0;
+		padding: 8px 16px;
 	}
 }
 

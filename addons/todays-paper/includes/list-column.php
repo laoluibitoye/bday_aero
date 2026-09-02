@@ -32,7 +32,9 @@ add_action(
 			return;
 		}
 		$flagged_date = (string) get_post_meta( $post_id, '_bday_todays_paper_date', true );
-		echo '<span style="color:#b45309;font-weight:600;">&#9733; Today\'s Paper</span>';
+		$publication  = (string) get_post_meta( $post_id, '_bday_todays_paper_publication', true ) ?: 'e-paper';
+		$label        = bday_todays_paper_publications()[ $publication ] ?? "Today's Paper";
+		printf( '<span style="color:#b45309;font-weight:600;">&#9733; %s</span>', esc_html( $label ) );
 		if ( '' !== $flagged_date ) {
 			$timestamp = strtotime( $flagged_date );
 			if ( false !== $timestamp ) {
@@ -48,10 +50,12 @@ add_action(
 );
 
 /**
- * Per-post "Remove from Today's Paper" row action — only shown when the
- * post is actually flagged, so an editor who added one by mistake (or
- * whose flag has simply gone stale) doesn't have to open the full edit
- * screen and find the metabox checkbox just to undo it.
+ * Per-post "Remove from Today's Paper"/"Remove from Weekender" row
+ * action (label matches whichever publication the post is currently
+ * under) — only shown when the post is actually flagged, so an editor
+ * who added one by mistake (or whose flag has simply gone stale) doesn't
+ * have to open the full edit screen and find the metabox checkbox just
+ * to undo it.
  */
 add_filter(
 	'post_row_actions',
@@ -77,9 +81,13 @@ add_filter(
 			'bday_remove_todays_paper_' . $post->ID
 		);
 
+		$publication = (string) get_post_meta( $post->ID, '_bday_todays_paper_publication', true ) ?: 'e-paper';
+		$label       = bday_todays_paper_publications()[ $publication ] ?? "Today's Paper";
+
 		$actions['bday_remove_todays_paper'] = sprintf(
-			'<a href="%s" style="color:#b91c1c;">Remove from Today\'s Paper</a>',
-			esc_url( $url )
+			'<a href="%s" style="color:#b91c1c;">Remove from %s</a>',
+			esc_url( $url ),
+			esc_html( $label )
 		);
 		return $actions;
 	},

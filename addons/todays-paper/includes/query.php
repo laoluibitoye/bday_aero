@@ -17,16 +17,35 @@ if ( ! defined( 'ABSPATH' ) ) {
  * flagged today. Marking an old post for today's paper without it having
  * been published today means it simply won't appear here.
  *
+ * $publication is one of bday_todays_paper_publications()'s keys
+ * ('e-paper'/'weekender', matching edition_publication term slugs — see
+ * that function's docblock). Every post flagged before the Weekender
+ * option existed has no `_bday_todays_paper_publication` meta at all;
+ * treated as 'e-paper' (what "featured" implicitly meant back then), not
+ * excluded — the OR clause below covers both an explicit 'e-paper' value
+ * and that legacy unset case, only for the 'e-paper' query itself.
+ *
  * @return WP_Post[]
  */
-function bday_todays_paper_posts_for_date( int $year, int $month, int $day ): array {
+function bday_todays_paper_posts_for_date( int $year, int $month, int $day, string $publication = 'e-paper' ): array {
+	$meta_query = array(
+		array( 'key' => '_bday_todays_paper', 'value' => '1' ),
+	);
+	if ( 'e-paper' === $publication ) {
+		$meta_query[] = array(
+			'relation' => 'OR',
+			array( 'key' => '_bday_todays_paper_publication', 'value' => 'e-paper' ),
+			array( 'key' => '_bday_todays_paper_publication', 'compare' => 'NOT EXISTS' ),
+		);
+	} else {
+		$meta_query[] = array( 'key' => '_bday_todays_paper_publication', 'value' => $publication );
+	}
+
 	return bday_get_posts(
 		array(
 			'post_type'       => 'post',
 			'numberposts'     => -1,
-			'meta_query'      => array(
-				array( 'key' => '_bday_todays_paper', 'value' => '1' ),
-			),
+			'meta_query'      => $meta_query,
 			'date_query'      => array(
 				array(
 					'year'  => $year,
@@ -37,6 +56,19 @@ function bday_todays_paper_posts_for_date( int $year, int $month, int $day ): ar
 			'cache_namespace' => 'todays_paper',
 		)
 	);
+}
+
+/**
+ * Weekend dates default to the Weekender edition, weekdays to Today's
+ * Paper — reader-requested editorial pattern: "Weekender is the edition
+ * that needs to be marked on weekends." Used by template-epaper-
+ * articles.php to decide, from the selected date alone, which edition
+ * (bday_edition PDF) and which marked-articles channel to show, with no
+ * separate publication picker needed on that page.
+ */
+function bday_todays_paper_publication_for_date( DateTime $date ): string {
+	$weekday = (int) $date->format( 'w' ); // 0 = Sunday, 6 = Saturday
+	return ( 0 === $weekday || 6 === $weekday ) ? 'weekender' : 'e-paper';
 }
 
 /**
@@ -75,74 +107,87 @@ function bday_todays_paper_tier( WP_Post $post ): array {
  * page templates so the card markup/options can't drift between them.
  */
 /**
- * Server-rendered month calendar for templates/template-epaper-articles.php
- * — no JS required, every day is a plain link to `?date=Y-m-d` on the
- * given page. $selected_ymd (already-validated 'Y-m-d') gets its own
- * highlight distinct from "today"'s, since browsing to a past/future
- * month's calendar and today is neither in view nor selected.
+ * Jump-to-date picker for templates/template-epaper-articles.php — a
+ * plain GET form, no JS required. Previously paired with a full
+ * server-rendered month grid; reader-requested removal of the grid
+ * (redundant once the native date input's own picker does the same job,
+ * plus jumps years back in one interaction instead of dozens of
+ * prev/next-month clicks) left this as the page's only date control.
  */
-function bday_todays_paper_render_calendar( int $year, int $month, string $selected_ymd, string $page_url ): void {
-	$first_of_month = DateTime::createFromFormat( 'Y-n-j', "{$year}-{$month}-1" );
-	if ( false === $first_of_month ) {
+function bday_todays_paper_render_date_picker( string $selected_ymd, string $page_url ): void {
+	$today_ymd = current_time( 'Y-m-d' );
+	?>
+	<form method="get" action="<?php echo esc_url( $page_url ); ?>" class="bday-epaper-date-picker">
+		<label for="bday-epaper-jump-date" class="bday-epaper-date-picker__label">Jump to date</label>
+		<input
+			type="date"
+			id="bday-epaper-jump-date"
+			name="date"
+			value="<?php echo esc_attr( $selected_ymd ); ?>"
+			max="<?php echo esc_attr( $today_ymd ); ?>"
+		/>
+		<button type="submit" class="bday-btn-link bday-epaper-date-picker__submit">Go</button>
+	</form>
+	<?php
+}
+
+/**
+ * The edition cover + "Read Edition" button for a given publication +
+ * date — mirrors the block templates/template-todays-paper.php has
+ * always had, and single-bday_edition.php's own open/gated branch,
+ * pulled out here so template-epaper-articles.php can show the same
+ * block for whichever date/edition a reader navigates to (not just
+ * today's). Renders nothing if the editions/ addon isn't active or
+ * there's simply no edition for that publication on that date — a date
+ * with only marked articles and no edition is still a useful page.
+ */
+function bday_todays_paper_render_edition_block( string $publication_slug, int $year, int $month, int $day ): void {
+	if ( ! post_type_exists( 'bday_edition' ) || ! function_exists( 'bday_edition_type_is_restricted' ) ) {
 		return;
 	}
-	$days_in_month = (int) $first_of_month->format( 't' );
-	$start_of_week = (int) get_option( 'start_of_week', 0 ); // 0 = Sunday, WP core option
-	$first_weekday = (int) $first_of_month->format( 'w' ); // 0 (Sun) .. 6 (Sat)
-	$leading_blanks = ( $first_weekday - $start_of_week + 7 ) % 7;
+	$term = get_term_by( 'slug', $publication_slug, 'edition_publication' );
+	if ( ! $term || is_wp_error( $term ) ) {
+		return;
+	}
+	$editions = bday_get_posts(
+		array(
+			'post_type'       => 'bday_edition',
+			'numberposts'     => 1,
+			'tax_query'       => array(
+				array( 'taxonomy' => 'edition_publication', 'field' => 'term_id', 'terms' => $term->term_id ),
+			),
+			'date_query'      => array(
+				array( 'year' => $year, 'month' => $month, 'day' => $day ),
+			),
+			'cache_namespace' => 'todays_paper',
+		)
+	);
+	$edition = $editions[0] ?? null;
+	if ( ! $edition ) {
+		return;
+	}
 
-	$prev = ( clone $first_of_month )->modify( '-1 month' );
-	$next = ( clone $first_of_month )->modify( '+1 month' );
-	$today_ymd = current_time( 'Y-m-d' );
-
-	$weekday_labels = array( 'Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa' );
-	$weekday_labels = array_merge( array_slice( $weekday_labels, $start_of_week ), array_slice( $weekday_labels, 0, $start_of_week ) );
+	$direct_url = ! bday_edition_type_is_restricted() ? bday_edition_build_signed_download_url( $edition->ID ) : null;
 	?>
-	<div class="bday-epaper-calendar">
-		<div class="bday-epaper-calendar__nav">
-			<a href="<?php echo esc_url( add_query_arg( 'date', $prev->format( 'Y-m-01' ), $page_url ) ); ?>" class="bday-epaper-calendar__nav-link" aria-label="Previous month">&lsaquo;</a>
-			<span class="bday-epaper-calendar__month"><?php echo esc_html( $first_of_month->format( 'F Y' ) ); ?></span>
-			<a href="<?php echo esc_url( add_query_arg( 'date', $next->format( 'Y-m-01' ), $page_url ) ); ?>" class="bday-epaper-calendar__nav-link" aria-label="Next month">&rsaquo;</a>
-		</div>
-		<?php
-		// Jump-to-date — reader-requested: paging month-by-month to reach
-		// something from a year ago is tedious. Plain GET form, no JS
-		// required; the native date input's own picker UI handles year/month
-		// selection far faster than repeated prev/next clicks.
-		?>
-		<form method="get" action="<?php echo esc_url( $page_url ); ?>" class="bday-epaper-calendar__jump">
-			<label for="bday-epaper-jump-date" class="screen-reader-text">Jump to date</label>
-			<input
-				type="date"
-				id="bday-epaper-jump-date"
-				name="date"
-				value="<?php echo esc_attr( $selected_ymd ); ?>"
-				max="<?php echo esc_attr( $today_ymd ); ?>"
-			/>
-			<button type="submit" class="bday-btn-link bday-epaper-calendar__jump-btn">Go</button>
-		</form>
-		<div class="bday-epaper-calendar__grid">
-			<?php foreach ( $weekday_labels as $bday_cal_label ) : ?>
-				<span class="bday-epaper-calendar__weekday"><?php echo esc_html( $bday_cal_label ); ?></span>
-			<?php endforeach; ?>
-			<?php for ( $bday_cal_i = 0; $bday_cal_i < $leading_blanks; $bday_cal_i++ ) : ?>
-				<span class="bday-epaper-calendar__day bday-epaper-calendar__day--blank"></span>
-			<?php endfor; ?>
-			<?php for ( $bday_cal_day = 1; $bday_cal_day <= $days_in_month; $bday_cal_day++ ) :
-				$bday_cal_ymd = sprintf( '%04d-%02d-%02d', $year, $month, $bday_cal_day );
-				$bday_cal_classes = array( 'bday-epaper-calendar__day' );
-				if ( $bday_cal_ymd === $selected_ymd ) {
-					$bday_cal_classes[] = 'bday-epaper-calendar__day--selected';
-				}
-				if ( $bday_cal_ymd === $today_ymd ) {
-					$bday_cal_classes[] = 'bday-epaper-calendar__day--today';
-				}
-				?>
-				<a
-					href="<?php echo esc_url( add_query_arg( 'date', $bday_cal_ymd, $page_url ) ); ?>"
-					class="<?php echo esc_attr( implode( ' ', $bday_cal_classes ) ); ?>"
-				><?php echo esc_html( (string) $bday_cal_day ); ?></a>
-			<?php endfor; ?>
+	<div class="bday-todays-paper-page__edition">
+		<a href="<?php echo esc_url( get_permalink( $edition ) ); ?>" class="bday-todays-paper-page__edition-media">
+			<?php echo bday_get_thumbnail( $edition->ID, 'pdf_thumbnail' ); ?>
+		</a>
+		<div class="bday-todays-paper-page__edition-body">
+			<h2><?php echo esc_html( $term->name ); ?></h2>
+			<p><?php echo esc_html( bday_format_date( $edition->post_date ) ); ?></p>
+			<?php if ( null !== $direct_url ) : ?>
+				<a class="bday-btn-link" href="<?php echo esc_url( bday_edition_reader_url( $direct_url ) ); ?>" data-bd-edition-open target="_blank" rel="noopener">Read Edition</a>
+			<?php else : ?>
+				<button
+					type="button"
+					class="bday-btn-link"
+					data-bd-edition-download
+					data-bd-edition-publication="<?php echo esc_attr( $publication_slug ); ?>"
+					data-bd-edition-date="<?php echo esc_attr( get_the_date( 'Y-m-d', $edition ) ); ?>"
+				>Read Edition</button>
+				<p class="bday-todays-paper-page__edition-status" data-bd-edition-status role="status"></p>
+			<?php endif; ?>
 		</div>
 	</div>
 	<?php
