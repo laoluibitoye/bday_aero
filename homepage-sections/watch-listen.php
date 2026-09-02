@@ -32,7 +32,7 @@ if ( empty( $videos ) && empty( $episodes ) ) {
 			<div class="bday-rd-watch-listen__video-grid">
 				<?php foreach ( $videos as $post ) : $cats = get_the_category( $post->ID ); ?>
 					<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-rd-watch-listen__video-card">
-						<?php echo bday_get_thumbnail( $post->ID, 'medium_rectangle' ); ?>
+						<?php echo bday_get_card_media( $post->ID, 'medium_rectangle' ); ?>
 						<?php if ( ! empty( $cats ) ) : ?><span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( $cats[0]->name ); ?></span><?php endif; ?>
 						<h4><?php echo esc_html( get_the_title( $post ) ); ?></h4>
 					</a>

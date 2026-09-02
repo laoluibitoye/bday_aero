@@ -39,7 +39,7 @@ if ( empty( $cols ) ) {
 					<a href="<?php echo esc_url( $col['url'] ); ?>" class="bday-rd-kicker bday-rd-kicker--accent">More</a>
 				</div>
 				<a href="<?php echo esc_url( get_permalink( $lead ) ); ?>" class="bday-rd-topic-triple__lead">
-					<?php if ( has_post_thumbnail( $lead->ID ) ) : ?><?php echo bday_get_thumbnail( $lead->ID, 'top_story' ); ?><?php endif; ?>
+					<?php if ( has_post_thumbnail( $lead->ID ) ) : ?><?php echo bday_get_card_media( $lead->ID, 'top_story' ); ?><?php endif; ?>
 					<h3><?php echo esc_html( get_the_title( $lead ) ); ?></h3>
 					<p><?php echo esc_html( wp_trim_words( get_the_excerpt( $lead ), 18 ) ); ?></p>
 				</a>

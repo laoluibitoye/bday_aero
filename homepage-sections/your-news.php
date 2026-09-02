@@ -41,7 +41,7 @@ if ( empty( $desks ) ) {
 					<div class="bday-rd-desk-card__items">
 						<?php foreach ( $desk['posts'] as $post ) : ?>
 							<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-rd-desk-card__item">
-								<?php if ( has_post_thumbnail( $post->ID ) ) : ?><?php echo bday_get_thumbnail( $post->ID, 'small_category' ); ?><?php endif; ?>
+								<?php if ( has_post_thumbnail( $post->ID ) ) : ?><?php echo bday_get_card_media( $post->ID, 'small_category' ); ?><?php endif; ?>
 								<span class="bday-rd-desk-card__item-body">
 									<span class="bday-rd-desk-card__item-title"><?php echo esc_html( get_the_title( $post ) ); ?></span>
 									<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( bday_time_ago( $post->post_date ) ); ?></span>

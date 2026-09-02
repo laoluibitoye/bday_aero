@@ -28,7 +28,7 @@ if ( empty( $stories ) ) {
 			<div class="bday-rd-story-list">
 				<?php foreach ( $stories as $post ) : ?>
 					<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-rd-story-list__item">
-						<?php if ( has_post_thumbnail( $post->ID ) ) : ?><?php echo bday_get_thumbnail( $post->ID, 'medium_rectangle' ); ?><?php endif; ?>
+						<?php if ( has_post_thumbnail( $post->ID ) ) : ?><?php echo bday_get_card_media( $post->ID, 'medium_rectangle' ); ?><?php endif; ?>
 						<span class="bday-rd-story-list__body">
 							<?php $cats = get_the_category( $post->ID ); ?>
 							<?php if ( ! empty( $cats ) ) : ?><span class="bday-rd-kicker bday-rd-kicker--accent"><?php echo esc_html( $cats[0]->name ); ?></span><?php endif; ?>

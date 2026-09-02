@@ -29,7 +29,7 @@ if ( ! $lead && empty( $most_read ) ) {
 			</div>
 			<?php if ( $lead ) : ?>
 				<a href="<?php echo esc_url( get_permalink( $lead ) ); ?>" class="bday-rd-editor-pick__lead">
-					<?php if ( has_post_thumbnail( $lead->ID ) ) : ?><?php echo bday_get_thumbnail( $lead->ID, 'featured' ); ?><?php endif; ?>
+					<?php if ( has_post_thumbnail( $lead->ID ) ) : ?><?php echo bday_get_card_media( $lead->ID, 'featured' ); ?><?php endif; ?>
 					<?php $cats = get_the_category( $lead->ID ); ?>
 					<?php if ( ! empty( $cats ) ) : ?><span class="bday-rd-kicker bday-rd-kicker--accent"><?php echo esc_html( $cats[0]->name ); ?></span><?php endif; ?>
 					<h3><?php echo esc_html( get_the_title( $lead ) ); ?></h3>
@@ -41,7 +41,7 @@ if ( ! $lead && empty( $most_read ) ) {
 				<div class="bday-rd-editor-pick__more">
 					<?php foreach ( $picks as $post ) : ?>
 						<a href="<?php echo esc_url( get_permalink( $post ) ); ?>">
-							<?php if ( has_post_thumbnail( $post->ID ) ) : ?><?php echo bday_get_thumbnail( $post->ID, 'medium_rectangle' ); ?><?php endif; ?>
+							<?php if ( has_post_thumbnail( $post->ID ) ) : ?><?php echo bday_get_card_media( $post->ID, 'medium_rectangle' ); ?><?php endif; ?>
 							<span class="bday-rd-editor-pick__more-title"><?php echo esc_html( get_the_title( $post ) ); ?></span>
 							<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( bday_time_ago( $post->post_date ) ); ?></span>
 						</a>
@@ -71,7 +71,7 @@ if ( ! $lead && empty( $most_read ) ) {
 					<div class="bday-rd-editor-pick__thumb-list">
 						<?php foreach ( $more_picks as $post ) : ?>
 							<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-rd-editor-pick__thumb-item<?php echo has_post_thumbnail( $post->ID ) ? '' : ' bday-rd-editor-pick__thumb-item--no-thumb'; ?>">
-								<?php if ( has_post_thumbnail( $post->ID ) ) : ?><?php echo bday_get_thumbnail( $post->ID, 'small_category' ); ?><?php endif; ?>
+								<?php if ( has_post_thumbnail( $post->ID ) ) : ?><?php echo bday_get_card_media( $post->ID, 'small_category' ); ?><?php endif; ?>
 								<span class="bday-rd-editor-pick__thumb-title"><?php echo esc_html( get_the_title( $post ) ); ?></span>
 							</a>
 						<?php endforeach; ?>

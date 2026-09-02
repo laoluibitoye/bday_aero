@@ -31,7 +31,7 @@ if ( empty( $videos ) ) {
 		<div class="bday-scroll-row">
 			<?php foreach ( $videos as $post ) : ?>
 				<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-video-card">
-					<?php echo bday_get_thumbnail( $post->ID, 'medium_rectangle' ); ?>
+					<?php echo bday_get_card_media( $post->ID, 'medium_rectangle' ); ?>
 					<h4><?php echo esc_html( get_the_title( $post ) ); ?></h4>
 				</a>
 			<?php endforeach; ?>

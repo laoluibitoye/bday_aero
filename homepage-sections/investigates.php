@@ -28,7 +28,7 @@ $has_thumb = has_post_thumbnail( $lead->ID );
 		</div>
 		<div class="bday-rd-investigates__grid">
 			<?php if ( $has_thumb ) : ?>
-				<a href="<?php echo esc_url( get_permalink( $lead ) ); ?>" class="bday-rd-investigates__media"><?php echo bday_get_thumbnail( $lead->ID, 'featured' ); ?></a>
+				<a href="<?php echo esc_url( get_permalink( $lead ) ); ?>" class="bday-rd-investigates__media"><?php echo bday_get_card_media( $lead->ID, 'featured' ); ?></a>
 			<?php endif; ?>
 			<div class="bday-rd-investigates__body">
 				<span class="bday-rd-kicker bday-rd-kicker--accent">Investigation · <?php echo esc_html( bday_format_date( $lead->post_date ) ); ?></span>

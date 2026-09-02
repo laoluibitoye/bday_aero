@@ -25,7 +25,7 @@ if ( empty( $posts ) ) {
 		<div class="bday-scroll-row bday-rd-in-pictures__rail">
 			<?php foreach ( $posts as $post ) : ?>
 				<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-rd-in-pictures__item">
-					<?php echo bday_get_thumbnail( $post->ID, 'medium_standard' ); ?>
+					<?php echo bday_get_card_media( $post->ID, 'medium_standard' ); ?>
 					<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( get_the_title( $post ) ); ?></span>
 				</a>
 			<?php endforeach; ?>

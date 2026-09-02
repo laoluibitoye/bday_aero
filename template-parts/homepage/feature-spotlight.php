@@ -24,7 +24,7 @@ if ( ! $feature ) {
 		<article class="bday-feature-spotlight__main">
 			<h2 class="bday-eyebrow"><a href="<?php echo esc_url( bday_section_url( 'editorial' ) ); ?>">Big Read</a></h2>
 			<a href="<?php echo esc_url( get_permalink( $feature ) ); ?>" class="bday-feature-spotlight__media">
-				<?php echo bday_get_thumbnail( $feature->ID, 'featured' ); ?>
+				<?php echo bday_get_card_media( $feature->ID, 'featured' ); ?>
 			</a>
 			<h3 class="bday-feature-spotlight__title"><a href="<?php echo esc_url( get_permalink( $feature ) ); ?>"><?php echo esc_html( get_the_title( $feature ) ); ?></a></h3>
 			<p class="bday-feature-spotlight__excerpt"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $feature->post_excerpt ?: $feature->post_content ), 32, '…' ) ); ?></p>
@@ -34,7 +34,7 @@ if ( ! $feature ) {
 			<ul class="bday-feature-spotlight__list">
 				<?php foreach ( $more as $post ) : ?>
 					<li>
-						<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-feature-spotlight__list-media"><?php echo bday_get_thumbnail( $post->ID, 'small' ); ?></a>
+						<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-feature-spotlight__list-media"><?php echo bday_get_card_media( $post->ID, 'small' ); ?></a>
 						<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-feature-spotlight__list-title"><?php echo esc_html( get_the_title( $post ) ); ?></a>
 					</li>
 				<?php endforeach; ?>

@@ -34,7 +34,7 @@ $also    = array_slice( $posts, 3, 8 );
 		</div>
 		<div class="bday-rd-premium__grid">
 			<a href="<?php echo esc_url( get_permalink( $feature ) ); ?>" class="bday-rd-premium__feature">
-				<?php if ( has_post_thumbnail( $feature->ID ) ) : ?><?php echo bday_get_thumbnail( $feature->ID, 'featured' ); ?><?php endif; ?>
+				<?php if ( has_post_thumbnail( $feature->ID ) ) : ?><?php echo bday_get_card_media( $feature->ID, 'featured' ); ?><?php endif; ?>
 				<h3><?php echo esc_html( get_the_title( $feature ) ); ?></h3>
 				<p><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $feature->post_excerpt ?: $feature->post_content ), 20, '…' ) ); ?></p>
 				<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( bday_format_date( $feature->post_date ) ); ?></span>
@@ -42,7 +42,7 @@ $also    = array_slice( $posts, 3, 8 );
 			<div class="bday-rd-premium__medium">
 				<?php foreach ( $medium as $post ) : ?>
 					<a href="<?php echo esc_url( get_permalink( $post ) ); ?>">
-						<?php if ( has_post_thumbnail( $post->ID ) ) : ?><?php echo bday_get_thumbnail( $post->ID, 'top_story' ); ?><?php endif; ?>
+						<?php if ( has_post_thumbnail( $post->ID ) ) : ?><?php echo bday_get_card_media( $post->ID, 'top_story' ); ?><?php endif; ?>
 						<h4><?php echo esc_html( get_the_title( $post ) ); ?></h4>
 						<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( bday_format_date( $post->post_date ) ); ?></span>
 					</a>

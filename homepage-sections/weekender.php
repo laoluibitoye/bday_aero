@@ -31,7 +31,7 @@ if ( empty( $cols ) ) {
 			<?php foreach ( $cols as $col ) : $lead = $col['posts'][0]; $more = array_slice( $col['posts'], 1, 2 ); ?>
 				<div class="bday-rd-weekender__col">
 					<a href="<?php echo esc_url( get_permalink( $lead ) ); ?>" class="bday-rd-weekender__lead">
-						<?php if ( has_post_thumbnail( $lead->ID ) ) : ?><?php echo bday_get_thumbnail( $lead->ID, 'medium_standard' ); ?><?php endif; ?>
+						<?php if ( has_post_thumbnail( $lead->ID ) ) : ?><?php echo bday_get_card_media( $lead->ID, 'medium_standard' ); ?><?php endif; ?>
 						<span class="bday-rd-kicker bday-rd-kicker--accent"><?php echo esc_html( $col['label'] ); ?></span>
 						<h4><?php echo esc_html( get_the_title( $lead ) ); ?></h4>
 					</a>

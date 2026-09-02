@@ -27,7 +27,7 @@ $grid = array_slice( $columnists, 1, 6 );
 		</div>
 		<div class="bday-rd-opinion__grid">
 			<a href="<?php echo esc_url( get_permalink( $lead ) ); ?>" class="bday-rd-opinion__lead">
-				<?php if ( has_post_thumbnail( $lead->ID ) ) : ?><?php echo bday_get_thumbnail( $lead->ID, 'medium_standard' ); ?><?php endif; ?>
+				<?php if ( has_post_thumbnail( $lead->ID ) ) : ?><?php echo bday_get_card_media( $lead->ID, 'medium_standard' ); ?><?php endif; ?>
 				<h3><?php echo esc_html( get_the_title( $lead ) ); ?></h3>
 				<p><?php echo esc_html( wp_trim_words( get_the_excerpt( $lead ), 22 ) ); ?></p>
 				<span class="bday-rd-kicker bday-rd-kicker--tint"><?php echo get_avatar( $lead->post_author, 24 ); ?> <?php echo esc_html( get_the_author_meta( 'display_name', $lead->post_author ) ); ?> · <?php echo esc_html( bday_format_date( $lead->post_date ) ); ?></span>

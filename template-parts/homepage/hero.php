@@ -40,7 +40,7 @@ $lead   = $data['lead'][0] ?? null;
 		<?php if ( $lead ) : ?>
 		<article class="bday-hero__lead">
 			<a href="<?php echo esc_url( get_permalink( $lead ) ); ?>" class="bday-hero__lead-media">
-				<?php echo bday_get_thumbnail( $lead->ID, 'featured' ); ?>
+				<?php echo bday_get_card_media( $lead->ID, 'featured' ); ?>
 			</a>
 			<h1 class="bday-hero__title"><a href="<?php echo esc_url( get_permalink( $lead ) ); ?>"><?php echo esc_html( get_the_title( $lead ) ); ?></a></h1>
 			<p class="bday-hero__excerpt"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $lead->post_excerpt ?: $lead->post_content ), 50, '…' ) ); ?></p>

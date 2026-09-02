@@ -24,7 +24,7 @@ $more = array_slice( $posts, 1, 3 );
 			<span class="bday-rd-kicker bday-rd-kicker--accent">The Interview</span>
 			<a href="<?php echo esc_url( get_tag_link( get_term_by( 'slug', 'bd-interview', 'post_tag' ) ) ); ?>" class="bday-rd-kicker bday-rd-kicker--faint bday-rd-interview__see-more">All interviews →</a>
 			<?php if ( has_post_thumbnail( $lead->ID ) ) : ?>
-				<div class="bday-rd-interview__portrait"><?php echo bday_get_thumbnail( $lead->ID, 'featured' ); ?></div>
+				<div class="bday-rd-interview__portrait"><?php echo bday_get_card_media( $lead->ID, 'featured' ); ?></div>
 			<?php endif; ?>
 			<a href="<?php echo esc_url( get_permalink( $lead ) ); ?>" class="bday-rd-interview__quote"><?php echo esc_html( get_the_title( $lead ) ); ?></a>
 			<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( get_the_author_meta( 'display_name', $lead->post_author ) ); ?></span>
@@ -33,7 +33,7 @@ $more = array_slice( $posts, 1, 3 );
 			<div class="bday-rd-interview__col bday-rd-interview__more">
 				<?php foreach ( $more as $post ) : ?>
 					<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-rd-interview__more-item">
-						<?php if ( has_post_thumbnail( $post->ID ) ) : ?><?php echo bday_get_thumbnail( $post->ID, 'small' ); ?><?php endif; ?>
+						<?php if ( has_post_thumbnail( $post->ID ) ) : ?><?php echo bday_get_card_media( $post->ID, 'small' ); ?><?php endif; ?>
 						<span>
 							<span class="bday-rd-interview__more-title"><?php echo esc_html( get_the_title( $post ) ); ?></span>
 							<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( wp_trim_words( get_the_excerpt( $post ), 12 ) ); ?></span>
