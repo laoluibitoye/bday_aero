@@ -61,6 +61,7 @@ require_once __DIR__ . '/includes/class-wp-user-resolver.php';
 require_once __DIR__ . '/includes/class-user-sync.php';
 require_once __DIR__ . '/includes/class-user-sync-receiver.php';
 require_once __DIR__ . '/includes/class-login-redirect.php';
+require_once __DIR__ . '/includes/class-reader-admin-lockdown.php';
 require_once __DIR__ . '/includes/class-account-page.php';
 require_once __DIR__ . '/includes/class-reader-settings-page.php';
 require_once __DIR__ . '/includes/class-nav-button.php';
@@ -118,6 +119,7 @@ if ( Bday_Aero_Settings::enabled() && Bday_Aero_License_Client::is_active() ) {
 	new Bday_Aero_Reader_Settings_Page();
 	new Bday_Aero_User_Sync();
 	new Bday_Aero_Login_Redirect();
+	new Bday_Aero_Reader_Admin_Lockdown();
 }
 
 if ( Bday_Aero_License_Client::is_dev_mode_bypass_active() ) {
