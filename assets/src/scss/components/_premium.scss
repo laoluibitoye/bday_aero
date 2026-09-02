@@ -1850,6 +1850,27 @@ $bday-border: var(--color-border);
 		font-size: 0.95rem;
 	}
 
+	&__jump {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 14px;
+
+		input[type="date"] {
+			flex: 1;
+			padding: 6px 8px;
+			border: 1px solid $bday-border;
+			border-radius: 5px;
+			font-size: 0.85rem;
+			color: $bday-ink;
+		}
+	}
+
+	&__jump-btn {
+		margin-top: 0;
+		padding: 7px 14px;
+	}
+
 	&__grid {
 		display: grid;
 		grid-template-columns: repeat(7, 1fr);

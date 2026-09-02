@@ -16,7 +16,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_filter(
 	'bulk_actions-edit-post',
 	static function ( array $actions ): array {
-		$actions['bday_mark_todays_paper'] = "Mark as Today's Paper";
+		$actions['bday_mark_todays_paper']   = "Mark as Today's Paper";
+		// Undoes a mistaken bulk-mark (or a batch of stale flags) the same
+		// way the mark action applies to many posts at once, rather than
+		// only ever being undoable one post at a time via the row action
+		// in list-column.php.
+		$actions['bday_unmark_todays_paper'] = "Remove from Today's Paper";
 		return $actions;
 	}
 );
@@ -24,24 +29,37 @@ add_filter(
 add_filter(
 	'handle_bulk_actions-edit-post',
 	static function ( string $redirect_to, string $doaction, array $post_ids ): string {
-		if ( 'bday_mark_todays_paper' !== $doaction ) {
-			return $redirect_to;
+		if ( 'bday_mark_todays_paper' === $doaction ) {
+			$marked = 0;
+			foreach ( $post_ids as $post_id ) {
+				if ( ! current_user_can( 'edit_post', $post_id ) ) {
+					continue;
+				}
+				update_post_meta( $post_id, '_bday_todays_paper', '1' );
+				update_post_meta( $post_id, '_bday_todays_paper_date', current_time( 'Y-m-d' ) );
+				if ( '' === (string) get_post_meta( $post_id, '_bday_todays_paper_size', true ) ) {
+					update_post_meta( $post_id, '_bday_todays_paper_size', 'small' );
+				}
+				$marked++;
+			}
+			return add_query_arg( 'bday_todays_paper_marked', $marked, $redirect_to );
 		}
 
-		$marked = 0;
-		foreach ( $post_ids as $post_id ) {
-			if ( ! current_user_can( 'edit_post', $post_id ) ) {
-				continue;
+		if ( 'bday_unmark_todays_paper' === $doaction ) {
+			$removed = 0;
+			foreach ( $post_ids as $post_id ) {
+				if ( ! current_user_can( 'edit_post', $post_id ) ) {
+					continue;
+				}
+				if ( '1' === (string) get_post_meta( $post_id, '_bday_todays_paper', true ) ) {
+					update_post_meta( $post_id, '_bday_todays_paper', '' );
+					$removed++;
+				}
 			}
-			update_post_meta( $post_id, '_bday_todays_paper', '1' );
-			update_post_meta( $post_id, '_bday_todays_paper_date', current_time( 'Y-m-d' ) );
-			if ( '' === (string) get_post_meta( $post_id, '_bday_todays_paper_size', true ) ) {
-				update_post_meta( $post_id, '_bday_todays_paper_size', 'small' );
-			}
-			$marked++;
+			return add_query_arg( 'bday_todays_paper_removed', $removed, $redirect_to );
 		}
 
-		return add_query_arg( 'bday_todays_paper_marked', $marked, $redirect_to );
+		return $redirect_to;
 	},
 	10,
 	3
@@ -50,19 +68,32 @@ add_filter(
 add_action(
 	'admin_notices',
 	static function (): void {
-		if ( ! isset( $_GET['bday_todays_paper_marked'] ) ) {
-			return;
-		}
-		$count = (int) $_GET['bday_todays_paper_marked'];
-		printf(
-			'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
-			esc_html(
-				sprintf(
-					/* translators: %d: number of posts marked */
-					_n( '%d post marked for Today\'s Paper.', '%d posts marked for Today\'s Paper.', $count, 'bday-aero' ),
-					$count
+		if ( isset( $_GET['bday_todays_paper_marked'] ) ) {
+			$count = (int) $_GET['bday_todays_paper_marked'];
+			printf(
+				'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+				esc_html(
+					sprintf(
+						/* translators: %d: number of posts marked */
+						_n( '%d post marked for Today\'s Paper.', '%d posts marked for Today\'s Paper.', $count, 'bday-aero' ),
+						$count
+					)
 				)
-			)
-		);
+			);
+		}
+
+		if ( isset( $_GET['bday_todays_paper_removed'] ) ) {
+			$count = (int) $_GET['bday_todays_paper_removed'];
+			printf(
+				'<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+				esc_html(
+					sprintf(
+						/* translators: %d: number of posts removed */
+						_n( '%d post removed from Today\'s Paper.', '%d posts removed from Today\'s Paper.', $count, 'bday-aero' ),
+						$count
+					)
+				)
+			);
+		}
 	}
 );

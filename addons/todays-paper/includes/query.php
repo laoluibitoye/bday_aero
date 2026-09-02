@@ -104,6 +104,23 @@ function bday_todays_paper_render_calendar( int $year, int $month, string $selec
 			<span class="bday-epaper-calendar__month"><?php echo esc_html( $first_of_month->format( 'F Y' ) ); ?></span>
 			<a href="<?php echo esc_url( add_query_arg( 'date', $next->format( 'Y-m-01' ), $page_url ) ); ?>" class="bday-epaper-calendar__nav-link" aria-label="Next month">&rsaquo;</a>
 		</div>
+		<?php
+		// Jump-to-date — reader-requested: paging month-by-month to reach
+		// something from a year ago is tedious. Plain GET form, no JS
+		// required; the native date input's own picker UI handles year/month
+		// selection far faster than repeated prev/next clicks.
+		?>
+		<form method="get" action="<?php echo esc_url( $page_url ); ?>" class="bday-epaper-calendar__jump">
+			<label for="bday-epaper-jump-date" class="screen-reader-text">Jump to date</label>
+			<input
+				type="date"
+				id="bday-epaper-jump-date"
+				name="date"
+				value="<?php echo esc_attr( $selected_ymd ); ?>"
+				max="<?php echo esc_attr( $today_ymd ); ?>"
+			/>
+			<button type="submit" class="bday-btn-link bday-epaper-calendar__jump-btn">Go</button>
+		</form>
 		<div class="bday-epaper-calendar__grid">
 			<?php foreach ( $weekday_labels as $bday_cal_label ) : ?>
 				<span class="bday-epaper-calendar__weekday"><?php echo esc_html( $bday_cal_label ); ?></span>
