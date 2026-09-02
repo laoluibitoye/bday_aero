@@ -47,6 +47,12 @@ final class Bday_Aero_Sdk_Loader {
 			'adFreeEnabled' => Bday_Aero_Settings::adfree_enabled(),
 			'privateModeEnforcement' => Bday_Aero_Settings::private_mode_enforcement(),
 			'accountUrl'   => Bday_Aero_Settings::account_page_url() ?: null,
+			// The public /subscribe/ page's Corporate tab links here rather
+			// than rendering a self-serve B2B plan grid (see
+			// renderPublicSubscribeTab() in the SDK) — same page
+			// template-subscribe.php's own "Need 20+ seats?" line already
+			// points to.
+			'corporateSubscriptionUrl' => class_exists( 'Bday_Aero_Page_Setup' ) ? Bday_Aero_Page_Setup::url_for( 'corporate_subscription' ) : null,
 			'googleClientId' => Bday_Aero_Settings::google_client_id() ?: null,
 			'appleClientId'  => Bday_Aero_Settings::apple_client_id() ?: null,
 			'captcha'      => $config['captcha'] ?? null,

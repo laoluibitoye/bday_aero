@@ -96,7 +96,17 @@
 		color: var(--color-ink-1);
 		opacity: 0.85;
 		text-decoration: none;
-		word-break: break-word;
+		// word-break: break-word (the old value here) forces a break
+		// wherever a line runs out of room, even mid-word with no natural
+		// break opportunity — which is exactly what produced the ugly
+		// "digitalsales@business" / "day.ng" split on the support email.
+		// overflow-wrap: break-word only forces a mid-word break as a last
+		// resort, preferring real break opportunities first — paired with
+		// the <wbr> footer.php now places right after the "@", a wrap (on
+		// a genuinely narrow column) lands there instead, same as any
+		// other email address wrapping cleanly at its own "@".
+		overflow-wrap: break-word;
+		word-break: normal;
 
 		&:hover {
 			opacity: 1;

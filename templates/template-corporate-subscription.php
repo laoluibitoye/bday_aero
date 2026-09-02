@@ -23,7 +23,7 @@ get_header();
 <style>
 	.bday-corp { --bday-corp-accent: #E30613; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
 	.bday-corp__hero { background: #0d0d0d; color: #fff; padding: 56px 24px; }
-	.bday-corp__hero-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 440px; gap: 48px; align-items: start; }
+	.bday-corp__hero-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 440px; gap: 48px; align-items: center; }
 	@media (max-width: 900px) { .bday-corp__hero-inner { grid-template-columns: 1fr; } }
 	.bday-corp__eyebrow { font-style: italic; font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--bday-corp-accent); margin: 0 0 12px; }
 	.bday-corp__title { font-size: 34px; line-height: 1.25; font-weight: 700; margin: 0 0 20px; }
@@ -84,7 +84,6 @@ get_header();
 				<p>Multiple corporate signup options with simple onboarding, so your team spends less time on admin.</p>
 			</div>
 		</div>
-		<a href="#aero-corporate-subscription-mount" class="bday-corp__btn">Get Pricing</a>
 		<p class="bday-corp__tagline">Become one of the many companies that empower their workforce with a Corporate Subscription.</p>
 	</section>
 
