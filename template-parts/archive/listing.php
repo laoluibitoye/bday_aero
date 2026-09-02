@@ -38,7 +38,7 @@ if ( is_category() || is_tag() || is_tax() ) {
 	$query_args['post_type'] = get_query_var( 'post_type' );
 }
 
-$results = Bday_Query_Cache::query( 'listing', md5( wp_json_encode( $query_args ) ), $query_args, 300 );
+$results = Bday_Query_Cache::query( 'listing', md5( wp_json_encode( $query_args ) ), $query_args, MINUTE_IN_SECONDS );
 ?>
 <div class="bday-container">
 	<?php if ( $results->have_posts() ) : ?>

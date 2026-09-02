@@ -16,7 +16,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Bday_Aero_Paywall_Config_Client {
 
-	private const CACHE_TTL = 5 * MINUTE_IN_SECONDS;
+	// Editor-reported: a scope-mode/funnel-threshold change made in
+	// admin-web took up to 5 minutes to show up here — subscription-
+	// service has no way to push an invalidation to WP when a setting
+	// changes, so freshness is purely this TTL. This is a lightweight
+	// unauthenticated GET specifically meant to be cache-friendly, so
+	// shortening it to 1 minute costs little (still absorbs every
+	// concurrent pageview within that window into one shared cache entry)
+	// while cutting the lag 5x.
+	private const CACHE_TTL = MINUTE_IN_SECONDS;
 
 	/** @return array<string, mixed> */
 	private static function defaults(): array {

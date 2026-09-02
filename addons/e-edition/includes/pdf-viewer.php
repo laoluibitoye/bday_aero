@@ -31,7 +31,7 @@ function bday_render_e_edition_grid(): void {
 		'order'          => 'DESC',
 	);
 
-	$results = Bday_Query_Cache::query( 'e_edition', md5( wp_json_encode( $args ) ), $args, 300 );
+	$results = Bday_Query_Cache::query( 'e_edition', md5( wp_json_encode( $args ) ), $args, MINUTE_IN_SECONDS );
 	?>
 	<div class="bday-container">
 		<div class="bday-card-grid">

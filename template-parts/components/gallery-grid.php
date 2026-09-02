@@ -54,7 +54,7 @@ if ( ! empty( $tax_query ) ) {
 	$query_args['tax_query'] = $tax_query;
 }
 
-$gallery_query = Bday_Query_Cache::query( $cache_namespace, md5( wp_json_encode( $query_args ) ), $query_args, 5 * MINUTE_IN_SECONDS );
+$gallery_query = Bday_Query_Cache::query( $cache_namespace, md5( wp_json_encode( $query_args ) ), $query_args, MINUTE_IN_SECONDS );
 
 if ( empty( $gallery_query->posts ) ) {
 	return;
