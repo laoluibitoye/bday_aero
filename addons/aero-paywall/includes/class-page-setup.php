@@ -29,7 +29,7 @@ final class Bday_Aero_Page_Setup {
 		add_action( 'wp_ajax_bday_aero_create_pages', array( $this, 'handle_create_pages' ) );
 	}
 
-	/** @return array<string, array{label: string, content: string, template: string}> */
+	/** @return array<string, array{label: string, content: string, template: string, slug?: string}> */
 	private static function definitions(): array {
 		return array(
 			'account'       => array(
@@ -46,6 +46,15 @@ final class Bday_Aero_Page_Setup {
 				'label'    => "Today's Paper",
 				'content'  => '',
 				'template' => 'templates/template-todays-paper.php',
+			),
+			'epaper_articles' => array(
+				'label'    => 'E-Paper Articles',
+				'content'  => '',
+				'template' => 'templates/template-epaper-articles.php',
+				// Explicit slug — the auto-generated one from this title
+				// would be "e-paper-articles" (sanitize_title() hyphenates
+				// every word), not the "epaper-articles" actually wanted.
+				'slug'     => 'epaper-articles',
 			),
 			'newsletter'    => array(
 				'label'    => 'Newsletter Opt-In',
@@ -100,11 +109,14 @@ final class Bday_Aero_Page_Setup {
 		}
 
 		$page_id = wp_insert_post(
-			array(
-				'post_title'   => $def['label'],
-				'post_content' => $def['content'],
-				'post_status'  => 'publish',
-				'post_type'    => 'page',
+			array_filter(
+				array(
+					'post_title'   => $def['label'],
+					'post_content' => $def['content'],
+					'post_status'  => 'publish',
+					'post_type'    => 'page',
+					'post_name'    => $def['slug'] ?? '',
+				)
 			),
 			true
 		);
