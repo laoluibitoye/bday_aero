@@ -62,9 +62,9 @@ $bday_footer_columns = array(
 				<h2>Support</h2>
 				<ul>
 					<li><a href="mailto:digitalsales@businessday.ng">digitalsales@<wbr />businessday.ng</a></li>
-					<li><a href="tel:+2348033225506">+234 803 322 5506</a></li>
+					<li><a href="tel:+2348033042209">+234 803 304 2209</a></li>
 					<li><a href="tel:+2348026011296">+234 802 601 1296</a></li>
-					<li><a href="tel:+2348133464051">+234 813 346 4051</a></li>
+					<li><a href="tel:+2348138243822">+234 813 824 3822</a></li>
 				</ul>
 			</div>
 		</div>

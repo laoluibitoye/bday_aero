@@ -21,7 +21,10 @@
 	padding-block: var(--space-8, 32px);
 
 	@include bd-up($bp-tablet) {
-		grid-template-columns: 1.2fr 2fr;
+		// Reader-requested: narrower brand/about column so the link columns
+		// beside it (and specifically Support's own width below) have more
+		// room — was 1.2fr, wider than the About paragraph actually needs.
+		grid-template-columns: 0.9fr 2fr;
 		gap: var(--space-8, 32px);
 	}
 }
@@ -65,7 +68,10 @@
 	gap: var(--space-6, 24px);
 
 	@include bd-up($bp-tablet) {
-		grid-template-columns: repeat(4, 1fr);
+		// Reader-requested: Support (last column) wider than the other
+		// three so its email address ("digitalsales@businessday.ng") fits
+		// on one line instead of wrapping mid-word.
+		grid-template-columns: 1fr 1fr 1fr 1.4fr;
 	}
 }
 

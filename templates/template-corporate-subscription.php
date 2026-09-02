@@ -23,8 +23,13 @@ get_header();
 <style>
 	.bday-corp { --bday-corp-accent: #E30613; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
 	.bday-corp__hero { background: #0d0d0d; color: #fff; padding: 56px 24px; }
-	.bday-corp__hero-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 440px; gap: 48px; align-items: center; }
+	.bday-corp__hero-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 560px; gap: 48px; align-items: center; }
 	@media (max-width: 900px) { .bday-corp__hero-inner { grid-template-columns: 1fr; } }
+	/* Reader-requested: narrower text column so the form card (fixed column
+	   above) can actually use its extra width — a max-width on the text
+	   itself, not just a smaller grid share, since 1fr would otherwise
+	   still stretch to fill whatever's left. */
+	.bday-corp__text { max-width: 460px; }
 	.bday-corp__eyebrow { font-style: italic; font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--bday-corp-accent); margin: 0 0 12px; }
 	.bday-corp__title { font-size: 34px; line-height: 1.25; font-weight: 700; margin: 0 0 20px; }
 	.bday-corp__lead { font-size: 16px; line-height: 1.7; opacity: 0.85; margin: 0 0 16px; }
@@ -45,7 +50,7 @@ get_header();
 <div class="bday-corp">
 	<section class="bday-corp__hero">
 		<div class="bday-corp__hero-inner">
-			<div>
+			<div class="bday-corp__text">
 				<p class="bday-corp__eyebrow">BusinessDay Corporate Subscriptions</p>
 				<h1 class="bday-corp__title">Give your organisation the credible, current and complete business intelligence it needs to see clearly and move first.</h1>
 				<p class="bday-corp__lead">Every day, the decisions you take as a leader determine where your company goes next. BusinessDay supports those decisions by bringing award-winning journalism, market data and expert analysis together on one platform — relevant to your world, shaped around your needs, and built to power growth across every level of your business.</p>
