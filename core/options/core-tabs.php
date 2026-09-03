@@ -106,6 +106,13 @@ add_filter(
 			),
 		);
 
+		$schema['access-control'] = array(
+			'tab_label' => 'Access Control',
+			'option'    => Bday_Settings_Visibility::OPTION,
+			'render'    => 'bday_render_access_control_tab',
+			'intro'     => 'Choose which roles, besides Administrator, can see and use each settings tab below. This tab itself always stays Administrator-only, so no role can grant itself broader access.',
+		);
+
 		return $schema;
 	}
 );
@@ -117,6 +124,44 @@ function bday_homepage_variant_options(): array {
 		$options[ $slug ] = 'Force: ' . $meta['label'];
 	}
 	return $options;
+}
+
+/** @param array<string, string[]> $values slug => role slugs currently granted */
+function bday_render_access_control_tab( array $values ): void {
+	$roles = wp_roles()->get_names();
+	unset( $roles['administrator'] );
+
+	$slugs = array_diff( array_keys( Bday_Options_Framework::schema() ), array( Bday_Settings_Visibility::ADMIN_ONLY_SLUG ) );
+	$rows  = array();
+	foreach ( $slugs as $slug ) {
+		$tab          = Bday_Options_Framework::schema()[ $slug ];
+		$rows[ $slug ] = $tab['tab_label'] ?? $slug;
+	}
+	$rows['aero-paywall'] = 'AeroPaywall';
+
+	echo '<p class="description">Administrator always has full access to every tab, regardless of what is selected below.</p>';
+	echo '<table class="widefat striped"><thead><tr><th>Settings tab</th>';
+	foreach ( $roles as $role_slug => $role_name ) {
+		echo '<th>' . esc_html( translate_user_role( $role_name ) ) . '</th>';
+	}
+	echo '</tr></thead><tbody>';
+
+	foreach ( $rows as $slug => $label ) {
+		$granted = $values[ $slug ] ?? array();
+		echo '<tr><td>' . esc_html( $label ) . '</td>';
+		foreach ( $roles as $role_slug => $role_name ) {
+			printf(
+				'<td><input type="checkbox" name="%1$s[%2$s][]" value="%3$s" %4$s /></td>',
+				esc_attr( Bday_Settings_Visibility::OPTION ),
+				esc_attr( $slug ),
+				esc_attr( $role_slug ),
+				checked( in_array( $role_slug, $granted, true ), true, false )
+			);
+		}
+		echo '</tr>';
+	}
+
+	echo '</tbody></table>';
 }
 
 function bday_render_general_tab(): void {

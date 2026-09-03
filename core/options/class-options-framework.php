@@ -66,14 +66,31 @@ final class Bday_Options_Framework {
 	 */
 	public static function register_menu(): void {
 		$schema = self::schema();
-		$slugs  = array_keys( $schema );
+
+		if ( empty( $schema ) ) {
+			add_menu_page(
+				'BusinessDay Theme',
+				'BusinessDay Theme',
+				'manage_options',
+				self::PAGE_SLUG,
+				array( self::class, 'render_empty' ),
+				'dashicons-admin-customizer',
+				61
+			);
+			return;
+		}
+
+		$slugs = self::visible_slugs( $schema );
+		if ( empty( $slugs ) ) {
+			return;
+		}
 
 		add_menu_page(
 			'BusinessDay Theme',
 			'BusinessDay Theme',
-			'manage_options',
+			Bday_Settings_Visibility::capability_for( $slugs[0] ),
 			self::PAGE_SLUG,
-			empty( $slugs ) ? array( self::class, 'render_empty' ) : null,
+			null,
 			'dashicons-admin-customizer',
 			61
 		);
@@ -87,13 +104,28 @@ final class Bday_Options_Framework {
 				self::PAGE_SLUG,
 				$label,
 				$label,
-				'manage_options',
+				Bday_Settings_Visibility::capability_for( $slug ),
 				$page_slug,
 				static function () use ( $slug ): void {
 					self::render_tab( $slug );
 				}
 			);
 		}
+	}
+
+	/**
+	 * @param array<string, array<string, mixed>> $schema
+	 * @return string[] schema slugs the current user can view, in schema order
+	 */
+	private static function visible_slugs( array $schema ): array {
+		return array_values(
+			array_filter(
+				array_keys( $schema ),
+				static function ( string $slug ): bool {
+					return current_user_can( Bday_Settings_Visibility::capability_for( $slug ) );
+				}
+			)
+		);
 	}
 
 	public static function register_settings(): void {
@@ -106,12 +138,22 @@ final class Bday_Options_Framework {
 				$tab['option'],
 				array(
 					'sanitize_callback' => static function ( $input ) use ( $tab ) {
+						if ( Bday_Settings_Visibility::OPTION === $tab['option'] ) {
+							return Bday_Settings_Visibility::sanitize( $input );
+						}
 						if ( ! empty( $tab['fields'] ) ) {
 							return bday_sanitize_fields( $tab['fields'], $input );
 						}
 						return is_array( $input ) ? $input : array();
 					},
 				)
+			);
+
+			add_filter(
+				"option_page_capability_{$tab['option']}",
+				static function () use ( $slug ): string {
+					return Bday_Settings_Visibility::capability_for( $slug );
+				}
 			);
 		}
 	}
@@ -128,7 +170,7 @@ final class Bday_Options_Framework {
 	private static function build_tabs( string $current_slug ): array {
 		$schema = self::schema();
 		$tabs   = array();
-		foreach ( array_keys( $schema ) as $index => $slug ) {
+		foreach ( self::visible_slugs( $schema ) as $index => $slug ) {
 			$page_slug = 0 === $index ? self::PAGE_SLUG : self::PAGE_SLUG . '-' . $slug;
 			$tabs[]    = array(
 				'label'  => $schema[ $slug ]['tab_label'] ?? $slug,
@@ -141,7 +183,7 @@ final class Bday_Options_Framework {
 
 	/** Renders one schema entry's own submenu page. */
 	public static function render_tab( string $slug ): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Bday_Settings_Visibility::capability_for( $slug ) ) ) {
 			return;
 		}
 

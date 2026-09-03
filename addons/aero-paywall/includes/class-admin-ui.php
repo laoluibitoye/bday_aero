@@ -128,10 +128,14 @@ final class Bday_Aero_Admin_Ui {
 	}
 
 	public function register_menu(): void {
+		if ( ! current_user_can( Bday_Settings_Visibility::capability_for( self::PAGE_SLUG ) ) ) {
+			return;
+		}
+
 		add_menu_page(
 			'AeroPaywall',
 			'AeroPaywall',
-			'manage_options',
+			Bday_Settings_Visibility::capability_for( self::PAGE_SLUG ),
 			self::PAGE_SLUG,
 			array( $this, 'render' ),
 			self::menu_icon_data_uri(),
@@ -276,7 +280,7 @@ final class Bday_Aero_Admin_Ui {
 
 	public function handle_test_connection(): void {
 		check_ajax_referer( 'aero_paywall_test_connection', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Bday_Settings_Visibility::capability_for( self::PAGE_SLUG ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'bday-aero' ) ), 403 );
 			return;
 		}
@@ -304,7 +308,7 @@ final class Bday_Aero_Admin_Ui {
 
 	public function handle_save_settings(): void {
 		check_ajax_referer( 'aero_paywall_save_settings', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Bday_Settings_Visibility::capability_for( self::PAGE_SLUG ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'bday-aero' ) ), 403 );
 			return;
 		}
