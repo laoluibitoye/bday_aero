@@ -71,6 +71,7 @@ add_filter(
 
 		$schema['sidebar-promo'] = array(
 			'tab_label' => 'Sidebar Promo',
+				'group'     => 'editorial',
 			'option'    => 'bday_addon_sidebar_promo',
 			'intro'     => 'Two dedicated advertising/promotional slots in the sidebar that runs alongside every article — no HTML or ad-tag knowledge required, just an image, an optional link, and an optional small sponsor label above it. This is separate from the GAM/direct-sold ad zones (Ads & Sharing Matrix) elsewhere on the page; use this specifically for something an editor manages directly rather than through the ad server.',
 			'about'     => '<p>Renders in the article sidebar, below any active widget-area content and above the regular ad zone. Each of the two slots is fully independent — enable one, both, or neither.</p>',

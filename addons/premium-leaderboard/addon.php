@@ -44,6 +44,7 @@ add_filter(
 	static function ( array $schema ): array {
 		$schema['premium-leaderboard'] = array(
 			'tab_label' => 'Premium Leaderboard',
+				'group'     => 'editorial',
 			'option'    => 'bday_addon_premium_leaderboard',
 			'render'    => 'bday_premium_leaderboard_settings_tab',
 			'intro'     => 'A rotating promotional/sponsor banner on the homepage — despite the name, not limited to subscription offers specifically (it\'s a generic image+link slot; a subscribe-promo image is one common use, a paid sponsor placement is another). Shown to every visitor regardless of subscription status, since it isn\'t always subscribe-related content.',

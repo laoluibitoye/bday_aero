@@ -58,6 +58,7 @@ add_filter(
 	static function ( array $schema ): array {
 		$schema['sections'] = array(
 			'tab_label' => 'Sections',
+				'group'     => 'editorial',
 			'option'    => 'bday_sections',
 			'render'    => 'bday_render_sections_tab',
 			'intro'     => 'Sections are the labeled links/headings used across the site — e.g. the homepage rail\'s "In Other News" or "Columnists" headings — each one a short internal key mapped to a real WordPress category, so the wording an editor sees and the URL a reader lands on can both be changed here without editing a template file.',

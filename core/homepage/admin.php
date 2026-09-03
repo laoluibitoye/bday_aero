@@ -172,6 +172,7 @@ add_filter(
 	static function ( array $schema ): array {
 		$schema['homepage_sections'] = array(
 			'tab_label' => 'Homepage Sections',
+				'group'     => 'editorial',
 			'option'    => 'bday_homepage_sections',
 			'render'    => 'bday_render_homepage_sections_tab',
 			'intro'     => 'Every section available to the "Redesign 2026" homepage layout, in the order it renders. Toggle a section off to skip it entirely (no query runs, nothing renders) — this does not affect the classic Default/Weekend homepage layouts, which are unrelated template files.',

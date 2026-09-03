@@ -188,6 +188,7 @@ add_filter(
 
 		$schema['vendors'] = array(
 			'tab_label' => 'Integrations',
+				'group'     => 'technical', // third-party API keys/tracking IDs
 			'option'    => 'bday_addon_vendors_flat',
 			'render'    => 'bday_render_vendors_tab',
 			'intro'     => 'Every third-party script this site loads — analytics, ad serving, content recommendations, on-site widgets — in one place, each independently on/off with its own account credentials. Each collapsible section below is a separate vendor; a vendor left disabled never loads its script at all, so it can\'t affect page speed or fire any tracking for that vendor.',

@@ -36,6 +36,7 @@ add_filter(
 	static function ( array $schema ): array {
 		$schema['news-carousel'] = array(
 			'tab_label' => 'News Carousel',
+				'group'     => 'editorial',
 			'option'    => 'bday_addon_news_carousel',
 			'render'    => 'bday_news_carousel_settings_tab',
 			'intro'     => 'On the Redesign 2026 homepage, these columns are what feed the "Your News" section\'s desk cards — each column is a small headline list pulled live from a category or tag you choose here, not manually curated content, and its title here becomes that desk\'s display name. On the classic homepage variants, the same columns still render as this addon\'s own scrolling carousel widget near the top of the page. Add, remove, or retitle columns any time; the five most recent posts in each column\'s source update automatically.',

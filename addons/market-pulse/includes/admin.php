@@ -242,6 +242,7 @@ add_filter(
 	static function ( array $schema ): array {
 		$schema['market-pulse'] = array(
 			'tab_label' => 'Market Pulse',
+				'group'     => 'editorial',
 			'option'    => 'bday_market_pulse',
 			'render'    => 'bday_render_market_pulse_tab',
 			'intro'     => "The homepage's auto-scrolling market ticker. Add, remove, and reorder figures freely — there's no fixed list.",

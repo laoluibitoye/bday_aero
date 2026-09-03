@@ -145,6 +145,7 @@ add_filter(
 	static function ( array $schema ): array {
 		$schema['translate'] = array(
 			'tab_label' => 'Translate',
+				'group'     => 'technical',
 			'option'    => 'bday_addon_translate',
 			'intro'     => 'A free machine-translation option for readers whose first language isn\'t English, powered by Google\'s own translation engine — no API key, no cost, and no translation infrastructure for this site to maintain. Translation quality is Google\'s, not editorially reviewed; this is a convenience for readers, not a substitute for a real multilingual edition.',
 			'about'     => '<p>Adds a language picker to the dark utility bar at the top of the header. The dropdown is styled to match the rest of the site (not Google\'s default widget chrome); picking a language reloads the current page translated.</p>',

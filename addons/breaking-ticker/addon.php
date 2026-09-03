@@ -72,6 +72,7 @@ add_filter(
 	static function ( array $schema ): array {
 		$schema['breaking-ticker'] = array(
 			'tab_label' => 'Breaking Ticker',
+				'group'     => 'editorial',
 			'option'    => 'bday_addon_breaking_ticker',
 			'intro'     => 'The scrolling "Top News" strip below the main navigation. It always shows the site\'s most recent posts automatically — there\'s no content to curate here, only how many headlines are pulled in and whether the strip shows at all.',
 			'about'     => '<p>Pulls the N most recent published posts site-wide (no category filter) and scrolls them right to left in a continuous loop. Pauses automatically when a reader hovers or focuses it, and disables the animation entirely for readers with "reduce motion" set in their OS.</p>',

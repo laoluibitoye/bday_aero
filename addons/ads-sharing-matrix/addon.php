@@ -26,6 +26,7 @@ add_filter(
 	static function ( array $schema ): array {
 		$schema['ads-sharing-matrix'] = array(
 			'tab_label' => 'Ads & Sharing Matrix',
+				'group'     => 'technical', // ad-ops placement rules, not day-to-day content
 			'option'    => 'bday_ads_matrix',
 			'render'    => 'bday_render_ads_matrix_tab',
 			'intro'     => 'Controls where ad units are allowed to render across the site\'s different page types (homepage, article, category archive, etc.) — the "matrix" of page type × zone. This decides placement rules, not the ad creative or targeting itself, which lives with the ad network configured under Integrations.',

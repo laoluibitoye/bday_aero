@@ -8,6 +8,7 @@ add_filter(
 	static function ( array $schema ): array {
 		$schema['newsletter'] = array(
 			'tab_label' => 'Newsletter',
+				'group'     => 'editorial', // category-to-list mapping is the day-to-day interaction; the one-time remote credential setup is the exception, not the common case
 			'option'    => 'bday_addon_newsletter',
 			'render'    => 'bday_newsletter_settings_tab',
 			'intro'     => 'Connects the site\'s newsletter signup forms to a remote FluentCRM install — a separate WordPress site running the FluentCRM plugin, not something hosted here. Once connected, readers who sign up for a specific category\'s updates are subscribed to that category\'s mapped list automatically.',

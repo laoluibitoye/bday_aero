@@ -1,6 +1,6 @@
 <?php
 /**
- * Unified theme options screen: its own top-level "BusinessDay Theme"
+ * Unified theme options screen: its own top-level "BDay Aero Options"
  * wp-admin menu, one real submenu page per section — core sections
  * (General, Homepage Variants, Ads & Sharing Matrix, Custom Code,
  * Integrations) and every add-on's own section — all contributed through
@@ -33,6 +33,40 @@ final class Bday_Options_Framework {
 		add_action( 'admin_menu', array( self::class, 'register_menu' ) );
 		add_action( 'admin_init', array( self::class, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( self::class, 'enqueue_media' ) );
+		add_action( 'admin_head', array( self::class, 'print_menu_group_css' ) );
+	}
+
+	/**
+	 * Styles the group-label rows add_group_divider() splices into the
+	 * sidebar submenu — a small uppercase heading with a hairline above it,
+	 * rather than looking like just another clickable tab. Printed
+	 * unconditionally on every wp-admin screen (a few bytes of inline CSS
+	 * that only ever matches an element on this menu) rather than gated to
+	 * this screen only, so the rule doesn't need to duplicate
+	 * enqueue_media()'s page-slug check for something this cheap.
+	 */
+	public static function print_menu_group_css(): void {
+		?>
+		<style>
+			#adminmenu .bday-menu-group-label {
+				display: block;
+				margin-top: 6px;
+				padding-top: 8px;
+				border-top: 1px solid rgba(240, 246, 252, .15);
+				font-size: 11px;
+				font-weight: 600;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				color: #b4b9be;
+				cursor: default;
+			}
+			#adminmenu .wp-submenu li:first-child .bday-menu-group-label {
+				margin-top: 0;
+				padding-top: 0;
+				border-top: none;
+			}
+		</style>
+		<?php
 	}
 
 	/**
@@ -64,13 +98,19 @@ final class Bday_Options_Framework {
 	 * "clicking the top-level item itself opens the first section" without
 	 * WordPress also generating a redundant duplicate submenu row for it.
 	 */
+	/** @var array<string, string> group key => sidebar/section heading */
+	private const GROUP_LABELS = array(
+		'editorial' => 'Editorial & Content',
+		'technical' => 'Technical & Infrastructure',
+	);
+
 	public static function register_menu(): void {
 		$schema = self::schema();
 
 		if ( empty( $schema ) ) {
 			add_menu_page(
-				'BusinessDay Theme',
-				'BusinessDay Theme',
+				'BDay Aero Options',
+				'BDay Aero Options',
 				'manage_options',
 				self::PAGE_SLUG,
 				array( self::class, 'render_empty' ),
@@ -86,8 +126,8 @@ final class Bday_Options_Framework {
 		}
 
 		add_menu_page(
-			'BusinessDay Theme',
-			'BusinessDay Theme',
+			'BDay Aero Options',
+			'BDay Aero Options',
 			Bday_Settings_Visibility::capability_for( $slugs[0] ),
 			self::PAGE_SLUG,
 			null,
@@ -95,10 +135,23 @@ final class Bday_Options_Framework {
 			61
 		);
 
+		// $slugs is already Editorial-then-Technical (visible_slugs() sorts
+		// by group) — a group-label divider is spliced into the wp-admin
+		// sidebar right before each group's first item, so the same split
+		// asked for in Access Control is visible one level up too: an
+		// editor scanning the sidebar sees at a glance which tabs are
+		// theirs to touch day-to-day versus the technical/ops half below.
+		$last_group = null;
 		foreach ( $slugs as $index => $slug ) {
 			$tab        = $schema[ $slug ];
+			$group      = self::group_of( $tab );
 			$label      = $tab['tab_label'] ?? $slug;
 			$page_slug  = 0 === $index ? self::PAGE_SLUG : self::PAGE_SLUG . '-' . $slug;
+
+			if ( $group !== $last_group ) {
+				self::add_group_divider( $group );
+				$last_group = $group;
+			}
 
 			add_submenu_page(
 				self::PAGE_SLUG,
@@ -113,12 +166,45 @@ final class Bday_Options_Framework {
 		}
 	}
 
+	/** @param array<string, mixed> $tab */
+	private static function group_of( array $tab ): string {
+		return ( $tab['group'] ?? 'technical' ) === 'editorial' ? 'editorial' : 'technical';
+	}
+
+	/**
+	 * Injects a non-clickable section-header row directly into the wp-admin
+	 * submenu list — add_submenu_page() has no concept of a plain label, so
+	 * this manipulates the $submenu global the same way core itself
+	 * populates it (a long-standing, widely-used extensibility pattern,
+	 * not a documented API). Only ever called right before a real page in
+	 * that group is about to be added, so it can never appear as an
+	 * orphan heading with nothing underneath for a role that can't see
+	 * any tab in that group. Capability 'read' is safe here specifically
+	 * *because* that visibility decision already happened by the time
+	 * this is called — every role that reaches this line can already see
+	 * at least one page in the group, so gating the label itself on
+	 * anything stricter would only ever hide it for someone who's about
+	 * to see the exact same words as a real submenu label two lines down.
+	 */
+	private static function add_group_divider( string $group ): void {
+		global $submenu;
+		$label = self::GROUP_LABELS[ $group ] ?? ucfirst( $group );
+		$submenu[ self::PAGE_SLUG ][] = array(
+			'<span class="bday-menu-group-label">' . esc_html( $label ) . '</span>',
+			'read',
+			self::PAGE_SLUG,
+		);
+	}
+
 	/**
 	 * @param array<string, array<string, mixed>> $schema
-	 * @return string[] schema slugs the current user can view, in schema order
+	 * @return string[] schema slugs the current user can view, Editorial
+	 *                   group before Technical, each group's own relative
+	 *                   order otherwise unchanged (usort is stable as of
+	 *                   PHP 8, which this theme already requires).
 	 */
 	private static function visible_slugs( array $schema ): array {
-		return array_values(
+		$visible = array_values(
 			array_filter(
 				array_keys( $schema ),
 				static function ( string $slug ): bool {
@@ -126,6 +212,18 @@ final class Bday_Options_Framework {
 				}
 			)
 		);
+
+		usort(
+			$visible,
+			static function ( string $a, string $b ) use ( $schema ): int {
+				$rank = static function ( string $slug ) use ( $schema ): int {
+					return 'editorial' === self::group_of( $schema[ $slug ] ) ? 0 : 1;
+				};
+				return $rank( $a ) <=> $rank( $b );
+			}
+		);
+
+		return $visible;
 	}
 
 	public static function register_settings(): void {
@@ -163,7 +261,7 @@ final class Bday_Options_Framework {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		echo '<div class="wrap"><h1>BusinessDay Theme</h1><p>No settings sections registered.</p></div>';
+		echo '<div class="wrap"><h1>BDay Aero Options</h1><p>No settings sections registered.</p></div>';
 	}
 
 	/** @return array<int, array{label: string, url: string, active: bool}> */
@@ -193,7 +291,7 @@ final class Bday_Options_Framework {
 		}
 		$tab = $schema[ $slug ];
 
-		Bday_Admin_UI::open( 'BusinessDay Theme', $tab['tab_label'] ?? $slug, self::build_tabs( $slug ), $tab['intro'] ?? '' );
+		Bday_Admin_UI::open( 'BDay Aero Options', $tab['tab_label'] ?? $slug, self::build_tabs( $slug ), $tab['intro'] ?? '' );
 		?>
 			<form action="options.php" method="post">
 				<?php settings_fields( $tab['option'] ); ?>

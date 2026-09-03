@@ -105,6 +105,7 @@ add_filter(
 	static function ( array $schema ): array {
 		$schema['typography'] = array(
 			'tab_label' => 'Typography',
+				'group'     => 'technical', // site-wide font/CSS, not per-article content
 			'option'    => 'bday_addon_typography',
 			'intro'     => 'Overrides the theme\'s built-in type system with a different font pairing/scale, without editing any CSS. Leave a field blank to keep the theme\'s own default for it — these fields don\'t all need to be filled in together, and an empty option here changes nothing.',
 			'about'     => '<p>Fonts are loaded from Google Fonts by the exact family name typed below — the same name you\'d search for at fonts.google.com. A misspelled name silently falls back to the browser\'s default font rather than erroring, so double-check against the Google Fonts listing if a change doesn\'t seem to take.</p>',

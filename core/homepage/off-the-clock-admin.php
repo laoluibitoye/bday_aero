@@ -164,6 +164,7 @@ add_filter(
 	static function ( array $schema ): array {
 		$schema['off_the_clock'] = array(
 			'tab_label' => 'Off the Clock',
+				'group'     => 'editorial',
 			'option'    => BDAY_OFF_THE_CLOCK_OPTION,
 			'render'    => 'bday_render_off_the_clock_tab',
 			'intro'     => 'Which categories make up the homepage\'s "Off the Clock" lifestyle section, and in what order. Add or remove rows as new lifestyle categories come online.',

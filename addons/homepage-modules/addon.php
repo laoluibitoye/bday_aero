@@ -81,6 +81,7 @@ add_filter(
 	static function ( array $schema ): array {
 		$schema['homepage-modules'] = array(
 			'tab_label' => 'Homepage Modules',
+				'group'     => 'editorial',
 			'option'    => 'bday_addon_homepage_modules',
 			'intro'     => 'On/off switches for the row of content modules that run down the lower half of the homepage, plus two purely-promotional modules (Shorts, banner ads) that have no other content behind them to show or hide — those two only appear once actually configured below.',
 			'about'     => '<p>The first six modules are always-on content pulled automatically from existing posts (video, magazine sections, Today\'s Paper, cartoons/podcast, events, e-editions) — turning one off just removes that row, nothing else needs to change. The Shorts rail and the two banner slots are the only ones that need real configuration to do anything.</p>',

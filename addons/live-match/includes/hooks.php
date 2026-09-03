@@ -34,6 +34,7 @@ add_filter(
 	static function ( array $schema ): array {
 		$schema['live-match'] = array(
 			'tab_label' => 'Live Match',
+				'group'     => 'editorial',
 			'option'    => 'bday_addon_live_match',
 			'intro'     => 'A live sports score/commentary strip for an in-progress match — most relevant on a major football day. Scores refresh automatically on the interval set below rather than requiring a manual update.',
 			'about'     => '<p>Renders into the same header ticker zone the breaking-news ticker uses, so only one of the two typically shows at a time in practice, depending on which is enabled.</p>',
