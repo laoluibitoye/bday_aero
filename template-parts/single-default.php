@@ -94,6 +94,8 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 			<span id="aero-paywall-bookmark-mount" class="bday-byline__bookmark"></span>
 		</div>
 
+		<?php get_template_part( 'template-parts/components/google-badges' ); ?>
+
 		<?php
 		/**
 		 * Text-to-speech (script.js's bdayInitTextToSpeech()) — theme-owned,
@@ -222,6 +224,8 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 				<?php if ( is_active_sidebar( 'article_page_text_link' ) ) : ?>
 					<?php dynamic_sidebar( 'article_page_text_link' ); ?>
 				<?php endif; ?>
+
+				<?php get_template_part( 'template-parts/components/google-badges' ); ?>
 			</div>
 
 			<div id="aero-paywall-comments-mount" class="bday-comments" data-aero-comments-post-id="<?php echo esc_attr( (string) $post_id ); ?>"></div>
@@ -250,6 +254,7 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 		<?php if ( is_active_sidebar( 'page_sidebar' ) ) : ?>
 			<?php dynamic_sidebar( 'page_sidebar' ); ?>
 		<?php endif; ?>
+		<?php get_template_part( 'template-parts/sidebar-google-news' ); ?>
 		<?php
 		/**
 		 * Editor-uploaded promotional material/custom ads
