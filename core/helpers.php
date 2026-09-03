@@ -23,6 +23,23 @@ function bday_get_thumbnail( int $post_id, string $size, string $classes = '' ):
 }
 
 /**
+ * Reader-audited: several homepage sections skip their media slot
+ * entirely with `has_post_thumbnail()` — a deliberate choice for the
+ * ordinary case (no image at all reads better than a generic fallback
+ * logo there), but it meant a post with a Featured Video set and no
+ * regular WP featured image rendered nothing in those slots: no image,
+ * no video facade, no badge. Use this instead of has_post_thumbnail()
+ * wherever a slot feeds into bday_get_card_media() specifically, so the
+ * video facade gets the same "render this slot" chance a real thumbnail
+ * already had. Harmless when the Featured Video Cards add-on is off (or
+ * a post has neither) — bday_get_card_media() still just falls through
+ * to its own fallback image in that case, exactly as it always did.
+ */
+function bday_has_card_media( int $post_id ): bool {
+	return has_post_thumbnail( $post_id ) || (bool) get_post_meta( $post_id, '_featured_video_id', true );
+}
+
+/**
  * Card-media HTML: the thumbnail, or a video facade when the post has a
  * _featured_video_id and the featured-video-cards add-on is on. Routed
  * through a filter (rather than checking the meta here) so this stays

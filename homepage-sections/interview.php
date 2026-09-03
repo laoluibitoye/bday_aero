@@ -33,7 +33,7 @@ $more = array_slice( $posts, 1, 3 );
 			<div class="bday-rd-interview__col bday-rd-interview__more">
 				<?php foreach ( $more as $post ) : ?>
 					<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-rd-interview__more-item">
-						<?php if ( has_post_thumbnail( $post->ID ) ) : ?><?php echo bday_get_card_media( $post->ID, 'small' ); ?><?php endif; ?>
+						<?php if ( bday_has_card_media( $post->ID ) ) : ?><?php echo bday_get_card_media( $post->ID, 'small' ); ?><?php endif; ?>
 						<span>
 							<span class="bday-rd-interview__more-title"><?php echo esc_html( get_the_title( $post ) ); ?></span>
 							<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( wp_trim_words( get_the_excerpt( $post ), 12 ) ); ?></span>

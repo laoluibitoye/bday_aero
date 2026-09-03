@@ -24,7 +24,7 @@ if ( empty( $tiles ) ) {
 		<div class="bday-rd-desk-tiles__grid">
 			<?php foreach ( $tiles as $tile ) : $category = $tile['category']; $post = $tile['thumbnail_post']; ?>
 				<a href="<?php echo esc_url( get_category_link( $category ) ); ?>" class="bday-rd-desk-tile">
-					<?php if ( $post && has_post_thumbnail( $post->ID ) ) : ?><?php echo bday_get_card_media( $post->ID, 'medium_rectangle' ); ?><?php endif; ?>
+					<?php if ( $post && bday_has_card_media( $post->ID ) ) : ?><?php echo bday_get_card_media( $post->ID, 'medium_rectangle' ); ?><?php endif; ?>
 					<span class="bday-rd-desk-tile__name"><?php echo esc_html( $category->name ); ?></span>
 					<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( number_format_i18n( $category->count ) ); ?> stories</span>
 				</a>
