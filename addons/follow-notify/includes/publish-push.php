@@ -19,6 +19,34 @@ function bday_follow_notify_on_publish( string $new_status, string $old_status, 
 		return;
 	}
 
+	bday_follow_notify_sync_post( $post );
+}
+
+/**
+ * The actual POST to /connector/post-published — split out from the
+ * transition_post_status hook above so the WP-CLI backfill command
+ * (includes/backfill-published-posts.php) can push the exact same payload
+ * for a post that was already published long before this webhook existed,
+ * instead of re-deriving its own copy of this logic.
+ *
+ * Audit finding: this used to bail out entirely when a post had neither a
+ * category nor a tag ("nobody to notify"), which made sense while this
+ * endpoint's only job was follow fan-out. The admin console's Content
+ * Analytics now depends on the same published_posts row unconditionally
+ * (it's the only source of an article's title/url for that report), so a
+ * termless post skipping this call meant it permanently showed as a bare
+ * "Post #<id>" with no link. subscription-service's recordAndFanOut()
+ * already no-ops the fan-out half cleanly when termIds is empty (confirmed
+ * in published-posts.service.ts) — it always upserts the PublishedPost row
+ * first regardless — so removing the bail-out here is safe: a termless
+ * post now still gets its title/url synced, it simply has nobody to
+ * notify, which was already true before.
+ *
+ * @return bool True if the POST was attempted (a configured base_url/api_key
+ *              existed), false if this is a no-op because the connector
+ *              isn't configured at all.
+ */
+function bday_follow_notify_sync_post( WP_Post $post ): bool {
 	// Reads the same two options Bday_Aero_Settings::api_base_url()/
 	// api_key() wrap (aero_paywall_api_base_url/api_key — confirmed by
 	// reading that class directly) rather than calling the class itself.
@@ -33,7 +61,7 @@ function bday_follow_notify_on_publish( string $new_status, string $old_status, 
 	$base_url = (string) get_option( 'aero_paywall_api_base_url', '' );
 	$api_key  = (string) get_option( 'aero_paywall_api_key', '' );
 	if ( '' === $base_url || '' === $api_key ) {
-		return;
+		return false;
 	}
 
 	// Full term objects, not just ids — the admin console's category
@@ -43,9 +71,6 @@ function bday_follow_notify_on_publish( string $new_status, string $old_status, 
 	$categories     = wp_list_pluck( $category_terms, 'term_id' );
 	$category_names = wp_list_pluck( $category_terms, 'name' );
 	$tags           = wp_get_post_tags( $post->ID, array( 'fields' => 'ids' ) );
-	if ( empty( $categories ) && empty( $tags ) ) {
-		return;
-	}
 
 	$thumbnail_id = get_post_thumbnail_id( $post->ID );
 	$image_url    = $thumbnail_id ? wp_get_attachment_image_url( $thumbnail_id, 'medium_rectangle' ) : '';
@@ -73,4 +98,6 @@ function bday_follow_notify_on_publish( string $new_status, string $old_status, 
 			),
 		)
 	);
+
+	return true;
 }
