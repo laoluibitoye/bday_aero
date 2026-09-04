@@ -67,9 +67,16 @@ function bday_get_redesign_homepage_data(): array {
 		? bday_get_posts( array( 'post_type' => 'events', 'numberposts' => 4, 'cache_namespace' => 'homepage' ) )
 		: array();
 
-	// "top-video" category — same source template-parts/homepage/video-row.php
-	// already uses for the classic layout's BD TV carousel.
-	$data['rd_videos'] = bday_get_posts( array( 'category_name' => 'top-video', 'numberposts' => 5, 'cache_namespace' => 'homepage' ) );
+	// Editor-requested: "Videos to Watch" (Watch & Listen section) now pulls
+	// from the standalone Videos content type (bday_video CPT) instead of the
+	// "top-video" category on regular posts — a dedicated video shows up here
+	// the moment it's published, with no separate tagging step. The classic
+	// layout's own "BD TV row" (template-parts/homepage/video-row.php) is a
+	// different homepage element and was deliberately left on "top-video" —
+	// not part of this change.
+	$data['rd_videos'] = post_type_exists( 'bday_video' )
+		? bday_get_posts( array( 'post_type' => 'bday_video', 'numberposts' => 5, 'cache_namespace' => 'homepage' ) )
+		: array();
 	$data['rd_latest'] = bday_get_posts( array( 'tag' => 'bdrecent', 'numberposts' => 8, 'cache_namespace' => 'homepage' ) );
 
 	// Off the Clock's columns are now an admin-editable list (Appearance -> BusinessDay Theme ->

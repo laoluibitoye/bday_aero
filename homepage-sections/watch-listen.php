@@ -2,7 +2,7 @@
 /**
  * Section Name: Watch & Listen
  * Section Slug: watch-listen
- * Description: Two media-card rows — "Videos to Watch" (the "top-video" category, landscape thumbnails) and "Podcasts" (podcast episodes), reader-requested to read as an actual media section rather than a feature-plus-list layout. The video row is gated by Homepage Modules' "BD TV row" toggle, the show row by its "Toon of the Day + Podcast" toggle — same two toggles the classic homepage's separate rows already use.
+ * Description: Two media-card rows — "Videos to Watch" (the standalone Videos content type, landscape thumbnails) and "Podcasts" (podcast episodes), reader-requested to read as an actual media section rather than a feature-plus-list layout. The video row is gated by Homepage Modules' "BD TV row" toggle, the show row by its "Toon of the Day + Podcast" toggle — same two toggles the classic homepage's separate rows already use.
  * Default Enabled: yes
  */
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,13 +27,24 @@ if ( empty( $videos ) && empty( $episodes ) ) {
 		<?php if ( ! empty( $videos ) ) : ?>
 			<div class="bday-rd-watch-listen__subhead">
 				<h3>Videos to Watch</h3>
-				<a href="<?php echo esc_url( bday_category_url( 'top-video' ) ); ?>" class="bday-rd-kicker bday-rd-kicker--accent">All videos →</a>
+				<?php if ( post_type_exists( 'bday_video' ) ) : ?>
+					<a href="<?php echo esc_url( (string) get_post_type_archive_link( 'bday_video' ) ); ?>" class="bday-rd-kicker bday-rd-kicker--accent">All videos →</a>
+				<?php endif; ?>
 			</div>
 			<div class="bday-rd-watch-listen__video-grid">
-				<?php foreach ( $videos as $post ) : $cats = get_the_category( $post->ID ); ?>
+				<?php
+				foreach ( $videos as $post ) :
+					// bday_video's own taxonomy is Playlists, not the article
+					// category/tag system this CPT doesn't use — shown as the
+					// same small kicker a category name used to occupy here,
+					// omitted entirely for a video with no playlist assigned
+					// rather than forcing one.
+					$playlists = get_the_terms( $post->ID, 'video_playlist' );
+					$playlist  = ( is_array( $playlists ) && ! empty( $playlists ) ) ? $playlists[0] : null;
+					?>
 					<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="bday-rd-watch-listen__video-card">
 						<?php echo bday_get_card_media( $post->ID, 'medium_rectangle' ); ?>
-						<?php if ( ! empty( $cats ) ) : ?><span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( $cats[0]->name ); ?></span><?php endif; ?>
+						<?php if ( $playlist ) : ?><span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( $playlist->name ); ?></span><?php endif; ?>
 						<h4><?php echo esc_html( get_the_title( $post ) ); ?></h4>
 					</a>
 				<?php endforeach; ?>
