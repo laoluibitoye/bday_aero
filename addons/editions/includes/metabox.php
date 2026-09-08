@@ -100,7 +100,26 @@ function bday_edition_upload_pdf_if_present( int $post_id ): ?string {
 		return null;
 	}
 
-	$dir       = bday_edition_secure_dir();
+	$dir = bday_edition_secure_dir();
+	// Checked explicitly, ahead of move_uploaded_file(), so a
+	// misconfigured/unwritable folder reports specifically instead of
+	// a generic "could not save" that's indistinguishable from any other
+	// failure — the two real-world cases this actually catches: (a) a
+	// BDAY_EDITION_SECURE_DIR override pointed at a path that was never
+	// created (secure-storage.php deliberately skips auto-creating the
+	// override path — see bday_edition_secure_dir()'s docblock), and
+	// (b) the folder exists but the PHP-FPM process user doesn't have
+	// write access to it (e.g. it's owned by a different user/group than
+	// PHP actually runs as).
+	if ( ! is_dir( $dir ) ) {
+		bday_edition_queue_upload_notice( 'The secure PDF folder does not exist on the server: ' . $dir . '. The previous file, if any, was kept.' );
+		return null;
+	}
+	if ( ! is_writable( $dir ) ) {
+		bday_edition_queue_upload_notice( 'The secure PDF folder is not writable by the web server: ' . $dir . '. Check its ownership/permissions match the PHP-FPM process user. The previous file, if any, was kept.' );
+		return null;
+	}
+
 	$orig_name = sanitize_file_name( $_FILES['edition_pdf_file']['name'] );
 	$base      = pathinfo( $orig_name, PATHINFO_FILENAME );
 	$base      = '' !== $base ? $base : 'edition';
@@ -112,8 +131,17 @@ function bday_edition_upload_pdf_if_present( int $post_id ): ?string {
 	$filename = $post_id . '-' . $base . '-' . wp_generate_password( 8, false, false ) . '.pdf';
 	$dest     = $dir . '/' . $filename;
 
-	if ( ! move_uploaded_file( $tmp_name, $dest ) ) {
-		bday_edition_queue_upload_notice( 'Could not save the uploaded PDF to the secure folder. The previous file, if any, was kept.' );
+	// error_get_last() right after the failed call, not a generic
+	// message — move_uploaded_file() emits a real PHP warning
+	// (permission denied, disk full, open_basedir restriction, etc.)
+	// that was previously only visible in the PHP error log, if anyone
+	// thought to look there; now it's in the notice itself.
+	error_clear_last();
+	$moved = @move_uploaded_file( $tmp_name, $dest ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- error captured explicitly below instead
+	if ( ! $moved ) {
+		$last_error = error_get_last();
+		$detail     = $last_error ? $last_error['message'] : 'unknown error';
+		bday_edition_queue_upload_notice( 'Could not save the uploaded PDF to ' . $dest . ': ' . $detail . '. The previous file, if any, was kept.' );
 		return null;
 	}
 	chmod( $dest, 0640 );
