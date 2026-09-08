@@ -69,6 +69,20 @@ final class Bday_Aero_Content_Gate {
 		 */
 		$entitlement = Bday_Aero_Entitlement_Resolver::resolve_for_current_request();
 		if ( null !== $entitlement && ! empty( $entitlement['isSubscriber'] ) ) {
+			// Field-tested finding (2026-09-08): nothing in this render path
+			// ever sent a cache-control header, anywhere — a repo-wide search
+			// for nocache_headers()/Cache-Control/DONOTCACHEPAGE across the
+			// whole theme came back empty. This specific branch is the
+			// highest-risk one to leave uncovered: it's the one place the
+			// real, full article body gets inlined directly into
+			// server-rendered HTML (for a JS-disabled/ad-blocked reader), so
+			// a full-page cache or CDN sitting in front of production with no
+			// awareness of *this* would be free to store this subscriber's
+			// unlocked response and later serve it to a completely different,
+			// non-paying visitor. No such cache exists in this local dev
+			// stack to reproduce that against directly, but the fix costs
+			// nothing here regardless of whether one is ever added.
+			nocache_headers();
 			return $content;
 		}
 

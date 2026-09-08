@@ -74,8 +74,38 @@ final class Bday_Aero_Sdk_Loader {
 		return $scheme . '://' . $host . $port . '/.well-known/jwks.json';
 	}
 
-	/** Zero-outbound-call geography signal — reads the CF-IPCountry edge header directly, costs nothing. */
+	/**
+	 * Zero-outbound-call geography signal — reads the CF-IPCountry edge
+	 * header directly, costs nothing. Drives the SDK's NGN-vs-USD /
+	 * Paystack-vs-Stripe selection (sdk/src/my-account.ts's
+	 * resolveCurrencyAndGateway()) entirely client-side; the server never
+	 * trusts this value for the actual charge (checkout.service.ts derives
+	 * currency from the reader's own persisted billingCurrency instead).
+	 *
+	 * Field-tested (Gating System Field Test follow-up, 2026-09-08): this
+	 * add-on's sibling implementation (connector-plugin/includes/
+	 * class-sdk-loader.php) already had a `?aero_country=` override for
+	 * exactly this reason — this copy didn't, making the non-Nigeria/USD
+	 * branch untestable on a local stack with no real Cloudflare in front
+	 * of it. Same dev-mode gate as that sibling implementation: only
+	 * honored when AERO_PAYWALL_DEV_MODE is set in wp-config.php, so it
+	 * can't be used to spoof geography on a real site.
+	 *
+	 * Separately worth flagging (not something this override fixes): CF-
+	 * IPCountry being absent is treated identically to Nigeria by design
+	 * (returns null when no header is present, and the SDK's own fallback
+	 * for `null` is NGN/Paystack — see my-account.ts). That's the right
+	 * choice for "Cloudflare is in front of this site but a request
+	 * somehow skipped it" — but if this site's production origin isn't
+	 * actually behind Cloudflare at all, every reader worldwide gets NGN
+	 * pricing silently, with nothing here to signal that. Worth confirming
+	 * against the real DNS/hosting setup, not something verifiable from
+	 * code alone.
+	 */
 	private static function country_code(): ?string {
+		if ( Bday_Aero_License_Client::is_dev_mode_bypass_active() && isset( $_GET['aero_country'] ) ) {
+			return strtoupper( sanitize_text_field( wp_unslash( $_GET['aero_country'] ) ) );
+		}
 		$header = isset( $_SERVER['HTTP_CF_IPCOUNTRY'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_IPCOUNTRY'] ) ) : '';
 		return '' !== $header ? strtoupper( $header ) : null;
 	}

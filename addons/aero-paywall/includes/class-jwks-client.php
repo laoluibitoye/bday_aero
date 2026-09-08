@@ -88,25 +88,57 @@ final class Bday_Aero_Jwks_Client {
 		}
 	}
 
-	/** @return array<string, mixed>|null */
+	/**
+	 * Field-tested finding (Gating System Field Test, 2026-09-08): this
+	 * used to go through Bday_Query_Cache::remember(), which caches
+	 * whatever its producer callback returns as long as it's not literally
+	 * `false` — including `null`. A single failed fetch (one timeout, one
+	 * 5xx from the origin) got written through with the full 12-hour TTL,
+	 * so every JWT verification for up to 12 real hours read back that
+	 * cached `null` and failed, with no retry — turning one transient blip
+	 * into up to half a day of every reader (subscribers included) being
+	 * treated as unverifiable/anonymous. Manages its own cache here
+	 * instead, using the identical key/group Bday_Query_Cache::remember()
+	 * would have used (so the "unknown kid" retry's
+	 * Bday_Query_Cache::forget() call above still busts the right entry),
+	 * but only ever writes through a genuinely successful fetch.
+	 *
+	 * @return array<string, mixed>|null
+	 */
 	private static function fetch_jwks( string $api_base_url, string $cache_key ): ?array {
-		return Bday_Query_Cache::remember(
-			'aero_paywall',
-			$cache_key,
-			static function () use ( $api_base_url ) {
-				$origin = self::origin_of( $api_base_url );
-				if ( '' === $origin ) {
-					return null;
-				}
-				$response = wp_remote_get( $origin . '/.well-known/jwks.json', array( 'timeout' => 5 ) );
-				if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-					return null;
-				}
-				$body = json_decode( wp_remote_retrieve_body( $response ), true );
-				return is_array( $body ) ? $body : null;
-			},
-			self::CACHE_TTL
-		);
+		$group    = 'bday_aero_paywall';
+		$full_key = 'aero_paywall:' . $cache_key;
+
+		$cached = wp_cache_get( $full_key, $group );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+		if ( ! wp_using_ext_object_cache() ) {
+			$cached = get_transient( $full_key );
+			if ( is_array( $cached ) ) {
+				wp_cache_set( $full_key, $cached, $group, self::CACHE_TTL );
+				return $cached;
+			}
+		}
+
+		$origin = self::origin_of( $api_base_url );
+		if ( '' === $origin ) {
+			return null;
+		}
+		$response = wp_remote_get( $origin . '/.well-known/jwks.json', array( 'timeout' => 5 ) );
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			return null; // deliberately not cached — retried fresh on the very next call
+		}
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( ! is_array( $body ) ) {
+			return null;
+		}
+
+		wp_cache_set( $full_key, $body, $group, self::CACHE_TTL );
+		if ( ! wp_using_ext_object_cache() ) {
+			set_transient( $full_key, $body, self::CACHE_TTL );
+		}
+		return $body;
 	}
 
 	private static function origin_of( string $url ): string {

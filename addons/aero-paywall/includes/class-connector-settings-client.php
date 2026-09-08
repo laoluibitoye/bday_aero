@@ -102,9 +102,22 @@ final class Bday_Aero_Connector_Settings_Client {
 			return;
 		}
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			wp_send_json_error( array( 'message' => __( 'The Subscription Service rejected that setting.', 'bday-aero' ) ) );
+			$body  = json_decode( wp_remote_retrieve_body( $response ), true );
+			$error = $body['message'] ?? __( 'The Subscription Service rejected that setting.', 'bday-aero' );
+			wp_send_json_error( array( 'message' => is_string( $error ) ? $error : __( 'The Subscription Service rejected that setting.', 'bday-aero' ) ) );
 			return;
 		}
+
+		// Field-tested finding (2026-09-08): Bday_Aero_Paywall_Config_Client
+		// caches subscription-service's answer to this exact question for a
+		// full minute, independent of subscription-service's own ~60s cache
+		// — meaning an admin could change the gating mode here and see the
+		// old mode still in effect, on this same site, for up to two
+		// uncorrelated minutes. Busting it the moment a write actually
+		// succeeds removes the WP-side half of that gap entirely — the
+		// remaining ~60s is subscription-service's own cache, which this
+		// process has no reach into.
+		Bday_Query_Cache::forget( 'aero_paywall', 'paywall_config' );
 
 		wp_send_json_success( array( 'key' => $key, 'value' => $value ) );
 	}
