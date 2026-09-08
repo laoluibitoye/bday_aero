@@ -29,12 +29,41 @@ final class Bday_Aero_Jwks_Client {
 	 */
 	private const LEEWAY_SECONDS = 60;
 
-	/** @return array<string, mixed>|null decoded token claims, or null if invalid/unreachable */
-	public static function verify( string $token, string $api_base_url, string $cache_key ): ?array {
-		$jwks = self::fetch_jwks( $api_base_url, $cache_key );
+	/**
+	 * @param string      $token         The JWT to verify.
+	 * @param string      $api_base_url  DB-configurable base URL — still used to derive the
+	 *                                   JWKS origin when $trusted_host is null (reader-token
+	 *                                   verification always passes null here: subscription-service
+	 *                                   has no equivalent trust-anchor requirement, only licensing
+	 *                                   does — Platform Audit G2).
+	 * @param string      $cache_key     Cache-bucket key (kept separate per caller, e.g.
+	 *                                   'reader_jwks' vs 'license_jwks').
+	 * @param string|null $trusted_host  When set (license verification only), the JWKS is
+	 *                                   fetched from this host instead of $api_base_url's —
+	 *                                   closes July-audit bypass (c): a customer repointing the
+	 *                                   DB-editable "Licensing Platform base URL" setting at a
+	 *                                   self-hosted fake server no longer changes where the JWKS
+	 *                                   itself comes from.
+	 * @param string|null $pinned_kid    When set (license verification only), any fetched key
+	 *                                   whose `kid` doesn't match is discarded before signature
+	 *                                   verification — belt-and-suspenders alongside
+	 *                                   $trusted_host: even if a fake server's response were
+	 *                                   somehow reached, a self-generated key can't share the
+	 *                                   real production key's kid.
+	 * @return array<string, mixed>|null decoded token claims, or null if invalid/unreachable
+	 */
+	public static function verify(
+		string $token,
+		string $api_base_url,
+		string $cache_key,
+		?string $trusted_host = null,
+		?string $pinned_kid = null
+	): ?array {
+		$jwks = self::fetch_jwks( $api_base_url, $cache_key, $trusted_host );
 		if ( null === $jwks ) {
 			return null;
 		}
+		$jwks = self::apply_kid_pin( $jwks, $pinned_kid );
 
 		$result = self::decode_claims( $token, $jwks );
 		if ( null !== $result['claims'] ) {
@@ -61,11 +90,39 @@ final class Bday_Aero_Jwks_Client {
 		 * really is invalid.
 		 */
 		Bday_Query_Cache::forget( 'aero_paywall', $cache_key );
-		$jwks = self::fetch_jwks( $api_base_url, $cache_key );
+		$jwks = self::fetch_jwks( $api_base_url, $cache_key, $trusted_host );
 		if ( null === $jwks ) {
 			return null;
 		}
+		$jwks = self::apply_kid_pin( $jwks, $pinned_kid );
 		return self::decode_claims( $token, $jwks )['claims'];
+	}
+
+	/**
+	 * Trust-anchor key pinning (Platform Audit G2). No-op (returns $jwks
+	 * unchanged) whenever the caller passes no pin — the reader-token path
+	 * always does, so this function is a pure pass-through for that case.
+	 *
+	 * @param array<string, mixed> $jwks
+	 * @return array<string, mixed>
+	 */
+	private static function apply_kid_pin( array $jwks, ?string $pinned_kid ): array {
+		if ( null === $pinned_kid || '' === $pinned_kid ) {
+			return $jwks;
+		}
+		if ( ! isset( $jwks['keys'] ) || ! is_array( $jwks['keys'] ) ) {
+			return array( 'keys' => array() );
+		}
+		return array(
+			'keys' => array_values(
+				array_filter(
+					$jwks['keys'],
+					static function ( $key ) use ( $pinned_kid ): bool {
+						return is_array( $key ) && isset( $key['kid'] ) && hash_equals( $pinned_kid, (string) $key['kid'] );
+					}
+				)
+			),
+		);
 	}
 
 	/** @param array<string, mixed> $jwks @return array{claims: array<string, mixed>|null, unknown_kid: bool} */
@@ -105,7 +162,7 @@ final class Bday_Aero_Jwks_Client {
 	 *
 	 * @return array<string, mixed>|null
 	 */
-	private static function fetch_jwks( string $api_base_url, string $cache_key ): ?array {
+	private static function fetch_jwks( string $api_base_url, string $cache_key, ?string $trusted_host = null ): ?array {
 		$group    = 'bday_aero_paywall';
 		$full_key = 'aero_paywall:' . $cache_key;
 
@@ -121,7 +178,12 @@ final class Bday_Aero_Jwks_Client {
 			}
 		}
 
-		$origin = self::origin_of( $api_base_url );
+		// A configured trust anchor always wins over the DB-editable base
+		// URL — the entire point of Platform Audit G2's fix is that this
+		// choice must not be something wp_options write access can steer.
+		$origin = ( null !== $trusted_host && '' !== $trusted_host )
+			? 'https://' . $trusted_host
+			: self::origin_of( $api_base_url );
 		if ( '' === $origin ) {
 			return null;
 		}

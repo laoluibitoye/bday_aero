@@ -86,23 +86,23 @@ final class Bday_Aero_Mobile_Api {
 					Bday_Aero_Meter_Client::record_async( $device_id, $post_id );
 				}
 			}
-			return $this->response( $post, $is_premium, 'open', null, true, $preview, $content );
+			return $this->response( $post, $is_premium, 'open', null, null, true, $preview, $content );
 		}
 
 		$gift_token = $request->get_header( 'x-gift-token' );
 		if ( $gift_token ) {
 			$redeemed = $this->redeem_gift( (string) $gift_token, $post_id );
 			if ( $redeemed ) {
-				return $this->response( $post, $is_premium, 'open', null, true, $preview, $content );
+				return $this->response( $post, $is_premium, 'open', null, null, true, $preview, $content );
 			}
 		}
 
 		$entitlement = $this->resolve_entitlement( $request, $post_id );
 		if ( $entitlement['open'] ) {
-			return $this->response( $post, $is_premium, $entitlement['stage'], $entitlement['remaining'], $entitlement['isSubscriber'], $preview, $content );
+			return $this->response( $post, $is_premium, $entitlement['stage'], $entitlement['remaining'], $entitlement['remainingToRegister'], $entitlement['isSubscriber'], $preview, $content );
 		}
 
-		return $this->response( $post, $is_premium, $entitlement['stage'], $entitlement['remaining'], false, $preview, null );
+		return $this->response( $post, $is_premium, $entitlement['stage'], $entitlement['remaining'], $entitlement['remainingToRegister'], false, $preview, null );
 	}
 
 	/**
@@ -182,7 +182,7 @@ final class Bday_Aero_Mobile_Api {
 		return '';
 	}
 
-	/** @return array{open: bool, stage: string, remaining: int|null, isSubscriber: bool} */
+	/** @return array{open: bool, stage: string, remaining: int|null, remainingToRegister: int|null, isSubscriber: bool} */
 	private function resolve_entitlement( WP_REST_Request $request, int $post_id ): array {
 		$is_authenticated_reader = false;
 
@@ -212,7 +212,7 @@ final class Bday_Aero_Mobile_Api {
 			 * inventing a new signal.
 			 */
 			if ( $entitlement['isSubscriber'] ) {
-				return array( 'open' => true, 'stage' => 'open', 'remaining' => null, 'isSubscriber' => true );
+				return array( 'open' => true, 'stage' => 'open', 'remaining' => null, 'remainingToRegister' => null, 'isSubscriber' => true );
 			}
 			// Signed in but not subscribed: same free-article meter an
 			// anonymous reader gets, not an automatic pass — falls
@@ -224,13 +224,13 @@ final class Bday_Aero_Mobile_Api {
 
 		$device_id = self::resolve_device_id( $request );
 		if ( '' === $device_id ) {
-			return array( 'open' => false, 'stage' => 'paid_lock', 'remaining' => 0, 'isSubscriber' => false );
+			return array( 'open' => false, 'stage' => 'paid_lock', 'remaining' => 0, 'remainingToRegister' => 0, 'isSubscriber' => false );
 		}
 
 		$meter = Bday_Aero_Meter_Client::check( $device_id, $post_id );
 		if ( null === $meter ) {
 			// Unreachable subscription-service: fail closed, unlike the cosmetic clients.
-			return array( 'open' => false, 'stage' => 'paid_lock', 'remaining' => 0, 'isSubscriber' => false );
+			return array( 'open' => false, 'stage' => 'paid_lock', 'remaining' => 0, 'remainingToRegister' => 0, 'isSubscriber' => false );
 		}
 
 		$stage = $meter['stage'];
@@ -275,7 +275,13 @@ final class Bday_Aero_Mobile_Api {
 		}
 
 		$open = ! in_array( $stage, array( 'paid_lock', 'register_prompt', 'profile_prompt' ), true );
-		return array( 'open' => $open, 'stage' => $stage, 'remaining' => $meter['remaining'], 'isSubscriber' => false );
+		return array(
+			'open'                => $open,
+			'stage'               => $stage,
+			'remaining'           => $meter['remaining'],
+			'remainingToRegister' => $meter['remainingToRegister'] ?? null,
+			'isSubscriber'        => false,
+		);
 	}
 
 	private function redeem_gift( string $token, int $post_id ): bool {
@@ -299,18 +305,19 @@ final class Bday_Aero_Mobile_Api {
 		return is_array( $data ) && ! empty( $data['valid'] ) && (string) ( $data['postId'] ?? '' ) === (string) $post_id;
 	}
 
-	private function response( WP_Post $post, bool $is_premium, string $stage, ?int $remaining, bool $is_subscriber, string $preview, ?string $content ): WP_REST_Response {
+	private function response( WP_Post $post, bool $is_premium, string $stage, ?int $remaining, ?int $remaining_to_register, bool $is_subscriber, string $preview, ?string $content ): WP_REST_Response {
 		$response = new WP_REST_Response(
 			array(
-				'id'           => $post->ID,
-				'title'        => get_the_title( $post ),
-				'excerpt'      => get_the_excerpt( $post ),
-				'isPremium'    => $is_premium,
-				'stage'        => $stage,
-				'remaining'    => $remaining,
-				'isSubscriber' => $is_subscriber,
-				'preview'      => $preview,
-				'content'      => $content,
+				'id'                  => $post->ID,
+				'title'               => get_the_title( $post ),
+				'excerpt'             => get_the_excerpt( $post ),
+				'isPremium'           => $is_premium,
+				'stage'               => $stage,
+				'remaining'           => $remaining,
+				'remainingToRegister' => $remaining_to_register,
+				'isSubscriber'        => $is_subscriber,
+				'preview'             => $preview,
+				'content'             => $content,
 			),
 			200
 		);
