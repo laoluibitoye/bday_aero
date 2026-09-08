@@ -1,9 +1,19 @@
 <?php
 /**
- * Editorial post meta: the Video (YouTube ID), PDF, and PRO-URL meta boxes
- * on standard posts, plus the author display-picture profile field and the
- * Telegram publish notifier. These follow posts everywhere posts exist, so
- * they're core editorial support rather than a toggleable add-on.
+ * Editorial post meta: the Video (YouTube ID) meta box on standard posts,
+ * plus the author display-picture profile field and the Telegram publish
+ * notifier. These follow posts everywhere posts exist, so they're core
+ * editorial support rather than a toggleable add-on.
+ *
+ * Editor-requested removal (2026-09-08): the PRO Landing URL and PDF Meta
+ * boxes this file used to also register. PRO Landing URL's _pro_url meta
+ * had no reader-facing consumer anywhere in the theme — nothing ever read
+ * it back. PDF Meta's _bday_pdf_link/_bday_pdf_preview_link are the
+ * legacy e-edition-by-category fields, superseded by the real bday_edition
+ * CPT (addons/editions/) — existing values keep working (the legacy
+ * migration wizard and legacy-redirect.php both still read them), this
+ * only removes the ability to keep setting new ones from a regular post's
+ * editor screen.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -14,8 +24,6 @@ add_action(
 	'add_meta_boxes',
 	static function (): void {
 		add_meta_box( 'post-meta-video', 'Video Meta', 'bday_video_metabox', 'post' );
-		add_meta_box( 'pro-url-meta', 'PRO Landing URL', 'bday_pro_url_metabox', 'post' );
-		add_meta_box( 'post-meta-pdf', 'PDF Meta', 'bday_pdf_metabox', 'post' );
 	}
 );
 
@@ -28,26 +36,6 @@ function bday_video_metabox( WP_Post $post ): void {
 	printf(
 		'<p><label for="bday-featured-video-id">Featured video ID (card thumbnail, requires the Featured Video Cards add-on):</label> <input type="text" id="bday-featured-video-id" name="featured_video_id" value="%s" size="25" placeholder="YouTube video ID" /><br><span class="description">Independent of the field above — set this to show a playable video facade wherever this post appears as a card (homepage rails, related, archive grids), whether or not the post itself is a Video-format post.</span></p>',
 		esc_attr( get_post_meta( $post->ID, '_featured_video_id', true ) )
-	);
-}
-
-function bday_pro_url_metabox( WP_Post $post ): void {
-	wp_nonce_field( 'bday_editorial_meta', 'bday_editorial_meta_nonce' );
-	printf(
-		'<label for="bday-pro-url">PRO URL:</label> <input type="text" id="bday-pro-url" name="pro_url" value="%s" size="80" placeholder="Pro website landing URL" />',
-		esc_attr( get_post_meta( $post->ID, '_pro_url', true ) )
-	);
-}
-
-function bday_pdf_metabox( WP_Post $post ): void {
-	wp_nonce_field( 'bday_editorial_meta', 'bday_editorial_meta_nonce' );
-	printf(
-		'<p><label for="bday-pdf-link">PDF download URL:</label> <input type="text" id="bday-pdf-link" name="bday_pdf_link" value="%s" size="60" /></p>',
-		esc_attr( get_post_meta( $post->ID, '_bday_pdf_link', true ) )
-	);
-	printf(
-		'<p><label for="bday-pdf-preview">PDF preview URL:</label> <input type="text" id="bday-pdf-preview" name="bday_pdf_preview_link" value="%s" size="60" /></p>',
-		esc_attr( get_post_meta( $post->ID, '_bday_pdf_preview_link', true ) )
 	);
 }
 
@@ -64,11 +52,8 @@ add_action(
 			return;
 		}
 		$map = array(
-			'youtube_id'         => '_youtube_id',
-			'featured_video_id'  => '_featured_video_id',
-			'pro_url'            => '_pro_url',
-			'bday_pdf_link'      => '_bday_pdf_link',
-			'bday_pdf_preview_link' => '_bday_pdf_preview_link',
+			'youtube_id'        => '_youtube_id',
+			'featured_video_id' => '_featured_video_id',
 		);
 		foreach ( $map as $field => $meta_key ) {
 			if ( isset( $_POST[ $field ] ) ) {

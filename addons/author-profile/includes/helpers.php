@@ -6,31 +6,46 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * All bylined authors for a post: the native WordPress author first
  * (post_author — never dropped, so every existing post keeps working
- * unchanged), then any additionally-credited co-authors from the
- * metabox below, de-duplicated. Returns WP_User objects, not IDs, since
- * every call site immediately wants a name/avatar/link.
+ * unchanged), then any additionally-credited co-authors
+ * (bday_get_post_co_authors(), metabox.php), de-duplicated by WP user id
+ * (a guest entry has no id to de-dupe against, so two differently-typed
+ * guest entries with the same name would both render — an edge case not
+ * worth guarding against a genuinely intentional duplicate credit).
  *
- * @return WP_User[]
+ * Editor-requested rework (2026-09-08): a co-author no longer has to be a
+ * real WP_User (most bylined writers aren't staff with an account here),
+ * so this returns the same normalized shape metabox.php's
+ * bday_co_author_normalize() does — {type, id, name, url} — rather than
+ * WP_User objects. The primary post_author is always type 'user'.
+ *
+ * @return array{type:string,id:?int,name:string,url:string}[]
  */
 function bday_get_post_authors( int $post_id ): array {
-	$ids = array( (int) get_post_field( 'post_author', $post_id ) );
+	$primary_id = (int) get_post_field( 'post_author', $post_id );
+	$authors    = array();
+	$seen_ids   = array();
 
-	$co_author_ids = get_post_meta( $post_id, '_bday_co_authors', true );
-	if ( is_array( $co_author_ids ) ) {
-		foreach ( $co_author_ids as $co_author_id ) {
-			$ids[] = (int) $co_author_id;
-		}
+	$primary_user = get_userdata( $primary_id );
+	if ( $primary_user ) {
+		$authors[]            = array(
+			'type' => 'user',
+			'id'   => (int) $primary_user->ID,
+			'name' => $primary_user->display_name,
+			'url'  => get_author_posts_url( $primary_user->ID ),
+		);
+		$seen_ids[ $primary_id ] = true;
 	}
 
-	$ids = array_values( array_unique( array_filter( $ids ) ) );
-
-	$authors = array();
-	foreach ( $ids as $id ) {
-		$user = get_userdata( $id );
-		if ( $user ) {
-			$authors[] = $user;
+	foreach ( bday_get_post_co_authors( $post_id ) as $co_author ) {
+		if ( 'user' === $co_author['type'] && isset( $seen_ids[ $co_author['id'] ] ) ) {
+			continue;
 		}
+		if ( 'user' === $co_author['type'] ) {
+			$seen_ids[ $co_author['id'] ] = true;
+		}
+		$authors[] = $co_author;
 	}
+
 	return $authors;
 }
 
@@ -41,6 +56,11 @@ function bday_get_post_authors( int $post_id ): array {
  * conventional written-English joining pattern, not a comma-separated
  * dump. Returns a string so callers can drop it straight into existing
  * markup the same way bday_card_html() already returns a string.
+ *
+ * A guest author (no WP account) gets no avatar — there's no gravatar
+ * email or uploaded display picture to pull one from — and their name is
+ * only linked if they were given a URL; a staff co-author always gets
+ * both, exactly as before this addon supported guest bylines.
  */
 function bday_authors_byline_html( int $post_id ): string {
 	$authors = bday_get_post_authors( $post_id );
@@ -56,8 +76,14 @@ function bday_authors_byline_html( int $post_id ): string {
 				<span class="bday-byline__authors-sep"><?php echo esc_html( $index === count( $authors ) - 1 ? ( count( $authors ) > 2 ? ', and ' : ' and ' ) : ', ' ); ?></span>
 			<?php endif; ?>
 			<span class="bday-byline__author">
-				<?php echo get_avatar( $author->ID, 24, '', '', array( 'class' => 'bday-byline__author-avatar' ) ); ?>
-				<a href="<?php echo esc_url( get_author_posts_url( $author->ID ) ); ?>"><?php echo esc_html( $author->display_name ); ?></a>
+				<?php if ( 'user' === $author['type'] ) : ?>
+					<?php echo get_avatar( $author['id'], 24, '', '', array( 'class' => 'bday-byline__author-avatar' ) ); ?>
+				<?php endif; ?>
+				<?php if ( '' !== $author['url'] ) : ?>
+					<a href="<?php echo esc_url( $author['url'] ); ?>"><?php echo esc_html( $author['name'] ); ?></a>
+				<?php else : ?>
+					<?php echo esc_html( $author['name'] ); ?>
+				<?php endif; ?>
 			</span>
 		<?php endforeach; ?>
 	</span>

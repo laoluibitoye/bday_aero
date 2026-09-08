@@ -199,20 +199,35 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 				 * writer, not a footnote, so their bio belongs here too
 				 * when they've written one. Authors with no bio filled in
 				 * are skipped rather than rendering an empty card.
+				 *
+				 * A guest co-author (metabox.php — a freeform name/link,
+				 * not a WP account) has no user-meta bio to show at all,
+				 * so this loop skips them the same way it already skips a
+				 * staff author who never filled their bio in — they still
+				 * get their byline credit above, just no card here.
 				 */
 				$bday_bio_authors = function_exists( 'bday_get_post_authors' )
 					? bday_get_post_authors( $post_id )
-					: array( get_userdata( (int) get_post_field( 'post_author', $post_id ) ) );
-				foreach ( array_filter( $bday_bio_authors ) as $bday_bio_author ) :
-					$author_bio = get_the_author_meta( 'description', $bday_bio_author->ID );
+					: array();
+				if ( empty( $bday_bio_authors ) ) {
+					$bday_primary_user = get_userdata( (int) get_post_field( 'post_author', $post_id ) );
+					if ( $bday_primary_user ) {
+						$bday_bio_authors = array( array( 'type' => 'user', 'id' => (int) $bday_primary_user->ID, 'name' => $bday_primary_user->display_name, 'url' => get_author_posts_url( $bday_primary_user->ID ) ) );
+					}
+				}
+				foreach ( $bday_bio_authors as $bday_bio_author ) :
+					if ( 'user' !== $bday_bio_author['type'] ) {
+						continue;
+					}
+					$author_bio = get_the_author_meta( 'description', $bday_bio_author['id'] );
 					if ( ! $author_bio ) {
 						continue;
 					}
 					?>
 					<div class="bday-author-bio">
-						<?php echo get_avatar( $bday_bio_author->ID, 48, '', '', array( 'class' => 'bday-author-bio__avatar' ) ); ?>
+						<?php echo get_avatar( $bday_bio_author['id'], 48, '', '', array( 'class' => 'bday-author-bio__avatar' ) ); ?>
 						<div>
-							<strong><a href="<?php echo esc_url( get_author_posts_url( $bday_bio_author->ID ) ); ?>"><?php echo esc_html( $bday_bio_author->display_name ); ?></a></strong>
+							<strong><a href="<?php echo esc_url( $bday_bio_author['url'] ); ?>"><?php echo esc_html( $bday_bio_author['name'] ); ?></a></strong>
 							<p><?php echo esc_html( $author_bio ); ?></p>
 						</div>
 					</div>
