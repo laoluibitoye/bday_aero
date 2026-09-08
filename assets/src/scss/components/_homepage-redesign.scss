@@ -1050,6 +1050,14 @@ $rd-invert-ink: var(--rd-invert-ink);
 		// auto-scroll animation runs (common, acceptable ticker
 		// behavior) — pausing only on hover/manual-scroll intent below.
 		-webkit-overflow-scrolling: touch;
+		// Reader-requested: this strip auto-scrolls on its own and is
+		// also swipe/drag-scrollable, so a visible scrollbar track
+		// permanently sitting under it read as a stray UI element, not a
+		// real control anyone needs to look at. Scrolling itself is
+		// unaffected — only the browser's own scrollbar chrome is hidden.
+		scrollbar-width: none; // Firefox
+		-ms-overflow-style: none; // legacy Edge/IE
+		&::-webkit-scrollbar { display: none; } // Chrome/Safari/new Edge
 
 		&:hover .bday-rd-market-pulse__track,
 		&:active .bday-rd-market-pulse__track {
@@ -1071,9 +1079,11 @@ $rd-invert-ink: var(--rd-invert-ink);
 	}
 
 	&__grid {
-		background: var(--rd-border-a);
+		// Reader-requested: no visible divider between cells — this used
+		// to be background: var(--rd-border-a) showing through a 1px gap
+		// (a thin line between every cell), which is what actually read
+		// as the strip's "border lines".
 		display: flex;
-		gap: 1px;
 		flex-shrink: 0;
 	}
 
