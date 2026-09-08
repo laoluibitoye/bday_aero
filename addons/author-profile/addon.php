@@ -22,3 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/metabox.php';
 require_once __DIR__ . '/includes/avatar.php';
+
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	require_once __DIR__ . '/includes/migrate-custom-author-byline.php';
+}

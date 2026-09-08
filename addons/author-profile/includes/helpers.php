@@ -4,9 +4,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * All bylined authors for a post: the native WordPress author first
- * (post_author — never dropped, so every existing post keeps working
- * unchanged), then any additionally-credited co-authors
+ * All bylined authors for a post: the primary byline first — normally
+ * the native WordPress author (post_author), or, if
+ * bday_get_post_author_override() (metabox.php) has a name set, that
+ * override in its place entirely, added for parity with the retired
+ * Custom Author Byline plugin's "override giving yourself credit for
+ * this post" behavior — then any additionally-credited co-authors
  * (bday_get_post_co_authors(), metabox.php), de-duplicated by WP user id
  * (a guest entry has no id to de-dupe against, so two differently-typed
  * guest entries with the same name would both render — an edge case not
@@ -16,7 +19,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * real WP_User (most bylined writers aren't staff with an account here),
  * so this returns the same normalized shape metabox.php's
  * bday_co_author_normalize() does — {type, id, name, url} — rather than
- * WP_User objects. The primary post_author is always type 'user'.
+ * WP_User objects. The primary entry is 'guest' when overridden, 'user'
+ * otherwise.
  *
  * @return array{type:string,id:?int,name:string,url:string}[]
  */
@@ -25,15 +29,28 @@ function bday_get_post_authors( int $post_id ): array {
 	$authors    = array();
 	$seen_ids   = array();
 
-	$primary_user = get_userdata( $primary_id );
-	if ( $primary_user ) {
-		$authors[]            = array(
-			'type' => 'user',
-			'id'   => (int) $primary_user->ID,
-			'name' => $primary_user->display_name,
-			'url'  => get_author_posts_url( $primary_user->ID ),
+	$override = function_exists( 'bday_get_post_author_override' ) ? bday_get_post_author_override( $post_id ) : array( 'name' => '' );
+	if ( '' !== $override['name'] ) {
+		$authors[] = array(
+			'type' => 'guest',
+			'id'   => null,
+			'name' => $override['name'],
+			'url'  => $override['url'],
 		);
-		$seen_ids[ $primary_id ] = true;
+		// Not added to $seen_ids: the real WP account is still a distinct
+		// person who could, in principle, also be explicitly credited as
+		// a co-author alongside the name that replaced their byline slot.
+	} else {
+		$primary_user = get_userdata( $primary_id );
+		if ( $primary_user ) {
+			$authors[]               = array(
+				'type' => 'user',
+				'id'   => (int) $primary_user->ID,
+				'name' => $primary_user->display_name,
+				'url'  => get_author_posts_url( $primary_user->ID ),
+			);
+			$seen_ids[ $primary_id ] = true;
+		}
 	}
 
 	foreach ( bday_get_post_co_authors( $post_id ) as $co_author ) {

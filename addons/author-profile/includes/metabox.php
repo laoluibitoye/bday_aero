@@ -88,6 +88,27 @@ function bday_get_post_co_authors( int $post_id ): array {
 	return array_values( array_filter( array_map( 'bday_co_author_normalize', $raw ) ) );
 }
 
+/**
+ * A single, optional name+link that replaces the primary "By {author}"
+ * byline outright — added for parity with the retired Custom Author
+ * Byline plugin's "override giving yourself credit for this post"
+ * behavior (one override per post, not a list; that's what
+ * _bday_co_authors above is for). Stored separately from co-authors
+ * since the two are genuinely different questions: "who else wrote
+ * this" vs. "who actually wrote this, instead of whoever's WP account
+ * published it."
+ *
+ * @return array{name:string,url:string}
+ */
+function bday_get_post_author_override( int $post_id ): array {
+	$raw = get_post_meta( $post_id, '_bday_author_override', true );
+	$raw = is_array( $raw ) ? $raw : array();
+	return array(
+		'name' => (string) ( $raw['name'] ?? '' ),
+		'url'  => (string) ( $raw['url'] ?? '' ),
+	);
+}
+
 function bday_co_authors_metabox( WP_Post $post ): void {
 	wp_nonce_field( 'bday_co_authors', 'bday_co_authors_nonce' );
 
@@ -101,8 +122,21 @@ function bday_co_authors_metabox( WP_Post $post ): void {
 		}
 		$candidates[] = array( 'id' => (int) $user->ID, 'name' => $user->display_name );
 	}
+
+	$override = bday_get_post_author_override( $post->ID );
 	?>
-	<p class="description">The Author field above sets the primary byline. Add other writers here — search for a staff name, or just type a guest writer's name (most bylines aren't staff with an account here).</p>
+	<p class="description" style="margin-top:0;"><strong>Override the byline</strong> — replaces the "By <?php echo esc_html( get_the_author_meta( 'display_name', $primary_id ) ); ?>" credit entirely. Use this when the real writer isn't the WordPress account that published this post and shouldn't have one created for them. Leave blank to show the normal author below instead.</p>
+	<p>
+		<label for="bday-author-override-name" class="screen-reader-text">Override author name</label>
+		<input type="text" id="bday-author-override-name" name="bday_author_override_name" value="<?php echo esc_attr( $override['name'] ); ?>" class="widefat" placeholder="Author name" />
+	</p>
+	<p>
+		<label for="bday-author-override-url" class="screen-reader-text">Override author link</label>
+		<input type="url" id="bday-author-override-url" name="bday_author_override_url" value="<?php echo esc_attr( $override['url'] ); ?>" class="widefat" placeholder="Author's link (optional)" />
+	</p>
+	<hr style="margin:14px 0;" />
+
+	<p class="description">Credit additional writers here — search for a staff name, or just type a guest writer's name (most bylines aren't staff with an account here). Ignored for whichever byline the override above already replaced, and shown alongside it otherwise.</p>
 
 	<div id="bday-co-authors-list"></div>
 	<input type="hidden" id="bday-co-authors-data" name="bday_co_authors_json" value="<?php echo esc_attr( wp_json_encode( $current ) ); ?>" />
@@ -304,5 +338,21 @@ add_action(
 			}
 		}
 		update_post_meta( $post_id, '_bday_co_authors', $sanitized );
+
+		$override_name = isset( $_POST['bday_author_override_name'] ) ? sanitize_text_field( wp_unslash( $_POST['bday_author_override_name'] ) ) : '';
+		if ( '' === $override_name ) {
+			delete_post_meta( $post_id, '_bday_author_override' );
+		} else {
+			update_post_meta(
+				$post_id,
+				'_bday_author_override',
+				array(
+					'name' => $override_name,
+					'url'  => isset( $_POST['bday_author_override_url'] ) && '' !== $_POST['bday_author_override_url']
+						? esc_url_raw( wp_unslash( $_POST['bday_author_override_url'] ) )
+						: '',
+				)
+			);
+		}
 	}
 );
