@@ -15,6 +15,31 @@ if ( empty( $posts ) ) {
 	return;
 }
 
+// Only dispatches to one of the three shared layouts when a Technical
+// Team member has explicitly opted this section into a different one —
+// otherwise falls through to this file's own markup below unchanged,
+// since that markup already IS the shared "investigative" renderer's
+// origin (bday_render_investigative_section() in core/helpers.php is an
+// extraction of it, not a different look).
+$style = Bday_Section_Content::style( 'investigates' );
+if ( '' !== $style ) {
+	$investigates_term     = get_term_by( 'slug', 'bdinvestigates', 'post_tag' );
+	$investigates_term_url = ( $investigates_term && ! is_wp_error( $investigates_term ) ) ? (string) get_tag_link( $investigates_term ) : '';
+	bday_render_section_by_style(
+		$style,
+		array(
+			'posts'           => $posts,
+			'heading'         => bday_section_title( 'investigates' ),
+			'see_more_url'    => $investigates_term_url,
+			'see_more_label'  => 'See more →',
+			'lead_kicker'     => 'Investigation',
+			'author_position' => 'above',
+			'screen_label'    => 'BD Investigates',
+		)
+	);
+	return;
+}
+
 $lead   = $posts[0];
 $more   = array_slice( $posts, 1, 3 );
 $has_thumb = has_post_thumbnail( $lead->ID );

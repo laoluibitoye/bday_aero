@@ -15,6 +15,30 @@ if ( empty( $posts ) ) {
 	return;
 }
 
+// This section has no shared-layout equivalent of its own (a portrait +
+// pull-quote treatment, unlike the other 7 single-source sections) — it
+// only ever dispatches to one of the three shared layouts when a
+// Technical Team member explicitly opts it into one; otherwise it falls
+// through to its own bespoke markup below, unchanged.
+$style = Bday_Section_Content::style( 'interview' );
+if ( '' !== $style ) {
+	$interview_term     = get_term_by( 'slug', 'bd-interview', 'post_tag' );
+	$interview_term_url = ( $interview_term && ! is_wp_error( $interview_term ) ) ? (string) get_tag_link( $interview_term ) : '';
+	bday_render_section_by_style(
+		$style,
+		array(
+			'posts'           => $posts,
+			'heading'         => bday_section_title( 'interview' ),
+			'see_more_url'    => $interview_term_url,
+			'see_more_label'  => 'All interviews →',
+			'lead_kicker'     => 'Interview',
+			'author_position' => 'above',
+			'screen_label'    => 'Interview',
+		)
+	);
+	return;
+}
+
 $lead = $posts[0];
 $more = array_slice( $posts, 1, 3 );
 ?>

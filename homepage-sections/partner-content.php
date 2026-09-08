@@ -12,7 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 $data = $args['data'] ?? array();
 $tag  = get_term_by( 'slug', 'sponsored', 'post_tag' );
 
-bday_render_editorial_grid_section(
+bday_render_section_by_style(
+	Bday_Section_Content::style( 'partner-content' ) ?: 'grid',
 	array(
 		'posts'           => $data['rd_partner'] ?? array(),
 		'heading'         => bday_section_title( 'partner-content' ),

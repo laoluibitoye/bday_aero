@@ -289,9 +289,10 @@ final class Bday_Options_Framework {
 		if ( ! isset( $schema[ $slug ] ) ) {
 			return;
 		}
-		$tab = $schema[ $slug ];
+		$tab       = $schema[ $slug ];
+		$has_aside = ! empty( $tab['about'] );
 
-		Bday_Admin_UI::open( 'BDay Aero Options', $tab['tab_label'] ?? $slug, self::build_tabs( $slug ), $tab['intro'] ?? '' );
+		Bday_Admin_UI::open( 'BDay Aero Options', $tab['tab_label'] ?? $slug, self::build_tabs( $slug ), $tab['intro'] ?? '', $has_aside );
 		?>
 			<form action="options.php" method="post">
 				<?php settings_fields( $tab['option'] ); ?>

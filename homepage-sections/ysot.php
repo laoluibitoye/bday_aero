@@ -11,7 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $data = $args['data'] ?? array();
 
-bday_render_editorial_grid_section(
+bday_render_section_by_style(
+	Bday_Section_Content::style( 'ysot' ) ?: 'grid',
 	array(
 		'posts'           => $data['rd_ysot'] ?? array(),
 		'heading'         => bday_section_title( 'ysot' ),

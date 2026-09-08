@@ -14,6 +14,30 @@ $posts = $data['rd_latest'] ?? array();
 if ( empty( $posts ) ) {
 	return;
 }
+
+// This section has no shared-layout equivalent of its own (a plain card
+// grid via bday_card_html(), unlike the other 7 single-source sections)
+// — it only ever dispatches to one of the three shared layouts when a
+// Technical Team member explicitly opts it into one; otherwise it falls
+// through to its own bespoke markup below, unchanged.
+$style = Bday_Section_Content::style( 'latest-stories' );
+if ( '' !== $style ) {
+	$recent_term     = get_term_by( 'slug', 'bdrecent', 'post_tag' );
+	$recent_term_url = ( $recent_term && ! is_wp_error( $recent_term ) ) ? (string) get_tag_link( $recent_term ) : '';
+	bday_render_section_by_style(
+		$style,
+		array(
+			'posts'           => $posts,
+			'heading'         => bday_section_title( 'latest-stories' ),
+			'see_more_url'    => $recent_term_url,
+			'see_more_label'  => 'See more →',
+			'lead_kicker'     => 'Latest',
+			'author_position' => 'above',
+			'screen_label'    => 'Latest stories',
+		)
+	);
+	return;
+}
 ?>
 <section class="bday-rd-latest" data-screen-label="Latest stories">
 	<div class="bday-container">

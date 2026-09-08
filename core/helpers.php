@@ -189,6 +189,188 @@ function bday_render_editorial_grid_section( array $args ): void {
 }
 
 /**
+ * The "BD Investigates-style" homepage section: a dark, inverted-color
+ * band — one big lead (thumbnail optional) plus a short list of links
+ * beside it. Shared by BD Investigates and, when a Technical Team
+ * member opts a different single-source section into this layout from
+ * the Homepage Sections tab's Style column (bday_render_section_by_style()
+ * below), any other one of them.
+ *
+ * $args:
+ *   posts           WP_Post[]  required — posts[0] is the lead, up to 3 more form the link list
+ *   heading         string     section <h2> text
+ *   see_more_url    string     link target for the section-head "See more" kicker — omitted if blank
+ *   see_more_label  string     default 'See more →'
+ *   lead_kicker     string     text before " · <date>" above the lead title, default 'Investigation'
+ *   screen_label    string     data-screen-label on the <section>, for analytics
+ */
+function bday_render_investigative_section( array $args ): void {
+	$args = wp_parse_args(
+		$args,
+		array(
+			'posts'          => array(),
+			'heading'        => '',
+			'see_more_url'   => '',
+			'see_more_label' => 'See more →',
+			'lead_kicker'    => 'Investigation',
+			'screen_label'   => '',
+		)
+	);
+
+	$posts = $args['posts'];
+	if ( empty( $posts ) ) {
+		return;
+	}
+
+	$lead      = $posts[0];
+	$more      = array_slice( $posts, 1, 3 );
+	$has_thumb = has_post_thumbnail( $lead->ID );
+	?>
+	<section class="bday-rd-investigates<?php echo $has_thumb ? '' : ' bday-rd-investigates--no-thumb'; ?>" data-screen-label="<?php echo esc_attr( $args['screen_label'] ); ?>">
+		<div class="bday-container">
+			<div class="bday-rd-section-head bday-rd-section-head--invert">
+				<h2><?php echo esc_html( $args['heading'] ); ?></h2>
+				<span class="bday-rd-rule bday-rd-rule--invert"></span>
+				<?php if ( $args['see_more_url'] ) : ?>
+					<a href="<?php echo esc_url( $args['see_more_url'] ); ?>" class="bday-rd-kicker bday-rd-kicker--accent"><?php echo esc_html( $args['see_more_label'] ); ?></a>
+				<?php endif; ?>
+			</div>
+			<div class="bday-rd-investigates__grid">
+				<?php if ( $has_thumb ) : ?>
+					<a href="<?php echo esc_url( get_permalink( $lead ) ); ?>" class="bday-rd-investigates__media"><?php echo bday_get_card_media( $lead->ID, 'featured' ); ?></a>
+				<?php endif; ?>
+				<div class="bday-rd-investigates__body">
+					<span class="bday-rd-kicker bday-rd-kicker--accent"><?php echo esc_html( $args['lead_kicker'] ); ?> · <?php echo esc_html( bday_format_date( $lead->post_date ) ); ?></span>
+					<a href="<?php echo esc_url( get_permalink( $lead ) ); ?>" class="bday-rd-investigates__title"><?php echo esc_html( get_the_title( $lead ) ); ?></a>
+					<p class="bday-rd-investigates__dek"><?php echo esc_html( wp_trim_words( get_the_excerpt( $lead ), 26 ) ); ?></p>
+					<?php if ( ! empty( $more ) ) : ?>
+						<div class="bday-rd-investigates__more">
+							<?php foreach ( $more as $post ) : ?>
+								<a href="<?php echo esc_url( get_permalink( $post ) ); ?>"><?php echo esc_html( get_the_title( $post ) ); ?></a>
+							<?php endforeach; ?>
+						</div>
+					<?php endif; ?>
+				</div>
+			</div>
+		</div>
+	</section>
+	<?php
+}
+
+/**
+ * The "Premium-style" homepage section: one large feature, up to two
+ * medium stories, and an optional "also in" list, under a heading with
+ * an optional small badge and CTA link. Shared by Premium and, when
+ * opted into via the Homepage Sections tab's Style column, any other
+ * single-source section. Badge/CTA/also-list are all conditional on
+ * being passed a value — Premium's own "Premium" badge and "Subscribe"
+ * CTA are specific to that section's editorial meaning, not something
+ * every section opting into this layout should inherit by default.
+ *
+ * $args:
+ *   posts              WP_Post[]  required — posts[0] feature, next 2 "medium", rest (up to 8) the "also" list
+ *   heading            string     section heading text
+ *   badge              string     small pill above the heading — omitted if blank
+ *   cta_url            string     link target for the head's small CTA — omitted if blank
+ *   cta_label          string     default 'Subscribe →'
+ *   also_label         string     label above the "also" list, default 'More'
+ *   also_see_more_url  string     link target for the "also" list's own "See more" — omitted if blank
+ *   screen_label       string     data-screen-label on the <section>, for analytics
+ */
+function bday_render_premium_style_section( array $args ): void {
+	$args = wp_parse_args(
+		$args,
+		array(
+			'posts'             => array(),
+			'heading'           => '',
+			'badge'             => '',
+			'cta_url'           => '',
+			'cta_label'         => 'Subscribe →',
+			'also_label'        => 'More',
+			'also_see_more_url' => '',
+			'screen_label'      => '',
+		)
+	);
+
+	$posts = $args['posts'];
+	if ( empty( $posts ) ) {
+		return;
+	}
+
+	$feature = $posts[0];
+	$medium  = array_slice( $posts, 1, 2 );
+	$also    = array_slice( $posts, 3, 8 );
+	?>
+	<section class="bday-rd-premium" data-screen-label="<?php echo esc_attr( $args['screen_label'] ); ?>">
+		<div class="bday-container">
+			<div class="bday-rd-premium__head">
+				<?php if ( $args['badge'] ) : ?><span class="bday-rd-badge"><?php echo esc_html( $args['badge'] ); ?></span><?php endif; ?>
+				<h2 class="bday-rd-premium__title"><?php echo esc_html( $args['heading'] ); ?></h2>
+				<?php if ( $args['cta_url'] ) : ?>
+					<a class="bday-rd-kicker bday-rd-kicker--tint bday-rd-premium__cta" href="<?php echo esc_url( $args['cta_url'] ); ?>"><?php echo esc_html( $args['cta_label'] ); ?></a>
+				<?php endif; ?>
+			</div>
+			<div class="bday-rd-premium__grid">
+				<a href="<?php echo esc_url( get_permalink( $feature ) ); ?>" class="bday-rd-premium__feature">
+					<?php if ( bday_has_card_media( $feature->ID ) ) : ?><?php echo bday_get_card_media( $feature->ID, 'featured' ); ?><?php endif; ?>
+					<h3><?php echo esc_html( get_the_title( $feature ) ); ?></h3>
+					<p><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $feature->post_excerpt ?: $feature->post_content ), 20, '…' ) ); ?></p>
+					<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( bday_format_date( $feature->post_date ) ); ?></span>
+				</a>
+				<?php if ( ! empty( $medium ) ) : ?>
+					<div class="bday-rd-premium__medium">
+						<?php foreach ( $medium as $post ) : ?>
+							<a href="<?php echo esc_url( get_permalink( $post ) ); ?>">
+								<?php if ( bday_has_card_media( $post->ID ) ) : ?><?php echo bday_get_card_media( $post->ID, 'top_story' ); ?><?php endif; ?>
+								<h4><?php echo esc_html( get_the_title( $post ) ); ?></h4>
+								<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( bday_format_date( $post->post_date ) ); ?></span>
+							</a>
+						<?php endforeach; ?>
+					</div>
+				<?php endif; ?>
+				<?php if ( ! empty( $also ) ) : ?>
+				<div class="bday-rd-premium__also">
+					<div class="bday-rd-premium__also-head">
+						<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( $args['also_label'] ); ?></span>
+						<?php if ( $args['also_see_more_url'] ) : ?>
+							<a href="<?php echo esc_url( $args['also_see_more_url'] ); ?>" class="bday-rd-kicker bday-rd-kicker--accent bday-rd-premium__see-more">See more →</a>
+						<?php endif; ?>
+					</div>
+					<?php foreach ( $also as $post ) : ?>
+						<a href="<?php echo esc_url( get_permalink( $post ) ); ?>"><?php echo esc_html( get_the_title( $post ) ); ?></a>
+					<?php endforeach; ?>
+				</div>
+				<?php endif; ?>
+			</div>
+		</div>
+	</section>
+	<?php
+}
+
+/**
+ * Dispatches to whichever of the three reusable "post-list" section
+ * layouts above a Technical Team member picked for this section (the
+ * Homepage Sections tab's Style column) — 'grid', 'investigative', or
+ * 'premium'. $args is passed through unchanged to whichever renderer is
+ * picked; each one just reads the subset of keys it cares about and
+ * ignores the rest (see each function's own $args docblock), so callers
+ * don't need to branch on the style themselves.
+ */
+function bday_render_section_by_style( string $style, array $args ): void {
+	switch ( $style ) {
+		case 'investigative':
+			bday_render_investigative_section( $args );
+			return;
+		case 'premium':
+			bday_render_premium_style_section( $args );
+			return;
+		case 'grid':
+		default:
+			bday_render_editorial_grid_section( $args );
+	}
+}
+
+/**
  * A "Load more" button replacing page-number pagination sitewide (reader-requested — no
  * `?paged=2` links anywhere in the theme anymore). Deliberately not a new AJAX/REST endpoint:
  * `assets/src/js/load-more.js` just fetches the next page's full URL (a plain, cacheable GET,

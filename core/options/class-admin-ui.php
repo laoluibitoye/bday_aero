@@ -69,14 +69,24 @@ final class Bday_Admin_UI {
 	 * more sidebar()/status() calls, or close() directly for a page with
 	 * no sidebar content).
 	 *
-	 * @param string $product   e.g. "BusinessDay Theme" | "AeroPaywall"
+	 * @param string $product    e.g. "BusinessDay Theme" | "AeroPaywall"
 	 * @param string $page_title e.g. "Masthead" | "Restrictions"
 	 * @param array<int, array{label: string, url: string, active: bool}> $tabs
-	 * @param string $intro     Optional lead paragraph explaining what this
-	 *                          page/tab governs — printed inside the main
-	 *                          card, above the form.
+	 * @param string $intro      Optional lead paragraph explaining what this
+	 *                           page/tab governs — printed inside the main
+	 *                           card, above the form.
+	 * @param bool   $has_aside  Whether this page will call start_aside()
+	 *                           later. The two-column grid's column widths
+	 *                           are fixed at the .bday-admin__body element
+	 *                           opened here, before the caller has decided
+	 *                           whether it has any sidebar content to show
+	 *                           (that's usually only known once the form
+	 *                           itself has been built) — false collapses it
+	 *                           to one full-width column instead of leaving
+	 *                           a permanent 300px gap where an aside that
+	 *                           will never be opened would have sat.
 	 */
-	public static function open( string $product, string $page_title, array $tabs, string $intro = '' ): void {
+	public static function open( string $product, string $page_title, array $tabs, string $intro = '', bool $has_aside = true ): void {
 		?>
 		<div class="bday-admin__topbar">
 			<span class="bday-admin__mark">B</span>
@@ -92,7 +102,7 @@ final class Bday_Admin_UI {
 				<?php endforeach; ?>
 			</nav>
 		<?php endif; ?>
-		<div class="bday-admin__body">
+		<div class="bday-admin__body<?php echo $has_aside ? '' : ' bday-admin__body--full'; ?>">
 			<main class="bday-admin__main">
 				<?php if ( '' !== $intro ) : ?>
 					<p class="bday-admin__intro"><?php echo wp_kses_post( $intro ); ?></p>

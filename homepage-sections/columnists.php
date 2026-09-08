@@ -15,6 +15,29 @@ if ( empty( $columnists ) ) {
 	return;
 }
 
+// Only dispatches to one of the three shared layouts when a Technical
+// Team member has explicitly opted this section into one — otherwise
+// falls through to this file's own bespoke markup below, unchanged,
+// since that markup (not the shared "grid" renderer) is this section's
+// actual current look (its lead kicker shows the author's avatar/name,
+// which the shared renderer doesn't do).
+$style = Bday_Section_Content::style( 'columnists' );
+if ( '' !== $style ) {
+	bday_render_section_by_style(
+		$style,
+		array(
+			'posts'           => $columnists,
+			'heading'         => bday_section_title( 'columnists' ),
+			'see_more_url'    => bday_category_url( 'columnist' ),
+			'see_more_label'  => 'All columnists →',
+			'lead_kicker'     => 'Columnist',
+			'author_position' => 'above',
+			'screen_label'    => 'Columnists',
+		)
+	);
+	return;
+}
+
 $lead = $columnists[0];
 $grid = array_slice( $columnists, 1, 6 );
 ?>

@@ -21,6 +21,36 @@ if ( empty( $posts ) ) {
 	return;
 }
 
+// Only dispatches to one of the three shared layouts when a Technical
+// Team member has explicitly opted this section into a different one —
+// otherwise falls through to this file's own markup below unchanged,
+// since that markup already IS the shared "premium" renderer's origin
+// (bday_render_premium_style_section() in core/helpers.php is an
+// extraction of it, not a different look).
+$style = Bday_Section_Content::style( 'premium' );
+if ( '' !== $style ) {
+	$premium_term     = get_term_by( 'slug', 'premium', 'post_tag' );
+	$premium_term_url = ( $premium_term && ! is_wp_error( $premium_term ) ) ? (string) get_tag_link( $premium_term ) : '';
+	bday_render_section_by_style(
+		$style,
+		array(
+			'posts'             => $posts,
+			'heading'           => bday_section_title( 'premium' ),
+			'badge'             => 'Premium',
+			'cta_url'           => bday_epaper_url(),
+			'cta_label'         => 'Subscribe →',
+			'also_label'        => 'Also in Pro',
+			'also_see_more_url' => $premium_term_url,
+			'see_more_url'      => $premium_term_url,
+			'see_more_label'    => 'See more →',
+			'lead_kicker'       => 'Premium',
+			'author_position'   => 'above',
+			'screen_label'      => 'Premium',
+		)
+	);
+	return;
+}
+
 $feature = $posts[0];
 $medium  = array_slice( $posts, 1, 2 );
 $also    = array_slice( $posts, 3, 8 );

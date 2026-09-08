@@ -18,6 +18,16 @@
  * moment nothing's been saved, so an unconfigured install renders
  * byte-for-byte what it did before this existed.
  *
+ * Those same single-source sections can also have their *layout* swapped
+ * — style() below — to one of the three reusable renderers in
+ * core/helpers.php (bday_render_editorial_grid_section() / _investigative_
+ * / _premium_style_, dispatched via bday_render_section_by_style()).
+ * Unset (empty string) means "keep this section's own bespoke default
+ * markup" — every one of those 8 section files still contains its
+ * original hand-rolled rendering as that fallback path, only reached when
+ * no style override is saved, so this too changes nothing until a
+ * Technical Team member explicitly picks a style.
+ *
  * Deliberately scoped to the "Redesign 2026" homepage variant's section
  * files, same boundary Bday_Section_Registry and its own admin tab
  * already draw — the classic Default/Weekend homepage variants are fixed
@@ -89,7 +99,18 @@ final class Bday_Section_Content {
 		);
 	}
 
-	/** @return array<string, array{title: string, source_taxonomy: string, source_term: string}> */
+	/** @return string[] the layouts bday_render_section_by_style() knows how to dispatch to. */
+	public static function styles(): array {
+		return array( 'grid', 'investigative', 'premium' );
+	}
+
+	/** '' when no override is saved — caller falls back to that section's own bespoke default markup. */
+	public static function style( string $slug ): string {
+		$style = (string) ( self::row( $slug )['style'] ?? '' );
+		return in_array( $style, self::styles(), true ) ? $style : '';
+	}
+
+	/** @return array<string, array{title: string, source_taxonomy: string, source_term: string, style: string}> */
 	public static function sanitize( $input ): array {
 		$rows = is_array( $input ) ? $input : array();
 		$out  = array();
@@ -103,11 +124,15 @@ final class Bday_Section_Content {
 			$title    = isset( $row['title'] ) ? sanitize_text_field( wp_unslash( $row['title'] ) ) : '';
 			$taxonomy = isset( $row['source_taxonomy'] ) && 'post_tag' === $row['source_taxonomy'] ? 'post_tag' : 'category';
 			$term     = isset( $row['source_term'] ) ? sanitize_title( wp_unslash( $row['source_term'] ) ) : '';
+			$style    = isset( $row['style'] ) ? sanitize_key( wp_unslash( $row['style'] ) ) : '';
+			if ( ! in_array( $style, self::styles(), true ) ) {
+				$style = '';
+			}
 
 			// An all-blank row (a section nobody has touched) isn't worth
 			// saving — same "don't persist a no-op" posture as the Sections
 			// addon's own sanitizer.
-			if ( '' === $title && '' === $term ) {
+			if ( '' === $title && '' === $term && '' === $style ) {
 				continue;
 			}
 
@@ -115,6 +140,7 @@ final class Bday_Section_Content {
 				'title'           => $title,
 				'source_taxonomy' => $taxonomy,
 				'source_term'     => $term,
+				'style'           => $style,
 			);
 		}
 

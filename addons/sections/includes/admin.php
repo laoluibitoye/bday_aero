@@ -1,11 +1,21 @@
 <?php
 /**
- * Sections settings page: an ordered table of {key, label, category}
- * rows, reorderable by native HTML5 drag-and-drop (no jQuery/library —
- * same "dependency-free vanilla JS" convention as core/nav-menu.php's
- * walker). Reordering only ever moves the actual <tr> in the DOM; the
- * saved order is whatever order the rows physically submit in, so no
- * hidden "position" field bookkeeping is needed on top of that.
+ * Sections settings: an ordered table of {key, label, category} rows,
+ * reorderable by native HTML5 drag-and-drop (no jQuery/library — same
+ * "dependency-free vanilla JS" convention as core/nav-menu.php's walker).
+ * Reordering only ever moves the actual <tr> in the DOM; the saved order
+ * is whatever order the rows physically submit in, so no hidden
+ * "position" field bookkeeping is needed on top of that.
+ *
+ * Rendered *embedded inside* the Homepage Sections tab
+ * (core/homepage/admin.php's bday_render_homepage_sections_tab(), guarded
+ * by function_exists() in case this add-on is disabled) rather than as
+ * its own settings-schema tab/page — the two were visually near-
+ * identical drag-reorder tables living one click apart, which read as
+ * two different features until you opened both. No submit_button() call
+ * here for the same reason: the surrounding tab's one shared form/button
+ * already covers this table's fields, since bday_sections is now
+ * registered under the 'bday_homepage_sections' settings group.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -16,6 +26,14 @@ function bday_render_sections_tab( array $values ): void {
 	$sections  = bday_sections();
 	$categories = get_categories( array( 'hide_empty' => false, 'number' => 300 ) );
 	?>
+	<h2>Sections</h2>
+	<p class="description" style="margin-bottom:16px;">
+		Labeled links/headings used across the site — e.g. the homepage rail's "In Other News" or "Columnists"
+		headings — each one a short internal key mapped to a real WordPress category, so the wording an editor
+		sees and the URL a reader lands on can both be changed here without editing a template file. Reorder by
+		dragging a row. A section with no category assigned still saves, but its heading link goes nowhere until
+		one is chosen.
+	</p>
 	<table class="widefat bday-sections-table" id="bday-sections-table">
 		<thead>
 			<tr>
@@ -38,8 +56,6 @@ function bday_render_sections_tab( array $values ): void {
 	<template id="bday-section-row-template">
 		<?php bday_render_section_row( '__INDEX__', array(), $categories ); ?>
 	</template>
-
-	<?php submit_button(); ?>
 
 	<script>
 	(function () {

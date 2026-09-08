@@ -140,6 +140,13 @@ body.bday-admin-ui .wrap > h1:first-child {
 @media (max-width: 1100px) {
 	.bday-admin__body { grid-template-columns: 1fr; }
 }
+/* A page with no sidebar content (Bday_Admin_UI::open()'s $has_aside
+   false) never opens the 300px aside column at all — collapsing the grid
+   to one full-width track instead of leaving that space permanently
+   empty next to a narrower main card. */
+.bday-admin__body--full {
+	grid-template-columns: minmax(0, 1fr);
+}
 
 .bday-admin__main {
 	background: #fff;
