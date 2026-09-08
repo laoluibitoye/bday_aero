@@ -66,10 +66,17 @@ function bday_edition_sync_to_subscription_service( WP_Post $post ): void {
 	$base_url = (string) get_option( 'aero_paywall_api_base_url', '' );
 	$api_key  = (string) get_option( 'aero_paywall_api_key', '' );
 	if ( '' === $base_url || '' === $api_key ) {
+		// Unlike the missing-object-key/missing-terms returns above (both
+		// legitimate "still assembling this edition" states, not errors),
+		// a missing connector connection is a real setup problem — surface
+		// it, since otherwise a reader hits "No edition exists for that
+		// date" on subscription-service with nothing in wp-admin
+		// explaining why the sync that would have prevented it never ran.
+		bday_edition_queue_upload_notice( 'This edition was saved, but could not be synced to the archive service — the Aero Paywall API connection is not configured. Readers will see "No edition exists for that date" until this is fixed and the post is saved again.' );
 		return;
 	}
 
-	wp_remote_post(
+	$response = wp_remote_post(
 		rtrim( $base_url, '/' ) . '/connector/edition-sync',
 		array(
 			'timeout' => 5,
@@ -80,10 +87,44 @@ function bday_edition_sync_to_subscription_service( WP_Post $post ): void {
 			'body'    => wp_json_encode(
 				array(
 					'publication' => $publication,
-					'date'        => get_the_date( 'c', $post ),
+					// Plain 'Y-m-d', not 'c' (full ISO8601 with a
+					// timezone offset) — a reader's own lookup constructs
+					// its date the same plain way (single-bday_edition.php's
+					// data-bd-edition-date, "Y-m-d") and subscription-
+					// service parses it as `new Date("2026-09-08")`, which
+					// JS treats as exact UTC midnight. Sending a full
+					// timestamp+offset here instead gets converted to a
+					// different UTC calendar day whenever the post's local
+					// save time falls within the first N hours after
+					// midnight (N = the site's UTC offset) — Edition.date
+					// is a DATE-only column, so that one-day drift means
+					// the sync silently writes a different date than
+					// readers ever look up, surfacing as "No edition
+					// exists for that date" despite the sync having
+					// "succeeded."
+					'date'        => get_the_date( 'Y-m-d', $post ),
 					'objectKey'   => $object_key,
 				)
 			),
 		)
 	);
+
+	// Previously unchecked entirely — a failed sync here (wrong API
+	// key/URL, subscription-service down, a rejected payload) looked
+	// identical to a successful one from wp-admin's point of view: the
+	// edition post saves fine either way, and only a reader clicking
+	// "Read Edition" later would discover anything was wrong, via
+	// subscription-service's "No edition exists for that date" — by
+	// which point there's nothing in wp-admin pointing back at the cause.
+	if ( is_wp_error( $response ) ) {
+		bday_edition_queue_upload_notice( 'This edition was saved, but syncing it to the archive service failed: ' . $response->get_error_message() . '. Readers will see "No edition exists for that date" until this is fixed and the post is saved again.' );
+		return;
+	}
+	$status = wp_remote_retrieve_response_code( $response );
+	if ( $status < 200 || $status >= 300 ) {
+		$body    = wp_remote_retrieve_body( $response );
+		$decoded = json_decode( $body, true );
+		$detail  = is_array( $decoded ) && isset( $decoded['message'] ) ? $decoded['message'] : ( '' !== $body ? $body : "HTTP {$status}" );
+		bday_edition_queue_upload_notice( 'This edition was saved, but syncing it to the archive service failed (' . ( is_array( $detail ) ? wp_json_encode( $detail ) : $detail ) . '). Readers will see "No edition exists for that date" until this is fixed and the post is saved again.' );
+	}
 }
