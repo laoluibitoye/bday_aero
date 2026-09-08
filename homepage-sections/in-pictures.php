@@ -18,7 +18,7 @@ if ( empty( $posts ) ) {
 <section class="bday-rd-in-pictures" data-screen-label="In pictures">
 	<div class="bday-container">
 		<div class="bday-rd-section-head">
-			<h2>In Pictures</h2>
+			<h2><?php echo esc_html( bday_section_title( 'in-pictures' ) ); ?></h2>
 			<span class="bday-rd-rule"></span>
 			<a href="<?php echo esc_url( get_post_format_link( 'gallery' ) ); ?>" class="bday-rd-kicker bday-rd-kicker--accent">See more →</a>
 		</div>

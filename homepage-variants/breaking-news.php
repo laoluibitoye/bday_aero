@@ -11,8 +11,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $data = bday_get_homepage_data();
 
+// header.php already fires the bday_header_ticker_zone action
+// unconditionally on every page (including this one) — calling
+// ticker-zone here too double-rendered the ticker/Live Match widget
+// whenever this variant is admin-forced on.
 get_template_part( 'template-parts/homepage/hero', null, array( 'data' => $data, 'layout' => 'takeover' ) );
-get_template_part( 'template-parts/homepage/ticker-zone' );
 
 echo '<div class="bday-container bday-two-col bday-two-col--rail">';
 get_template_part( 'template-parts/homepage/rail', null, array( 'data' => $data ) );

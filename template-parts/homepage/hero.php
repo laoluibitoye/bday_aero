@@ -30,7 +30,7 @@ $lead   = $data['lead'][0] ?? null;
 		<aside class="bday-hero__col bday-hero__col--top">
 			<h2 class="bday-eyebrow">Top News</h2>
 			<ul class="bday-list">
-				<?php foreach ( $data['top_stories'] as $post ) : ?>
+				<?php foreach ( $data['top_stories'] ?? array() as $post ) : ?>
 					<li><a href="<?php echo esc_url( get_permalink( $post ) ); ?>"><?php echo esc_html( get_the_title( $post ) ); ?></a><time><?php echo esc_html( bday_time_ago( $post->post_date ) ); ?></time></li>
 				<?php endforeach; ?>
 			</ul>
@@ -56,7 +56,7 @@ $lead   = $data['lead'][0] ?? null;
 			<?php do_action( 'bday_hero_before_recent' ); ?>
 			<h2 class="bday-eyebrow"><a href="<?php echo esc_url( bday_section_url( 'opinion' ) ); ?>">Opinion</a></h2>
 			<ul class="bday-list bday-list--byline">
-				<?php foreach ( $data['opinion'] as $post ) : ?>
+				<?php foreach ( $data['opinion'] ?? array() as $post ) : ?>
 					<li>
 						<?php echo get_avatar( $post->post_author, 32 ); ?>
 						<div>

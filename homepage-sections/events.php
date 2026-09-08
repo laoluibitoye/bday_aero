@@ -24,7 +24,7 @@ if ( empty( $events ) ) {
 	<div class="bday-container bday-rd-events__grid">
 		<div class="bday-rd-events__copy">
 			<span class="bday-rd-kicker bday-rd-kicker--accent">BD Conferences</span>
-			<h2>Upcoming events</h2>
+			<h2><?php echo esc_html( bday_section_title( 'events' ) ); ?></h2>
 			<p>Events across industries and sectors, built to surround you with information, inspiration and a network that sharpens the next business decision.</p>
 			<a href="<?php echo esc_url( get_post_type_archive_link( 'events' ) ); ?>" class="bday-rd-btn bday-rd-btn--solid">Explore all events</a>
 		</div>

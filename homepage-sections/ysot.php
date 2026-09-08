@@ -14,7 +14,7 @@ $data = $args['data'] ?? array();
 bday_render_editorial_grid_section(
 	array(
 		'posts'           => $data['rd_ysot'] ?? array(),
-		'heading'         => 'YSoT',
+		'heading'         => bday_section_title( 'ysot' ),
 		'see_more_url'    => bday_category_url( 'yaba-school-of-thought' ),
 		'see_more_label'  => 'See more →',
 		'lead_kicker'     => 'YSoT',

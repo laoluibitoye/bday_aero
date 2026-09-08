@@ -295,15 +295,26 @@ function bday_social_share_html( int $post_id ): string {
 	$url   = get_permalink( $post_id );
 	$title = get_the_title( $post_id );
 
+	// Each dynamic value is rawurlencode()'d before it goes into a query
+	// string — esc_url() alone isn't that: its default 'display' context
+	// entity-encodes '&' for safe HTML-attribute parsing, but the browser
+	// decodes that right back to a literal '&' when it reads the href, so
+	// an unencoded '&' or '#' in a title still split the query string at
+	// that character, truncating whatever came after it (e.g. Twitter's
+	// text= or WhatsApp's text=). Not an XSS — esc_url() still neutralizes
+	// markup/scheme injection in the final href — just a formatting bug.
+	$url_enc   = rawurlencode( $url );
+	$title_enc = rawurlencode( $title );
+
 	ob_start();
 	?>
 	<div class="social-share">
 		<span class="social-share__label">Share</span>
-		<a class="social-share__item social-share__item--facebook" rel="nofollow noreferrer" aria-label="Facebook" target="_blank" href="<?php echo esc_url( 'https://www.facebook.com/sharer/sharer.php?u=' . $url ); ?>"><i class="bi bi-facebook"></i></a>
-		<a class="social-share__item social-share__item--twitter" rel="nofollow noreferrer" aria-label="X (Twitter)" target="_blank" href="<?php echo esc_url( 'https://twitter.com/share?text=' . $title . '&url=' . $url ); ?>"><i class="bi bi-twitter"></i></a>
-		<a class="social-share__item social-share__item--linkedin" rel="nofollow noreferrer" aria-label="LinkedIn" target="_blank" href="<?php echo esc_url( 'https://linkedin.com/shareArticle?mini=true&url=' . $url ); ?>"><i class="bi bi-linkedin"></i></a>
-		<a class="social-share__item social-share__item--telegram" rel="nofollow noreferrer" aria-label="Telegram" target="_blank" href="<?php echo esc_url( 'https://telegram.me/share/url?url=' . $url . '&text=' . $title ); ?>"><i class="bi bi-telegram"></i></a>
-		<a class="social-share__item social-share__item--whatsapp" rel="nofollow noreferrer" aria-label="WhatsApp" target="_blank" href="<?php echo esc_url( 'https://api.whatsapp.com/send?text=' . $url ); ?>"><i class="bi bi-whatsapp"></i></a>
+		<a class="social-share__item social-share__item--facebook" rel="nofollow noreferrer" aria-label="Facebook" target="_blank" href="<?php echo esc_url( 'https://www.facebook.com/sharer/sharer.php?u=' . $url_enc ); ?>"><i class="bi bi-facebook"></i></a>
+		<a class="social-share__item social-share__item--twitter" rel="nofollow noreferrer" aria-label="X (Twitter)" target="_blank" href="<?php echo esc_url( 'https://twitter.com/share?text=' . $title_enc . '&url=' . $url_enc ); ?>"><i class="bi bi-twitter"></i></a>
+		<a class="social-share__item social-share__item--linkedin" rel="nofollow noreferrer" aria-label="LinkedIn" target="_blank" href="<?php echo esc_url( 'https://linkedin.com/shareArticle?mini=true&url=' . $url_enc ); ?>"><i class="bi bi-linkedin"></i></a>
+		<a class="social-share__item social-share__item--telegram" rel="nofollow noreferrer" aria-label="Telegram" target="_blank" href="<?php echo esc_url( 'https://telegram.me/share/url?url=' . $url_enc . '&text=' . $title_enc ); ?>"><i class="bi bi-telegram"></i></a>
+		<a class="social-share__item social-share__item--whatsapp" rel="nofollow noreferrer" aria-label="WhatsApp" target="_blank" href="<?php echo esc_url( 'https://api.whatsapp.com/send?text=' . $url_enc ); ?>"><i class="bi bi-whatsapp"></i></a>
 	</div>
 	<?php
 	return (string) ob_get_clean();

@@ -26,7 +26,7 @@ if ( empty( $cards ) ) {
 <section class="bday-rd-editions bday-news-carousel" data-screen-label="E-editions">
 	<div class="bday-container">
 		<div class="bday-rd-section-head">
-			<h2>E-editions</h2>
+			<h2><?php echo esc_html( bday_section_title( 'editions' ) ); ?></h2>
 			<span class="bday-rd-rule"></span>
 		</div>
 		<div class="bday-news-carousel__nav">

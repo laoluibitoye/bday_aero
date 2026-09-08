@@ -173,19 +173,12 @@ add_action(
 );
 
 // Settings tab: one collapsible section per driver, plus the ads master switch.
+// The actual field list is built by bday_render_vendors_tab() itself
+// (below) per driver — this schema entry uses 'render', not 'fields', so
+// nothing here needs to pre-compute one.
 add_filter(
 	'bday_settings_schema',
 	static function ( array $schema ): array {
-		$fields   = array(
-			array( 'key' => 'ads_master_switch', 'type' => 'checkbox', 'label' => 'Ads enabled site-wide', 'default' => true, 'description' => 'Master switch for all ad rendering (GAM + direct-sold). Auto-disabled on staging hostnames regardless of this setting.' ),
-		);
-		foreach ( bday_vendor_drivers() as $driver ) {
-			foreach ( $driver->settings_fields() as $field ) {
-				$field['key']         = $driver->slug() . '__' . $field['key'];
-				$fields[] = $field;
-			}
-		}
-
 		$schema['vendors'] = array(
 			'tab_label' => 'Integrations',
 				'group'     => 'technical', // third-party API keys/tracking IDs

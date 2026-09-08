@@ -21,7 +21,7 @@ $grid = array_slice( $columnists, 1, 6 );
 <section class="bday-rd-columnists" data-screen-label="Columnists">
 	<div class="bday-container">
 		<div class="bday-rd-section-head">
-			<h2>Columnists</h2>
+			<h2><?php echo esc_html( bday_section_title( 'columnists' ) ); ?></h2>
 			<span class="bday-rd-rule"></span>
 			<a href="<?php echo esc_url( bday_category_url( 'columnist' ) ); ?>" class="bday-rd-kicker bday-rd-kicker--tint">All columnists →</a>
 		</div>

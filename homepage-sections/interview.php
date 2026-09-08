@@ -21,7 +21,7 @@ $more = array_slice( $posts, 1, 3 );
 <section class="bday-rd-interview" data-screen-label="Interview">
 	<div class="bday-container bday-rd-interview__grid">
 		<div class="bday-rd-interview__col">
-			<span class="bday-rd-kicker bday-rd-kicker--accent">The Interview</span>
+			<span class="bday-rd-kicker bday-rd-kicker--accent"><?php echo esc_html( bday_section_title( 'interview' ) ); ?></span>
 			<a href="<?php echo esc_url( get_tag_link( get_term_by( 'slug', 'bd-interview', 'post_tag' ) ) ); ?>" class="bday-rd-kicker bday-rd-kicker--faint bday-rd-interview__see-more">All interviews →</a>
 			<?php if ( has_post_thumbnail( $lead->ID ) ) : ?>
 				<div class="bday-rd-interview__portrait"><?php echo bday_get_card_media( $lead->ID, 'featured' ); ?></div>

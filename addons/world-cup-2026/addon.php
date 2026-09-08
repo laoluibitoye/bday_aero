@@ -41,6 +41,16 @@ add_shortcode(
 		</div>
 		<script>
 		document.addEventListener('DOMContentLoaded', function () {
+			// This widget's data comes from a third-party API
+			// (worldcup26.ir, see data-api above) this theme doesn't
+			// control — every field from it is escaped before it ever
+			// touches innerHTML, so a compromised or malicious response
+			// can only ever render as inert text, never as markup/script.
+			function escHtml(s) {
+				return String(s).replace(/[&<>"']/g, function (c) {
+					return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+				});
+			}
 			document.querySelectorAll('.bday-wc-fixtures').forEach(function (container) {
 				fetch(container.dataset.api)
 					.then(function (r) { return r.json(); })
@@ -59,11 +69,13 @@ add_shortcode(
 							return;
 						}
 						var html = games.map(function (g) {
-							var home = g.home_team_name_en || g.home_team_label || 'TBD';
-							var away = g.away_team_name_en || g.away_team_label || 'TBD';
-							var score = g.finished === 'TRUE' || (g.time_elapsed !== 'notstarted' && g.time_elapsed !== 'finished')
-								? g.home_score + ' - ' + g.away_score
-								: (g.local_time || 'VS');
+							var home = escHtml(g.home_team_name_en || g.home_team_label || 'TBD');
+							var away = escHtml(g.away_team_name_en || g.away_team_label || 'TBD');
+							var score = escHtml(
+								g.finished === 'TRUE' || (g.time_elapsed !== 'notstarted' && g.time_elapsed !== 'finished')
+									? g.home_score + ' - ' + g.away_score
+									: (g.local_time || 'VS')
+							);
 							return '<a class="bday-wc-fixture" href="' + container.dataset.link + '"><span>' + home + '</span><strong>' + score + '</strong><span>' + away + '</span></a>';
 						}).join('');
 						container.innerHTML = html + '<a class="bday-wc-fixtures__cta" href="' + container.dataset.link + '">Predict Matches</a>';
@@ -82,7 +94,49 @@ add_shortcode(
 add_action( 'wp_ajax_wc_submit_prediction', 'bday_wc_prediction_handler' );
 add_action( 'wp_ajax_nopriv_wc_submit_prediction', 'bday_wc_prediction_handler' );
 
+/**
+ * Where prediction submissions (real PII: name/email/phone) are stored.
+ * Deliberately NOT a fixed name directly under uploads/ — that's a public,
+ * web-served directory, so a guessable filename there is a public PII
+ * leak. Two independent layers instead: a dedicated subdirectory locked
+ * down with .htaccess + index.php (works on this stack's Apache; kept as
+ * defense-in-depth, not the only layer, since a different host might not
+ * honor .htaccess), and a filename derived from this site's own auth salt
+ * so it isn't guessable even without that lock.
+ */
+function bday_wc_predictions_dir(): string {
+	$upload_dir = wp_upload_dir();
+	$dir        = $upload_dir['basedir'] . '/private/world-cup-2026';
+
+	if ( ! file_exists( $dir ) ) {
+		wp_mkdir_p( $dir );
+	}
+	if ( ! file_exists( $dir . '/.htaccess' ) ) {
+		file_put_contents( $dir . '/.htaccess', "Require all denied\ndeny from all\n" );
+	}
+	if ( ! file_exists( $dir . '/index.php' ) ) {
+		file_put_contents( $dir . '/index.php', "<?php\n// Silence is golden.\n" );
+	}
+
+	return $dir;
+}
+
+function bday_wc_predictions_file(): string {
+	$token = substr( hash_hmac( 'sha256', 'world-cup-2026-predictions', wp_salt( 'auth' ) ), 0, 24 );
+	return bday_wc_predictions_dir() . '/predictions-' . $token . '.csv';
+}
+
+/**
+ * check_ajax_referer() requires a 'nonce' field carrying
+ * wp_create_nonce('bday_wc_predict') — whichever prediction-form markup
+ * ends up calling this endpoint needs to send that nonce (e.g. as a hidden
+ * field, or a data attribute read into the POST body), the same way every
+ * other AJAX handler in this theme is called. Until then this correctly
+ * rejects every request instead of accepting unauthenticated submissions.
+ */
 function bday_wc_prediction_handler(): void {
+	check_ajax_referer( 'bday_wc_predict', 'nonce' );
+
 	$name  = sanitize_text_field( wp_unslash( $_POST['pred_name'] ?? '' ) );
 	$email = sanitize_email( wp_unslash( $_POST['pred_email'] ?? '' ) );
 	$phone = sanitize_text_field( wp_unslash( $_POST['pred_phone'] ?? '' ) );
@@ -91,9 +145,8 @@ function bday_wc_prediction_handler(): void {
 		wp_send_json_error( 'Missing required fields.' );
 	}
 
-	$upload_dir = wp_upload_dir();
-	$csv_file   = $upload_dir['basedir'] . '/worldcup_predictions.csv';
-	$is_new     = ! file_exists( $csv_file );
+	$csv_file = bday_wc_predictions_file();
+	$is_new   = ! file_exists( $csv_file );
 
 	$fp = fopen( $csv_file, 'a' );
 	if ( false === $fp ) {

@@ -154,7 +154,7 @@ final class Bday_Aero_Page_Setup {
 
 	public function handle_create_pages(): void {
 		check_ajax_referer( 'bday_aero_create_pages', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Bday_Settings_Visibility::capability_for( 'aero-paywall' ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'bday-aero' ) ), 403 );
 			return;
 		}

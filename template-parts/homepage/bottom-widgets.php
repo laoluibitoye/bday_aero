@@ -42,17 +42,21 @@ $cartoon_of_day = ( $modules['enable_toon_podcast_row'] && post_type_exists( 'ca
 	: array();
 ?>
 
-<?php if ( $modules['enable_magazine_row'] ) : ?>
+<?php
+$magazine_items = array_filter(
+	array(
+		'weekender'  => $data['weekender'][0] ?? null,
+		'womens_hub' => $data['womens_hub'][0] ?? null,
+		'reports'    => $data['reports'][0] ?? null,
+	)
+);
+?>
+<?php if ( $modules['enable_magazine_row'] && ! empty( $magazine_items ) ) : ?>
 <section class="bday-magazine-row">
 	<div class="bday-container bday-card-grid">
-		<?php foreach ( array(
-			'weekender'  => $data['weekender'][0] ?? null,
-			'womens_hub' => $data['womens_hub'][0] ?? null,
-			'reports'    => $data['reports'][0] ?? null,
-		) as $slug => $post ) :
-			if ( ! $post ) continue;
-			echo bday_card_html( $post, array( 'size' => 'pdf_thumbnail' ) );
-		endforeach; ?>
+		<?php foreach ( $magazine_items as $post ) : ?>
+			<?php echo bday_card_html( $post, array( 'size' => 'pdf_thumbnail' ) ); ?>
+		<?php endforeach; ?>
 	</div>
 </section>
 <?php endif; ?>

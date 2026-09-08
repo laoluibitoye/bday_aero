@@ -18,7 +18,7 @@ if ( empty( $tiles ) ) {
 <section class="bday-rd-desk-tiles" data-screen-label="Sections">
 	<div class="bday-container">
 		<div class="bday-rd-section-head">
-			<h2>Browse the Desks</h2>
+			<h2><?php echo esc_html( bday_section_title( 'browse-desks' ) ); ?></h2>
 			<span class="bday-rd-rule"></span>
 		</div>
 		<div class="bday-rd-desk-tiles__grid">

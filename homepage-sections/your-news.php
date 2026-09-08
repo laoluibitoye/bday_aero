@@ -28,7 +28,7 @@ if ( empty( $desks ) ) {
 <section class="bday-rd-your-news" data-screen-label="Your News">
 	<div class="bday-container">
 		<div class="bday-rd-section-head">
-			<h2>Your News</h2>
+			<h2><?php echo esc_html( bday_section_title( 'your-news' ) ); ?></h2>
 			<span class="bday-rd-rule"></span>
 		</div>
 		<div class="bday-scroll-row bday-rd-your-news__rail" data-hide-scrollbar>

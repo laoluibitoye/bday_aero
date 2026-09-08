@@ -22,25 +22,44 @@ if ( ! defined( 'ABSPATH' ) ) {
  * service itself, which every other post-publish call already hits one at
  * a time, never concurrently.
  *
- * wp bday backfill-published-posts [--dry-run] [--limit=<n>] [--sleep=<seconds>]
+ * wp bday backfill-published-posts [--dry-run] [--limit=<n>] [--sleep=<seconds>] [--post_ids=<id,id,...>]
+ *
+ * --post_ids targets specific posts directly (comma-separated IDs) instead
+ * of walking the whole catalog from the lowest ID — the way to re-sync one
+ * known post (e.g. after a failed sync reported by the live hook or a prior
+ * backfill run) without re-attempting everything before it again.
  */
 WP_CLI::add_command( 'bday backfill-published-posts', 'bday_follow_notify_backfill_command' );
 
 function bday_follow_notify_backfill_command( array $args, array $assoc_args ): void {
-	$dry_run = isset( $assoc_args['dry-run'] );
-	$limit   = isset( $assoc_args['limit'] ) ? (int) $assoc_args['limit'] : -1;
-	$sleep   = isset( $assoc_args['sleep'] ) ? (float) $assoc_args['sleep'] : 1.0;
+	$dry_run  = isset( $assoc_args['dry-run'] );
+	$limit    = isset( $assoc_args['limit'] ) ? (int) $assoc_args['limit'] : -1;
+	$sleep    = isset( $assoc_args['sleep'] ) ? (float) $assoc_args['sleep'] : 1.0;
+	$post_ids = isset( $assoc_args['post_ids'] )
+		? array_filter( array_map( 'absint', explode( ',', (string) $assoc_args['post_ids'] ) ) )
+		: null;
 
-	$post_ids = get_posts(
-		array(
-			'post_type'      => 'post',
-			'post_status'    => 'publish',
-			'posts_per_page' => $limit,
-			'orderby'        => 'ID',
-			'order'          => 'ASC',
-			'fields'         => 'ids',
+	$post_ids = null !== $post_ids
+		? get_posts(
+			array(
+				'post_type'      => 'post',
+				'post_status'    => 'publish',
+				'post__in'       => $post_ids,
+				'orderby'        => 'post__in',
+				'posts_per_page' => count( $post_ids ),
+				'fields'         => 'ids',
+			)
 		)
-	);
+		: get_posts(
+			array(
+				'post_type'      => 'post',
+				'post_status'    => 'publish',
+				'posts_per_page' => $limit,
+				'orderby'        => 'ID',
+				'order'          => 'ASC',
+				'fields'         => 'ids',
+			)
+		);
 
 	if ( empty( $post_ids ) ) {
 		WP_CLI::success( 'No published posts found.' );
@@ -49,6 +68,7 @@ function bday_follow_notify_backfill_command( array $args, array $assoc_args ): 
 
 	$total   = count( $post_ids );
 	$synced  = 0;
+	$failed  = 0;
 	$skipped = 0;
 
 	foreach ( $post_ids as $i => $post_id ) {
@@ -62,13 +82,22 @@ function bday_follow_notify_backfill_command( array $args, array $assoc_args ): 
 			WP_CLI::log( sprintf( '[dry-run] would sync #%d "%s"', $post->ID, $post->post_title ) );
 			++$synced;
 		} else {
-			$attempted = bday_follow_notify_sync_post( $post );
-			if ( $attempted ) {
+			$result = bday_follow_notify_sync_post( $post );
+			if ( null === $result ) {
+				WP_CLI::warning( sprintf( 'connector not configured — aborting at #%d', $post->ID ) );
+				break;
+			} elseif ( true === $result ) {
 				WP_CLI::log( sprintf( '(%d/%d) synced #%d "%s"', $i + 1, $total, $post->ID, $post->post_title ) );
 				++$synced;
 			} else {
-				WP_CLI::warning( sprintf( 'connector not configured — aborting at #%d', $post->ID ) );
-				break;
+				// Attempted but failed (network error or non-2xx) — logged
+				// with the real reason via error_log by the sync function
+				// itself. Counted separately, not as a synced row, and the
+				// run keeps going: one flaky request shouldn't abort a
+				// backfill of the whole catalog the way "not configured at
+				// all" correctly does above.
+				WP_CLI::warning( sprintf( '(%d/%d) FAILED to sync #%d "%s" — see server error log', $i + 1, $total, $post->ID, $post->post_title ) );
+				++$failed;
 			}
 		}
 
@@ -80,5 +109,5 @@ function bday_follow_notify_backfill_command( array $args, array $assoc_args ): 
 		}
 	}
 
-	WP_CLI::success( sprintf( '%d synced, %d skipped, out of %d published posts.', $synced, $skipped, $total ) );
+	WP_CLI::success( sprintf( '%d synced, %d failed, %d skipped, out of %d published posts.', $synced, $failed, $skipped, $total ) );
 }

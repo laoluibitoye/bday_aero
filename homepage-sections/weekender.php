@@ -23,7 +23,7 @@ if ( empty( $cols ) ) {
 <section class="bday-rd-weekender" data-screen-label="Weekender and life">
 	<div class="bday-container">
 		<div class="bday-rd-section-head">
-			<h2>Off the Clock</h2>
+			<h2><?php echo esc_html( bday_section_title( 'weekender' ) ); ?></h2>
 			<span class="bday-rd-rule"></span>
 			<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( implode( ' · ', wp_list_pluck( $cols, 'label' ) ) ); ?></span>
 		</div>

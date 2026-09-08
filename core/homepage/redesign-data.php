@@ -26,11 +26,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 function bday_get_redesign_homepage_data(): array {
 	$data = bday_get_homepage_data();
 
-	// offset: 1 — the hero's own lead story ($data['lead'], also queried
-	// from the "bdlead" tag with no offset) is item 0 of this same tag;
-	// without the offset it would show a second time as "01" in the
-	// numbered list right next to itself as the lead article.
-	$data['rd_top_news'] = bday_get_posts( array( 'tag' => 'bdlead', 'numberposts' => 8, 'offset' => 1, 'cache_namespace' => 'homepage' ) );
+	// Excludes the hero's own lead story by ID rather than assuming it's
+	// item 0 of the "bdlead" tag order (an offset would) — true normally,
+	// but not when a lead is locked (bday_get_hero_lead()) to a post
+	// that isn't the newest bdlead-tagged one, or isn't tagged "bdlead"
+	// at all. Without excluding it explicitly, a locked lead could show
+	// a second time in this numbered list right next to itself.
+	$data['rd_top_news'] = bday_get_posts( array( 'tag' => 'bdlead', 'numberposts' => 8, 'post__not_in' => array( $data['lead'][0]->ID ?? 0 ), 'cache_namespace' => 'homepage' ) );
 
 	// Hero's third column ("Latest News") — genuinely the newest posts
 	// site-wide (no tag), deliberately not the "bdrecent" tag Latest
@@ -53,8 +55,8 @@ function bday_get_redesign_homepage_data(): array {
 	);
 
 	// 1 feature + 2 medium + 8 "Also in Pro" = 11.
-	$data['rd_premium'] = bday_get_posts( array( 'tag' => 'premium', 'numberposts' => 11, 'cache_namespace' => 'homepage' ) );
-	$data['rd_opinion']  = bday_get_posts( array( 'category_name' => 'opinion', 'numberposts' => 7, 'cache_namespace' => 'homepage' ) );
+	$data['rd_premium'] = bday_section_source_posts( 'premium' );
+	$data['rd_opinion']  = bday_section_source_posts( 'opinion' );
 	$data['rd_toon']     = post_type_exists( 'cartoons' )
 		? bday_get_posts( array( 'post_type' => 'cartoons', 'numberposts' => 1, 'cache_namespace' => 'homepage' ) )
 		: array();
@@ -77,7 +79,7 @@ function bday_get_redesign_homepage_data(): array {
 	$data['rd_videos'] = post_type_exists( 'bday_video' )
 		? bday_get_posts( array( 'post_type' => 'bday_video', 'numberposts' => 5, 'cache_namespace' => 'homepage' ) )
 		: array();
-	$data['rd_latest'] = bday_get_posts( array( 'tag' => 'bdrecent', 'numberposts' => 8, 'cache_namespace' => 'homepage' ) );
+	$data['rd_latest'] = bday_section_source_posts( 'latest-stories' );
 
 	// Off the Clock's columns are now an admin-editable list (Appearance -> BusinessDay Theme ->
 	// Off the Clock — see core/homepage/off-the-clock-admin.php), not a hardcoded PHP array.
@@ -121,10 +123,10 @@ function bday_get_redesign_homepage_data(): array {
 	// this is genuinely more editorial-desk content, not a repeat.
 	$data['rd_editor_pick_more'] = bday_get_posts( array( 'category_name' => 'editorial', 'numberposts' => 5, 'offset' => 3, 'cache_namespace' => 'homepage' ) );
 
-	$data['rd_investigates'] = bday_get_posts( array( 'tag' => 'bdinvestigates', 'numberposts' => 4, 'cache_namespace' => 'homepage' ) );
-	$data['rd_interview']    = bday_get_posts( array( 'tag' => 'bd-interview', 'numberposts' => 4, 'cache_namespace' => 'homepage' ) );
-	$data['rd_partner']      = bday_get_posts( array( 'tag' => 'sponsored', 'numberposts' => 4, 'cache_namespace' => 'homepage' ) );
-	$data['rd_ysot']         = bday_get_posts( array( 'category_name' => 'yaba-school-of-thought', 'numberposts' => 7, 'cache_namespace' => 'homepage' ) );
+	$data['rd_investigates'] = bday_section_source_posts( 'investigates' );
+	$data['rd_interview']    = bday_section_source_posts( 'interview' );
+	$data['rd_partner']      = bday_section_source_posts( 'partner-content' );
+	$data['rd_ysot']         = bday_section_source_posts( 'ysot' );
 	$data['rd_gallery']      = bday_get_posts(
 		array(
 			'tax_query'       => array(

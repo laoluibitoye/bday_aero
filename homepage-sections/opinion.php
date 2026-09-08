@@ -14,7 +14,7 @@ $data = $args['data'] ?? array();
 bday_render_editorial_grid_section(
 	array(
 		'posts'           => $data['rd_opinion'] ?? array(),
-		'heading'         => 'Opinion',
+		'heading'         => bday_section_title( 'opinion' ),
 		'see_more_url'    => bday_section_url( 'opinion' ),
 		'see_more_label'  => 'All opinion →',
 		'lead_kicker'     => 'Editorial',

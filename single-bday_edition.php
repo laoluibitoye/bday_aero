@@ -65,6 +65,16 @@ if ( have_posts() ) :
 				<?php endif; ?>
 
 				<a class="bday-edition-single__archive-link" href="<?php echo esc_url( get_term_link( $publication ) ); ?>">See past editions of <?php echo esc_html( $publication->name ); ?></a>
+
+				<?php
+				// The date-picker version of this page (E-Paper Articles)
+				// exists and works, but was previously unlinked from
+				// anywhere on the site.
+				$bday_epaper_archive_url = class_exists( 'Bday_Aero_Page_Setup' ) ? Bday_Aero_Page_Setup::url_for( 'epaper_articles' ) : null;
+				if ( $bday_epaper_archive_url ) :
+					?>
+					<a class="bday-edition-single__archive-link" href="<?php echo esc_url( $bday_epaper_archive_url ); ?>">Browse past editions by date</a>
+				<?php endif; ?>
 			<?php endif; ?>
 		</article>
 	</section>

@@ -15,7 +15,7 @@ $tag  = get_term_by( 'slug', 'sponsored', 'post_tag' );
 bday_render_editorial_grid_section(
 	array(
 		'posts'           => $data['rd_partner'] ?? array(),
-		'heading'         => 'Partnered & Sponsored Content',
+		'heading'         => bday_section_title( 'partner-content' ),
 		'see_more_url'    => $tag ? (string) get_tag_link( $tag ) : '',
 		'see_more_label'  => 'See more →',
 		'lead_kicker'     => 'Sponsored',

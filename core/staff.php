@@ -16,7 +16,7 @@ add_filter(
 		if ( ! is_user_logged_in() ) {
 			return $show;
 		}
-		$staff_roles = array( 'administrator', 'editor', 'author', 'wpseo_manager', 'bddraft', 'bdeditor', 'wpseo_editor' );
+		$staff_roles = array( 'administrator', 'editor', 'author', 'wpseo_manager', 'bddraft', 'bdeditor', 'wpseo_editor', 'bday_technical_team' );
 		$user        = wp_get_current_user();
 		return array_intersect( $staff_roles, (array) $user->roles ) ? $show : false;
 	}

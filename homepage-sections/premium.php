@@ -29,7 +29,7 @@ $also    = array_slice( $posts, 3, 8 );
 	<div class="bday-container">
 		<div class="bday-rd-premium__head">
 			<span class="bday-rd-badge">Premium</span>
-			<h2 class="bday-rd-premium__title">BusinessDay Pro — intelligence for decision makers</h2>
+			<h2 class="bday-rd-premium__title"><?php echo esc_html( bday_section_title( 'premium' ) ); ?></h2>
 			<a class="bday-rd-kicker bday-rd-kicker--tint bday-rd-premium__cta" href="<?php echo esc_url( bday_epaper_url() ); ?>">Subscribe →</a>
 		</div>
 		<div class="bday-rd-premium__grid">

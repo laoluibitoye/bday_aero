@@ -50,6 +50,16 @@ $bday_marked_posts = bday_todays_paper_posts_for_date(
 		<header class="bday-todays-paper-page__header">
 			<span class="bday-eyebrow">Today's Paper</span>
 			<h1><?php echo esc_html( date_i18n( 'l, F j, Y' ) ); ?></h1>
+			<?php
+			// The date-picker version of this same page (E-Paper Articles,
+			// epaper_articles in class-page-setup.php) exists and is fully
+			// wired up, but until now nothing on the site linked to it —
+			// reachable only by typing its URL directly.
+			$bday_epaper_archive_url = class_exists( 'Bday_Aero_Page_Setup' ) ? Bday_Aero_Page_Setup::url_for( 'epaper_articles' ) : null;
+			if ( $bday_epaper_archive_url ) :
+				?>
+				<a class="bday-btn-link" href="<?php echo esc_url( $bday_epaper_archive_url ); ?>">Browse past editions by date →</a>
+			<?php endif; ?>
 		</header>
 
 		<?php

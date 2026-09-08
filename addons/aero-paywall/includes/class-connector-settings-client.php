@@ -26,7 +26,7 @@ final class Bday_Aero_Connector_Settings_Client {
 
 	public function handle_get(): void {
 		check_ajax_referer( 'aero_paywall_connector_settings', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Bday_Settings_Visibility::capability_for( 'aero-paywall' ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'bday-aero' ) ), 403 );
 			return;
 		}
@@ -60,7 +60,7 @@ final class Bday_Aero_Connector_Settings_Client {
 
 	public function handle_update(): void {
 		check_ajax_referer( 'aero_paywall_connector_settings', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Bday_Settings_Visibility::capability_for( 'aero-paywall' ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'bday-aero' ) ), 403 );
 			return;
 		}

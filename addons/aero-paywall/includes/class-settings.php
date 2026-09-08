@@ -73,10 +73,23 @@ final class Bday_Aero_Settings {
 		return is_array( $terms ) ? $terms : array();
 	}
 
-	/** @return string[] */
+	/**
+	 * @return string[]
+	 *
+	 * Default is 'post' + 'bday_edition' — a fresh/never-configured site
+	 * gates both regular articles and e-edition PDFs out of the box. Before
+	 * this, an edition was only ever gated once an admin explicitly opened
+	 * this settings screen and saved it with e-editions checked; until then
+	 * every edition's PDF rendered the fully open, no-login self-signed
+	 * link (bday_edition_type_is_restricted() in secure-storage.php). Note
+	 * this only affects the *default* on an option that's never been
+	 * saved — a site that already saved this list without bday_edition
+	 * keeps that explicit choice; add it from the settings screen.
+	 */
 	public static function restricted_post_types(): array {
-		$types = get_option( self::RESTRICTED_POST_TYPES, array( 'post' ) );
-		return is_array( $types ) && ! empty( $types ) ? $types : array( 'post' );
+		$default = array( 'post', 'bday_edition' );
+		$types   = get_option( self::RESTRICTED_POST_TYPES, $default );
+		return is_array( $types ) && ! empty( $types ) ? $types : $default;
 	}
 
 	public static function accent_color(): string {

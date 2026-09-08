@@ -9,6 +9,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * "Technical Team" — a role with an Editor's day-to-day content
+ * capabilities, that also gets default access (see the first-run seed in
+ * core/homepage/admin.php) to the settings tabs that repoint a homepage
+ * section's title or its underlying tag/category, a capability
+ * deliberately kept out of Editor/Author's reach since it changes what a
+ * section *is*, not just what's published through it. get_role() guards
+ * this so it only ever runs the (cheap but non-free) add_role() once —
+ * every later request finds the role already there and does nothing,
+ * same idempotency every add_option() first-run seed in this theme
+ * already relies on.
+ */
+add_action(
+	'after_setup_theme',
+	static function (): void {
+		if ( ! get_role( 'bday_technical_team' ) ) {
+			$editor = get_role( 'editor' );
+			add_role( 'bday_technical_team', 'Technical Team', $editor ? $editor->capabilities : array( 'read' => true ) );
+		}
+	}
+);
+
 add_action(
 	'after_setup_theme',
 	static function (): void {

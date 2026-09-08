@@ -205,3 +205,72 @@ function bday_edition_build_signed_download_url( int $post_id, int $ttl_seconds 
 function bday_edition_reader_url( string $signed_pdf_url ): string {
 	return home_url( '/?bday_reader=1&pdf=' . rawurlencode( $signed_pdf_url ) );
 }
+
+/**
+ * flipbook-reader.php's own gate on the `pdf` URL it's asked to load —
+ * before this, it fetched and rendered ANY URL handed to it in that
+ * parameter with no validation of its own, on the theory that the caller
+ * already did an entitlement check to get a signed URL in the first
+ * place. That's true for a legitimately-issued URL, but the reader itself
+ * had no way to tell one apart from `?pdf=https://anything-else` — making
+ * it a fully open, unauthenticated proxy for arbitrary third-party
+ * content served under this site's own trusted domain. Two — and only
+ * two — URL shapes are legitimate:
+ *
+ *   1. This site's own self-signed edition-download REST route
+ *      (bday_edition_build_signed_download_url() above). Same-origin, so
+ *      the reader can independently re-verify the exp/sig here with the
+ *      same secret+formula download-endpoint.php itself checks — this
+ *      isn't "trust the caller," it's a real, stateless signature
+ *      re-check (nothing is consumed/invalidated by checking it twice).
+ *
+ *   2. subscription-service's own configured API host — a signed URL it
+ *      minted only after its own entitlement check. This site can't
+ *      re-verify *that* signature (different secret/scheme), but a
+ *      client can't have obtained such a URL without already passing
+ *      that check, so trusting the host itself (not the query string) is
+ *      the right boundary here — the same first-party trust every other
+ *      call to Bday_Aero_Settings::api_base_url() already relies on.
+ *
+ * Anything else — any other host, any other path — is rejected.
+ */
+function bday_edition_reader_pdf_url_is_allowed( string $url ): bool {
+	$parsed = wp_parse_url( $url );
+	if ( ! $parsed || empty( $parsed['host'] ) || empty( $parsed['scheme'] ) || ! in_array( $parsed['scheme'], array( 'http', 'https' ), true ) ) {
+		return false;
+	}
+
+	$home_host = wp_parse_url( home_url(), PHP_URL_HOST );
+	if ( is_string( $home_host ) && 0 === strcasecmp( $parsed['host'], $home_host ) ) {
+		return bday_edition_verify_self_signed_download_url( $parsed );
+	}
+
+	$api_host = class_exists( 'Bday_Aero_Settings' ) ? wp_parse_url( Bday_Aero_Settings::api_base_url(), PHP_URL_HOST ) : null;
+	if ( is_string( $api_host ) && '' !== $api_host && 0 === strcasecmp( $parsed['host'], $api_host ) ) {
+		return true;
+	}
+
+	return false;
+}
+
+/** @param array<string, mixed> $parsed_url wp_parse_url() output for a same-origin URL */
+function bday_edition_verify_self_signed_download_url( array $parsed_url ): bool {
+	if ( 0 !== strpos( $parsed_url['path'] ?? '', '/wp-json/aeropaywall/v1/edition-download/' ) ) {
+		return false;
+	}
+
+	parse_str( $parsed_url['query'] ?? '', $query );
+	if ( ! preg_match( '#/edition-download/(\d+)#', $parsed_url['path'], $matches ) ) {
+		return false;
+	}
+	$post_id = (int) $matches[1];
+	$exp     = isset( $query['exp'] ) ? (int) $query['exp'] : 0;
+	$sig     = isset( $query['sig'] ) ? (string) $query['sig'] : '';
+
+	if ( $post_id <= 0 || $exp <= 0 || '' === $sig || time() > $exp ) {
+		return false;
+	}
+
+	$expected = hash_hmac( 'sha256', $post_id . '.' . $exp, bday_edition_signing_secret() );
+	return hash_equals( $expected, $sig );
+}

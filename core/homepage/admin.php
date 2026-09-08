@@ -1,12 +1,27 @@
 <?php
 /**
  * "Homepage Sections" settings tab — a drag-reorderable, enable/disable
- * checklist of every file auto-discovered by Bday_Section_Registry. Same
- * native-HTML5-drag-and-drop pattern as addons/sections/includes/admin.php
- * (no jQuery/library), but simpler: this list's *rows* are fixed (one per
- * section file on disk), so there's no add/remove-row UI, only reorder +
- * toggle — a section is added or removed by shipping/deleting a file
- * under homepage-sections/, not from this screen.
+ * checklist of every file auto-discovered by Bday_Section_Registry, plus
+ * (new) a Title and Source column per row backed by Bday_Section_Content:
+ * Title free-text-overrides the <h2> a section prints (falls back to the
+ * shipped default the moment it's cleared); Source only appears for the
+ * sections listed in bday_section_sources() — the ones driven by exactly
+ * one tag/category — and lets that tag/category be swapped for another
+ * one, e.g. repurposing "Columnists" to source from a different category
+ * without touching a template file. Same native-HTML5-drag-and-drop
+ * pattern as addons/sections/includes/admin.php (no jQuery/library), but
+ * simpler: this list's *rows* are fixed (one per section file on disk),
+ * so there's no add/remove-row UI, only reorder + toggle — a section is
+ * added or removed by shipping/deleting a file under homepage-sections/,
+ * not from this screen.
+ *
+ * This tab (and the older, similarly-shaped "Sections" tab —
+ * addons/sections/) default to Technical Team + Administrator only (see
+ * the bday_settings_tab_roles seed below) since retitling a section or
+ * repointing its content source changes what a section *is*, not the
+ * day-to-day editorial call of what's published through it — an admin
+ * can still widen or narrow that from Access Control at any time, this
+ * is only the out-of-the-box default.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -77,12 +92,22 @@ function bday_render_homepage_sections_tab( array $values ): void {
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=bday-theme-settings-homepage' ) ); ?>">Homepage Variants</a>
 		to preview or go live with it.
 	</p>
+	<p class="description" style="margin-bottom:16px;">
+		<strong>Title</strong> overrides the heading a section prints on the homepage — leave blank to use the
+		shipped default shown as its placeholder. <strong>Source</strong> only applies to sections built from a
+		single tag or category (Columnists, Opinion, Premium, BD Investigates, The Interview, Partner Content,
+		YSoT, Latest Stories) — repoint one at a different tag or category to repurpose that section entirely,
+		e.g. turning "Columnists" into a rail for a different category. Sections built from more than one
+		source, or already configurable elsewhere (Your News, Off the Clock), show "—" here.
+	</p>
 	<table class="widefat bday-sections-table" id="bday-homepage-sections-table">
 		<thead>
 			<tr>
 				<th style="width:24px"></th>
 				<th style="width:70px">Enabled</th>
 				<th>Section</th>
+				<th>Title</th>
+				<th>Source</th>
 				<th>Description</th>
 			</tr>
 		</thead>
@@ -133,6 +158,12 @@ function bday_render_homepage_sections_tab( array $values ): void {
 
 /** @param int $index @param array{slug: string, enabled: bool} $row @param array<string, mixed> $meta */
 function bday_render_homepage_section_row( int $index, array $row, array $meta ): void {
+	$slug            = $row['slug'];
+	$title_defaults  = Bday_Section_Content::title_defaults();
+	$sources         = bday_section_sources();
+	$content         = Bday_Section_Content::row( $slug );
+	$has_title       = isset( $title_defaults[ $slug ] );
+	$source_default  = $sources[ $slug ] ?? null;
 	?>
 	<tr>
 		<td><span class="bday-drag-handle dashicons dashicons-menu"></span></td>
@@ -143,6 +174,36 @@ function bday_render_homepage_section_row( int $index, array $row, array $meta )
 			</label>
 		</td>
 		<td><strong><?php echo esc_html( $meta['label'] ?? $row['slug'] ); ?></strong></td>
+		<td>
+			<?php if ( $has_title ) : ?>
+				<input
+					type="text"
+					class="regular-text"
+					name="bday_homepage_section_content[<?php echo esc_attr( $slug ); ?>][title]"
+					value="<?php echo esc_attr( $content['title'] ?? '' ); ?>"
+					placeholder="<?php echo esc_attr( $title_defaults[ $slug ] ); ?>"
+				>
+			<?php else : ?>
+				<span class="description">—</span>
+			<?php endif; ?>
+		</td>
+		<td>
+			<?php if ( null !== $source_default ) : ?>
+				<select name="bday_homepage_section_content[<?php echo esc_attr( $slug ); ?>][source_taxonomy]">
+					<option value="category" <?php selected( ( $content['source_taxonomy'] ?? $source_default['taxonomy'] ), 'category' ); ?>>Category</option>
+					<option value="post_tag" <?php selected( ( $content['source_taxonomy'] ?? $source_default['taxonomy'] ), 'post_tag' ); ?>>Tag</option>
+				</select>
+				<input
+					type="text"
+					class="small-text"
+					name="bday_homepage_section_content[<?php echo esc_attr( $slug ); ?>][source_term]"
+					value="<?php echo esc_attr( $content['source_term'] ?? '' ); ?>"
+					placeholder="<?php echo esc_attr( $source_default['term'] ); ?>"
+				>
+			<?php else : ?>
+				<span class="description">—</span>
+			<?php endif; ?>
+		</td>
 		<td><span class="description"><?php echo esc_html( $meta['description'] ?? '' ); ?></span></td>
 	</tr>
 	<?php
@@ -175,7 +236,7 @@ add_filter(
 				'group'     => 'editorial',
 			'option'    => 'bday_homepage_sections',
 			'render'    => 'bday_render_homepage_sections_tab',
-			'intro'     => 'Every section available to the "Redesign 2026" homepage layout, in the order it renders. Toggle a section off to skip it entirely (no query runs, nothing renders) — this does not affect the classic Default/Weekend homepage layouts, which are unrelated template files.',
+			'intro'     => 'Every section available to the "Redesign 2026" homepage layout, in the order it renders. Toggle a section off to skip it entirely (no query runs, nothing renders) — this does not affect the classic Default/Weekend homepage layouts, which are unrelated template files. Title and Source (Technical Team only by default) let a section be relabeled or repurposed onto a different tag/category without editing a template file.',
 			'about'     => '<p>A new section shows up here automatically the first time it\'s deployed (appended to the end, on by default) — nothing needs configuring for it to appear, only reordering if the default position isn\'t right.</p>',
 		);
 		return $schema;
@@ -189,6 +250,40 @@ add_action(
 			'bday_homepage_sections',
 			'bday_homepage_sections',
 			array( 'sanitize_callback' => 'bday_sanitize_homepage_sections' )
+		);
+		// Registered to the same settings *group* as the option above (not
+		// a new group of its own) so both save from the one "Homepage
+		// Sections" form in a single submit — settings_fields() only prints
+		// one group's nonce, and the Settings API saves every option
+		// registered to that group on submit, not just the one the nonce
+		// was named after.
+		register_setting(
+			'bday_homepage_sections',
+			'bday_homepage_section_content',
+			array( 'sanitize_callback' => array( 'Bday_Section_Content', 'sanitize' ) )
+		);
+	}
+);
+
+/**
+ * First-run default only — add_option() is a no-op once the option
+ * exists, so this never overwrites an admin's later Access Control
+ * changes. Retitling a section or repointing its tag/category changes
+ * what a section *is*, not the day-to-day editorial call of what's
+ * published through it, so both this tab and the older, similarly-shaped
+ * "Sections" tab (addons/sections/) default to Technical Team +
+ * Administrator only, out of the box — an admin can still widen or
+ * narrow that later from Access Control, same as every other tab.
+ */
+add_action(
+	'after_setup_theme',
+	static function (): void {
+		add_option(
+			Bday_Settings_Visibility::OPTION,
+			array(
+				'homepage_sections' => array( 'bday_technical_team' ),
+				'sections'          => array( 'bday_technical_team' ),
+			)
 		);
 	}
 );

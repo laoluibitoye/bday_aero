@@ -90,11 +90,32 @@ final class Bday_Aero_Meter_Client {
 		);
 	}
 
+	/**
+	 * A true sliding window: stores each failure's own timestamp and prunes
+	 * anything older than CB_FAILURE_WINDOW before counting, rather than a
+	 * plain counter whose transient TTL got pushed back to a fresh
+	 * CB_FAILURE_WINDOW on every new failure — that let a slow trickle of
+	 * failures spaced less than the window apart accumulate indefinitely
+	 * (never expiring on its own the way the constant's own comment says),
+	 * instead of tripping only on a genuine burst within the window.
+	 */
 	private static function record_failure(): void {
-		$count = (int) get_transient( self::CB_FAILURE_TRANSIENT );
-		++$count;
-		set_transient( self::CB_FAILURE_TRANSIENT, $count, self::CB_FAILURE_WINDOW );
-		if ( $count >= self::CB_FAILURE_THRESHOLD ) {
+		$failures = get_transient( self::CB_FAILURE_TRANSIENT );
+		$failures = is_array( $failures ) ? $failures : array();
+
+		$cutoff   = time() - self::CB_FAILURE_WINDOW;
+		$failures = array_values(
+			array_filter(
+				$failures,
+				static function ( int $timestamp ) use ( $cutoff ): bool {
+					return $timestamp > $cutoff;
+				}
+			)
+		);
+		$failures[] = time();
+
+		set_transient( self::CB_FAILURE_TRANSIENT, $failures, self::CB_FAILURE_WINDOW );
+		if ( count( $failures ) >= self::CB_FAILURE_THRESHOLD ) {
 			set_transient( self::CB_OPEN_TRANSIENT, true, self::CB_COOLDOWN );
 		}
 	}

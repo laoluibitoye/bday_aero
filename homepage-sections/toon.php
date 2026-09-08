@@ -24,7 +24,7 @@ if ( ! $toon ) {
 	<div class="bday-container bday-rd-toon__grid">
 		<a href="<?php echo esc_url( get_permalink( $toon ) ); ?>" class="bday-rd-toon__media"><?php echo bday_get_thumbnail( $toon->ID, 'featured' ); ?></a>
 		<div class="bday-rd-toon__body">
-			<span class="bday-rd-kicker bday-rd-kicker--accent">Toon of the Day</span>
+			<span class="bday-rd-kicker bday-rd-kicker--accent"><?php echo esc_html( bday_section_title( 'toon' ) ); ?></span>
 			<a href="<?php echo esc_url( get_permalink( $toon ) ); ?>" class="bday-rd-toon__title"><?php echo esc_html( get_the_title( $toon ) ); ?></a>
 			<span class="bday-rd-kicker bday-rd-kicker--faint">By the BusinessDay art desk · <?php echo esc_html( bday_format_date( $toon->post_date ) ); ?></span>
 			<div class="bday-rd-toon__actions">

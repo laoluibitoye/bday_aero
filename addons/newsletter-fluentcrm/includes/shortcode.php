@@ -108,8 +108,32 @@ function bday_newsletter_handle_options(): void {
 add_action( 'wp_ajax_bday_newsletter_subscribe', 'bday_newsletter_handle_subscribe' );
 add_action( 'wp_ajax_nopriv_bday_newsletter_subscribe', 'bday_newsletter_handle_subscribe' );
 
+/**
+ * Nonce-protected but, until now, not rate-limited — a valid nonce is
+ * trivially readable from any page's own HTML, so it stops CSRF, not
+ * scripted abuse. A simple per-IP throttle (5 submissions/minute) is
+ * enough to stop enumeration/flooding without needing a new dependency;
+ * it's a soft defense (REMOTE_ADDR is spoofable behind a bad proxy setup),
+ * not a substitute for FluentCRM's own server-side duplicate handling.
+ */
+function bday_newsletter_rate_limited(): bool {
+	$ip  = (string) ( $_SERVER['REMOTE_ADDR'] ?? '' );
+	$key = 'bday_nl_rl_' . md5( $ip );
+
+	$count = (int) get_transient( $key );
+	if ( $count >= 5 ) {
+		return true;
+	}
+	set_transient( $key, $count + 1, 60 );
+	return false;
+}
+
 function bday_newsletter_handle_subscribe(): void {
 	check_ajax_referer( 'bday_newsletter_subscribe', 'nonce' );
+
+	if ( bday_newsletter_rate_limited() ) {
+		wp_send_json_error( array( 'message' => 'Too many attempts — please wait a moment and try again.' ), 429 );
+	}
 
 	$email = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
 	if ( ! is_email( $email ) ) {

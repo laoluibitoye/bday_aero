@@ -10,13 +10,15 @@
  * Latest News rather than an election-day live box, since that box has no
  * general-purpose data source (see the homepage-rebuild-plan review doc).
  *
- * Also mounts three existing addon hooks the classic homepage already
+ * Also mounts two existing addon hooks the classic homepage already
  * wires up, so their wp-admin settings keep working here too:
  * bday_hero_before_recent (BDay Live's YouTube embed — reader-requested
  * position, above the Latest News column, same third-column slot the
- * classic hero uses), bday_homepage_leaderboard_zone (Premium
- * Leaderboard's rotating banner), and the homepage_leaderboard ad zone
- * (Ads & Sharing Matrix).
+ * classic hero uses) and the homepage_leaderboard ad zone (Ads & Sharing
+ * Matrix). bday_homepage_leaderboard_zone (Premium Leaderboard) is NOT
+ * mounted here — header.php already fires that action unconditionally on
+ * every page, including this one; doing it again here double-rendered
+ * the leaderboard banner on the homepage.
  */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -99,6 +101,5 @@ $top_news_archive_url = $bdlead_term && ! is_wp_error( $bdlead_term ) ? get_tag_
 		</div>
 
 	</div>
-	<?php do_action( 'bday_homepage_leaderboard_zone' ); ?>
 	<?php bday_ad_zone( 'homepage_leaderboard' ); ?>
 </section>

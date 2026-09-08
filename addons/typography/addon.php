@@ -123,10 +123,11 @@ add_filter(
 	}
 );
 
-// Invalidate the cached markup the moment the setting changes.
-add_action(
-	'update_option_bday_addon_typography',
-	static function (): void {
-		wp_cache_flush_group( 'bday_typography' );
-	}
-);
+// No explicit invalidation needed on save: bday_typography_print()'s cache
+// key is md5(wp_json_encode($settings)) itself, so a changed setting is
+// automatically a different key — the old entry is simply never read
+// again, and expires on its own via the normal DAY_IN_SECONDS TTL. An
+// earlier wp_cache_flush_group() call here was redundant with that (the
+// stale-read case it guarded against can't happen) and, with no
+// persistent object cache configured, only added an extra orphaned
+// transient row on every settings save.

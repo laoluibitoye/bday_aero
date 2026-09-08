@@ -42,11 +42,16 @@ function bday_follow_notify_on_publish( string $new_status, string $old_status, 
  * post now still gets its title/url synced, it simply has nobody to
  * notify, which was already true before.
  *
- * @return bool True if the POST was attempted (a configured base_url/api_key
- *              existed), false if this is a no-op because the connector
- *              isn't configured at all.
+ * @return bool|null True if the POST actually succeeded (a 2xx response),
+ *                    false if it was attempted but failed (network error or
+ *                    non-2xx — logged via error_log so a failure is never
+ *                    silent), null if this is a no-op because the connector
+ *                    isn't configured at all. The caller needs "never even
+ *                    tried" told apart from "tried and failed" — the
+ *                    backfill CLI, for one, aborts on the former but keeps
+ *                    going (and counts it) on the latter.
  */
-function bday_follow_notify_sync_post( WP_Post $post ): bool {
+function bday_follow_notify_sync_post( WP_Post $post ): ?bool {
 	// Reads the same two options Bday_Aero_Settings::api_base_url()/
 	// api_key() wrap (aero_paywall_api_base_url/api_key — confirmed by
 	// reading that class directly) rather than calling the class itself.
@@ -61,7 +66,7 @@ function bday_follow_notify_sync_post( WP_Post $post ): bool {
 	$base_url = (string) get_option( 'aero_paywall_api_base_url', '' );
 	$api_key  = (string) get_option( 'aero_paywall_api_key', '' );
 	if ( '' === $base_url || '' === $api_key ) {
-		return false;
+		return null;
 	}
 
 	// Full term objects, not just ids — the admin console's category
@@ -75,7 +80,7 @@ function bday_follow_notify_sync_post( WP_Post $post ): bool {
 	$thumbnail_id = get_post_thumbnail_id( $post->ID );
 	$image_url    = $thumbnail_id ? wp_get_attachment_image_url( $thumbnail_id, 'medium_rectangle' ) : '';
 
-	wp_remote_post(
+	$response = wp_remote_post(
 		rtrim( $base_url, '/' ) . '/connector/post-published',
 		array(
 			'timeout' => 5,
@@ -98,6 +103,17 @@ function bday_follow_notify_sync_post( WP_Post $post ): bool {
 			),
 		)
 	);
+
+	if ( is_wp_error( $response ) ) {
+		error_log( sprintf( '[Follow Notify] sync failed for post #%d: %s', $post->ID, $response->get_error_message() ) );
+		return false;
+	}
+
+	$code = wp_remote_retrieve_response_code( $response );
+	if ( $code < 200 || $code >= 300 ) {
+		error_log( sprintf( '[Follow Notify] sync failed for post #%d: subscription-service returned HTTP %d', $post->ID, $code ) );
+		return false;
+	}
 
 	return true;
 }

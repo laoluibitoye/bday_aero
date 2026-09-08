@@ -24,8 +24,14 @@ function bday_zone_should_render( string $zone, ?WP_Post $post = null ): bool {
 		$matrix = get_option( 'bday_ads_matrix', array() );
 	}
 
-	$config = $matrix[ $zone ] ?? null;
-	if ( ! $config || empty( $config['enabled_globally'] ) ) {
+	// A zone absent from the saved option (fresh install, or a zone added
+	// to bday_ads_matrix_zones() since the tab was last saved) defaults to
+	// on — matching both the documented contract ("every zone defaults to
+	// on") and what the admin screen itself already previews via the same
+	// `?? array('enabled_globally' => true)` fallback. Only an explicitly
+	// saved `false` turns a zone off.
+	$config = $matrix[ $zone ] ?? array( 'enabled_globally' => true );
+	if ( empty( $config['enabled_globally'] ) ) {
 		return false;
 	}
 

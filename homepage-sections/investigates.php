@@ -22,7 +22,7 @@ $has_thumb = has_post_thumbnail( $lead->ID );
 <section class="bday-rd-investigates<?php echo $has_thumb ? '' : ' bday-rd-investigates--no-thumb'; ?>" data-screen-label="BD Investigates">
 	<div class="bday-container">
 		<div class="bday-rd-section-head bday-rd-section-head--invert">
-			<h2>BD Investigates</h2>
+			<h2><?php echo esc_html( bday_section_title( 'investigates' ) ); ?></h2>
 			<span class="bday-rd-rule bday-rd-rule--invert"></span>
 			<a href="<?php echo esc_url( get_tag_link( get_term_by( 'slug', 'bdinvestigates', 'post_tag' ) ) ); ?>" class="bday-rd-kicker bday-rd-kicker--accent">See more →</a>
 		</div>

@@ -80,9 +80,15 @@ add_action(
 			return;
 		}
 		foreach ( array( '_bday_event_venue', '_bday_event_link', '_bday_event_date', '_bday_event_time' ) as $key ) {
-			if ( isset( $_POST[ $key ] ) ) {
-				update_post_meta( $post_id, $key, sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) );
+			if ( ! isset( $_POST[ $key ] ) ) {
+				continue;
 			}
+			$raw = wp_unslash( $_POST[ $key ] );
+			// _bday_event_link is a URL, not free text — esc_url_raw() (not
+			// sanitize_text_field()) matches how every sibling CPT in this
+			// theme sanitizes a link field (videos/podcasts/editions).
+			$value = '_bday_event_link' === $key ? esc_url_raw( $raw ) : sanitize_text_field( $raw );
+			update_post_meta( $post_id, $key, $value );
 		}
 	}
 );

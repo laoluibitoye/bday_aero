@@ -18,7 +18,7 @@ if ( empty( $cols ) ) {
 <section class="bday-rd-headlines" data-screen-label="Headlines">
 	<div class="bday-container bday-rd-headlines__grid">
 		<div class="bday-rd-headlines__label">
-			<h2>Headlines</h2>
+			<h2><?php echo esc_html( bday_section_title( 'headlines' ) ); ?></h2>
 			<span class="bday-rd-kicker bday-rd-kicker--muted">Updated <?php echo esc_html( date_i18n( 'H:i' ) ); ?></span>
 		</div>
 		<?php foreach ( $cols as $col ) : $post = $col['posts'][0] ?? null; if ( ! $post ) { continue; } ?>

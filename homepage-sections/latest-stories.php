@@ -18,7 +18,7 @@ if ( empty( $posts ) ) {
 <section class="bday-rd-latest" data-screen-label="Latest stories">
 	<div class="bday-container">
 		<div class="bday-rd-section-head">
-			<h2>Latest Stories</h2>
+			<h2><?php echo esc_html( bday_section_title( 'latest-stories' ) ); ?></h2>
 			<span class="bday-rd-rule"></span>
 			<a href="<?php echo esc_url( get_tag_link( get_term_by( 'slug', 'bdrecent', 'post_tag' ) ) ); ?>" class="bday-rd-kicker bday-rd-kicker--accent">See more →</a>
 		</div>

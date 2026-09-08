@@ -23,7 +23,7 @@ if ( ! $lead && empty( $most_read ) ) {
 	<div class="bday-container bday-rd-editor-pick__grid">
 		<div class="bday-rd-editor-pick__col">
 			<div class="bday-rd-section-head">
-				<h2>Editor's Pick</h2>
+				<h2><?php echo esc_html( bday_section_title( 'editor-pick' ) ); ?></h2>
 				<span class="bday-rd-rule"></span>
 				<a href="<?php echo esc_url( bday_category_url( 'editorial' ) ); ?>" class="bday-rd-kicker bday-rd-kicker--accent">See more →</a>
 			</div>

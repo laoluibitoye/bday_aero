@@ -19,7 +19,7 @@ if ( '' === $subscribe_url ) {
 	<div class="bday-container bday-rd-newsletter__grid">
 		<div class="bday-rd-newsletter__copy">
 			<span class="bday-rd-kicker bday-rd-kicker--tint">Membership</span>
-			<h2>Subscribe to BusinessDay</h2>
+			<h2><?php echo esc_html( bday_section_title( 'newsletter' ) ); ?></h2>
 			<p>Unlimited access to BD Pro analysis, the daily e-paper, every newsletter and the full archive.</p>
 		</div>
 		<div class="bday-rd-newsletter__cta">

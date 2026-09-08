@@ -115,7 +115,7 @@ add_filter(
 				'group'     => 'technical',
 			'option'    => Bday_Settings_Visibility::OPTION,
 			'render'    => 'bday_render_access_control_tab',
-			'intro'     => 'Choose which roles, besides Administrator, can see and use each settings tab below. This tab itself always stays Administrator-only, so no role can grant itself broader access.',
+			'intro'     => 'Choose which roles, besides Administrator, can see and use each settings tab below. This tab, Custom Code, and General always stay Administrator-only regardless of what\'s selected here — Custom Code runs raw, unsandboxed script on every page, and General controls whether the paywall and other add-ons run at all, so neither is delegable.',
 		);
 
 		return $schema;
@@ -148,7 +148,7 @@ function bday_render_access_control_tab( array $values ): void {
 	unset( $roles['administrator'] );
 
 	$schema = Bday_Options_Framework::schema();
-	$slugs  = array_diff( array_keys( $schema ), array( Bday_Settings_Visibility::ADMIN_ONLY_SLUG ) );
+	$slugs  = array_diff( array_keys( $schema ), Bday_Settings_Visibility::ADMIN_ONLY_SLUGS );
 
 	$groups = array(
 		'editorial' => array( 'label' => 'Editorial & Content', 'rows' => array() ),

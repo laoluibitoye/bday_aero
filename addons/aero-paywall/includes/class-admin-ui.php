@@ -380,7 +380,10 @@ final class Bday_Aero_Admin_Ui {
 			$types = is_array( $input[ Bday_Aero_Settings::RESTRICTED_POST_TYPES ] )
 				? array_values( array_intersect( $valid, array_map( 'sanitize_key', $input[ Bday_Aero_Settings::RESTRICTED_POST_TYPES ] ) ) )
 				: array();
-			$saved[ Bday_Aero_Settings::RESTRICTED_POST_TYPES ] = empty( $types ) ? array( 'post' ) : $types;
+			// Matches Bday_Aero_Settings::restricted_post_types()'s own default — an admin
+			// who clears every checkbox falls back to the same safe default a never-
+			// configured install already starts with, not a narrower one.
+			$saved[ Bday_Aero_Settings::RESTRICTED_POST_TYPES ] = empty( $types ) ? array( 'post', 'bday_edition' ) : $types;
 			update_option( Bday_Aero_Settings::RESTRICTED_POST_TYPES, $saved[ Bday_Aero_Settings::RESTRICTED_POST_TYPES ] );
 		}
 

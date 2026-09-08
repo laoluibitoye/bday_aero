@@ -5,9 +5,18 @@
  * synthesized capability `bday_view_settings_tab_{slug}`, resolved here via
  * `map_meta_cap` against a stored `[slug => role[]]` map rather than a role
  * ever being granted the capability directly — administrators always pass
- * regardless of the map, and the `access-control` slug (this feature's own
- * settings tab) always requires `manage_options`, ignoring the map
- * entirely, so no role can grant itself broader access.
+ * regardless of the map, and a handful of slugs (see ADMIN_ONLY_SLUGS)
+ * always require `manage_options`, ignoring the map entirely, so no role
+ * can grant itself — or be accidentally granted — broader access than
+ * intended:
+ *   - `access-control`: this feature's own settings tab, so no role can
+ *     grant itself broader access.
+ *   - `custom-code`: raw, unsandboxed <script>/HTML injected verbatim into
+ *     every page — delegating this tab is delegating site-wide script
+ *     injection, not a content permission.
+ *   - `general`: the master add-on on/off switch, including whether the
+ *     paywall itself (the aero-paywall add-on) runs at all — a site-
+ *     operations call, not a day-to-day editorial one.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -19,6 +28,8 @@ final class Bday_Settings_Visibility {
 	public const OPTION            = 'bday_settings_tab_roles';
 	private const CAP_PREFIX       = 'bday_view_settings_tab_';
 	public const ADMIN_ONLY_SLUG   = 'access-control';
+	/** @var string[] slugs that can never be delegated away from Administrator, no matter what the roles map says. */
+	public const ADMIN_ONLY_SLUGS  = array( self::ADMIN_ONLY_SLUG, 'custom-code', 'general' );
 
 	public static function init(): void {
 		add_filter( 'map_meta_cap', array( self::class, 'map_meta_cap' ), 10, 4 );
@@ -51,7 +62,7 @@ final class Bday_Settings_Visibility {
 
 		foreach ( $input as $slug => $roles ) {
 			$slug = sanitize_key( (string) $slug );
-			if ( '' === $slug || self::ADMIN_ONLY_SLUG === $slug ) {
+			if ( '' === $slug || in_array( $slug, self::ADMIN_ONLY_SLUGS, true ) ) {
 				continue;
 			}
 			$roles = is_array( $roles ) ? array_map( 'sanitize_key', $roles ) : array();
@@ -89,7 +100,7 @@ final class Bday_Settings_Visibility {
 		}
 
 		$slug = substr( $cap, strlen( self::CAP_PREFIX ) );
-		if ( self::ADMIN_ONLY_SLUG === $slug ) {
+		if ( in_array( $slug, self::ADMIN_ONLY_SLUGS, true ) ) {
 			return array( 'do_not_allow' );
 		}
 

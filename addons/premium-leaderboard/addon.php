@@ -7,9 +7,12 @@
  * Settings Tab: Premium Leaderboard
  * Default: on
  *
- * Homepage-only rotating sponsor image/link banner — not an ad-network
- * integration despite the name (that's addons/vendors/). Renders into
- * template-parts/homepage/hero.php's hook.
+ * Rotating sponsor image/link banner — not an ad-network integration
+ * despite the name (that's addons/vendors/). Renders into the
+ * bday_homepage_leaderboard_zone action, which header.php fires
+ * unconditionally on every page bday_page_allows_ads() permits (the
+ * front page, single posts, archives) — not homepage-only, despite the
+ * name and despite this docblock previously saying otherwise.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

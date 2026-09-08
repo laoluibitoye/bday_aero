@@ -15,6 +15,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function bday_get_homepage_data(): array {
 	$other_news = bday_get_posts( array( 'tag' => 'bdothernews', 'numberposts' => 9, 'cache_namespace' => 'homepage' ) );
+	// Resolved once so 'top_stories' below can exclude it by ID rather
+	// than assume it's item 0 of the "bdlead" tag order — true normally,
+	// but not when a lead is locked (bday_get_hero_lead()) to a post
+	// that isn't even the newest bdlead-tagged one, or isn't tagged
+	// "bdlead" at all.
+	$lead    = bday_get_hero_lead();
+	$lead_id = $lead[0]->ID ?? 0;
 
 	return array(
 		// Semafor-style short-form briefing strip — Africa/World/Politics
@@ -33,11 +40,11 @@ function bday_get_homepage_data(): array {
 				'cache_namespace' => 'homepage',
 			)
 		),
-		'lead'        => bday_get_posts( array( 'tag' => 'bdlead', 'numberposts' => 1, 'cache_namespace' => 'homepage' ) ),
-		'top_stories' => bday_get_posts( array( 'tag' => 'bdlead', 'numberposts' => 4, 'offset' => 1, 'cache_namespace' => 'homepage' ) ),
+		'lead'        => $lead,
+		'top_stories' => bday_get_posts( array( 'tag' => 'bdlead', 'numberposts' => 4, 'post__not_in' => array( $lead_id ), 'cache_namespace' => 'homepage' ) ),
 		'recent'      => bday_get_posts( array( 'tag' => 'bdrecent', 'numberposts' => 4, 'cache_namespace' => 'homepage' ) ),
 		'other_news'  => array_slice( $other_news, 0, 6 ),
-		'columnists'  => bday_get_posts( array( 'category_name' => 'Columnist', 'numberposts' => 6, 'cache_namespace' => 'homepage' ) ),
+		'columnists'  => bday_section_source_posts( 'columnists' ),
 		// Bumped from 3 to 5 — now feeds the hero's right-hand Opinion
 		// column (WSJ-layout adoption) instead of a small box further down
 		// the page, so it needs to actually fill that column.

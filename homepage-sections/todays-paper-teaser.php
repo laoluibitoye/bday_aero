@@ -18,7 +18,7 @@ if ( empty( $modules['enable_todays_paper'] ) ) {
 	<div class="bday-container bday-rd-todays-paper-teaser__inner">
 		<div>
 			<span class="bday-rd-kicker bday-rd-kicker--accent">Today's Paper</span>
-			<h2>The full print edition, online</h2>
+			<h2><?php echo esc_html( bday_section_title( 'todays-paper-teaser' ) ); ?></h2>
 			<p>Laid out exactly as it appeared today — read it page by page or download the PDF.</p>
 		</div>
 		<a href="<?php echo esc_url( bday_epaper_url() ); ?>" class="bday-rd-btn bday-rd-btn--solid">Read today's edition</a>
