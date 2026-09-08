@@ -3,10 +3,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * One metabox, two clearly-labeled halves: "Custom Author" (the byline-
+ * override field — parity with the retired Custom Author Byline plugin
+ * this replaced) on top, "Co-Authors" (the multi-writer credit list)
+ * below it. Editor-requested rename (2026-09-09) — the box's own title
+ * used to just say "Co-Authors," which read as if it only covered the
+ * bottom half. Internal ids/functions/meta keys are all untouched
+ * (bday_co_authors_metabox, _bday_co_authors, etc.) — this is a labeling
+ * fix, not a data-shape change, so nothing downstream needs to migrate.
+ */
 add_action(
 	'add_meta_boxes',
 	static function (): void {
-		add_meta_box( 'bday-co-authors', 'Co-Authors', 'bday_co_authors_metabox', 'post', 'side' );
+		add_meta_box( 'bday-co-authors', 'Custom Author', 'bday_co_authors_metabox', 'post', 'side' );
 	}
 );
 
@@ -136,6 +146,7 @@ function bday_co_authors_metabox( WP_Post $post ): void {
 	</p>
 	<hr style="margin:14px 0;" />
 
+	<p style="margin:0 0 4px;"><strong>Co-Authors</strong></p>
 	<p class="description">Credit additional writers here — search for a staff name, or just type a guest writer's name (most bylines aren't staff with an account here). Ignored for whichever byline the override above already replaced, and shown alongside it otherwise.</p>
 
 	<div id="bday-co-authors-list"></div>

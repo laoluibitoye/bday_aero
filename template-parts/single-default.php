@@ -205,6 +205,16 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 				 * so this loop skips them the same way it already skips a
 				 * staff author who never filled their bio in — they still
 				 * get their byline credit above, just no card here.
+				 *
+				 * Editor-requested (2026-09-09): a full, untruncated bio
+				 * reads fine once, but several of them stacked — every
+				 * co-author who's filled a bio in, each with its own full
+				 * paragraph — turned into a wall of text between the
+				 * article and its share buttons. Only the single-author
+				 * case (by far the common one) still gets the full bio;
+				 * two or more authors each get a trimmed one instead, so
+				 * the section stays proportionate to how many people are
+				 * actually being introduced.
 				 */
 				$bday_bio_authors = function_exists( 'bday_get_post_authors' )
 					? bday_get_post_authors( $post_id )
@@ -215,6 +225,7 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 						$bday_bio_authors = array( array( 'type' => 'user', 'id' => (int) $bday_primary_user->ID, 'name' => $bday_primary_user->display_name, 'url' => get_author_posts_url( $bday_primary_user->ID ) ) );
 					}
 				}
+				$bday_multi_author = count( $bday_bio_authors ) > 1;
 				foreach ( $bday_bio_authors as $bday_bio_author ) :
 					if ( 'user' !== $bday_bio_author['type'] ) {
 						continue;
@@ -224,11 +235,11 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 						continue;
 					}
 					?>
-					<div class="bday-author-bio">
-						<?php echo get_avatar( $bday_bio_author['id'], 48, '', '', array( 'class' => 'bday-author-bio__avatar' ) ); ?>
+					<div class="bday-author-bio<?php echo $bday_multi_author ? ' bday-author-bio--compact' : ''; ?>">
+						<?php echo get_avatar( $bday_bio_author['id'], $bday_multi_author ? 32 : 48, '', '', array( 'class' => 'bday-author-bio__avatar' ) ); ?>
 						<div>
 							<strong><a href="<?php echo esc_url( $bday_bio_author['url'] ); ?>"><?php echo esc_html( $bday_bio_author['name'] ); ?></a></strong>
-							<p><?php echo esc_html( $author_bio ); ?></p>
+							<p><?php echo esc_html( $bday_multi_author ? wp_trim_words( $author_bio, 20 ) : $author_bio ); ?></p>
 						</div>
 					</div>
 				<?php endforeach; ?>

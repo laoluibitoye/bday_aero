@@ -1296,6 +1296,24 @@ $bday-border: var(--color-border);
 	p { margin: 0; font-size: 13.5px; color: $bday-muted; line-height: 1.5; }
 }
 
+// A two-or-more-byline article (template-parts/single-default.php) gets
+// this smaller, tighter card per author instead of the full-size one —
+// several full bios stacked back to back read as a wall of text, not a
+// set of introductions. The PHP side already trims the bio text itself
+// (wp_trim_words); this only tightens the layout around it.
+.bday-author-bio--compact {
+	padding: 0.9em 1.2em;
+	margin: 0.8em 0;
+	gap: 10px;
+
+	strong { font-size: 13.5px; margin-bottom: 0.2em; }
+	p { font-size: 12.5px; }
+}
+#article-page main article .post-content .bday-author-bio--compact .bday-author-bio__avatar {
+	width: 32px;
+	height: 32px;
+}
+
 // Multi-author byline (addons/author-profile/) — one avatar+linked-name
 // pair per credited writer, joined "X and Y" / "X, Y and Z" rather than a
 // plain comma list, matching how bylines actually read in print/online.
