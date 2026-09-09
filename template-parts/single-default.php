@@ -92,6 +92,19 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 			 */
 			?>
 			<span id="aero-paywall-bookmark-mount" class="bday-byline__bookmark"></span>
+			<?php
+			/**
+			 * "Gift this article" — the SDK (gift-button.ts) only ever
+			 * appends a button into this span for an active subscriber
+			 * (index.ts's own subscriptionStatus check, on any singular
+			 * post — see that file's own comment for why this no longer
+			 * requires a premium post); a harmless empty span everywhere
+			 * else. Reader-requested placement, right beside Save — was
+			 * briefly its own block near Share (and, before that,
+			 * wp_footer with no visual link to the article at all).
+			 */
+			?>
+			<span id="aero-paywall-gift-mount"></span>
 		</div>
 
 		<?php get_template_part( 'template-parts/components/google-badges' ); ?>
@@ -144,17 +157,6 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 			<?php endif; ?>
 
 			<?php echo bday_social_share_html( $post_id ); ?>
-			<?php
-			/**
-			 * "Gift this article" — the SDK (gift-button.ts) only ever
-			 * appends a button into this div for an active subscriber
-			 * viewing a premium post (index.ts's own isSubscriber/postId
-			 * check); it stays a harmless empty div everywhere else. Placed
-			 * right beside Share, not in wp_footer where it previously
-			 * rendered with no visual link to the article at all.
-			 */
-			?>
-			<div id="aero-paywall-gift-mount"></div>
 			<?php bday_ad_zone( 'in_article_after_p2', get_post() ); ?>
 
 			<?php if ( count( $toc ) >= 3 ) : ?>
