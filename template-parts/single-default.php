@@ -144,6 +144,17 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 			<?php endif; ?>
 
 			<?php echo bday_social_share_html( $post_id ); ?>
+			<?php
+			/**
+			 * "Gift this article" — the SDK (gift-button.ts) only ever
+			 * appends a button into this div for an active subscriber
+			 * viewing a premium post (index.ts's own isSubscriber/postId
+			 * check); it stays a harmless empty div everywhere else. Placed
+			 * right beside Share, not in wp_footer where it previously
+			 * rendered with no visual link to the article at all.
+			 */
+			?>
+			<div id="aero-paywall-gift-mount"></div>
 			<?php bday_ad_zone( 'in_article_after_p2', get_post() ); ?>
 
 			<?php if ( count( $toc ) >= 3 ) : ?>

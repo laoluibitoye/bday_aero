@@ -110,10 +110,15 @@ final class Bday_Aero_Sdk_Loader {
 		return '' !== $header ? strtoupper( $header ) : null;
 	}
 
+	// aero-paywall-gift-mount deliberately isn't here — it used to be, but a
+	// wp_footer div has no visual relationship to the article a reader is
+	// gifting, so the "Gift this article" button rendered into it was
+	// effectively undiscoverable (Platform Audit follow-up, field report:
+	// "users can't find any button"). It's now emitted inline, right next
+	// to the article's own Share row — see template-parts/single-default.php.
 	public function render_mount_points(): void {
 		echo '<div id="aero-paywall-mounts" hidden>'
 			. '<div class="aero-paywall-mount aero-paywall-mount-slide-in-alert"></div>'
-			. '</div>'
-			. '<div id="aero-paywall-gift-mount"></div>';
+			. '</div>';
 	}
 }
