@@ -134,8 +134,27 @@ final class Bday_Aero_Mobile_Api {
 	 * browser) — a device id from *somewhere* is still better than none,
 	 * matching the existing fail-closed posture below for a genuinely
 	 * empty result.
+	 *
+	 * Field-tested finding (2026-09-10): the native mobile app calls this
+	 * route with a bare fetch() (BDay_Mobile_2026/app/src/lib/api/wpClient.ts)
+	 * that never stores or resends Set-Cookie — it has no cookie jar at
+	 * all. Bday_Aero_Device_Cookie::maybe_set() runs unconditionally on
+	 * every request's `init` hook, so with no cookie ever arriving from
+	 * the app, it minted a brand-new random UUID on every single article
+	 * open and that one-shot value won the preference above every time,
+	 * completely shadowing the app's actual stable X-Device-Id (SecureStore
+	 * -persisted, see deviceId.ts). The meter never saw the same device
+	 * twice, so `remaining` never moved and every article stayed 'open'.
+	 * Same X-App-Channel mobile detection already used below (stage
+	 * collapsing) — mobile has no cookie jar, so trust its header
+	 * directly instead of entering the cookie-preferring path meant for
+	 * browsers.
 	 */
 	private static function resolve_device_id( WP_REST_Request $request ): string {
+		if ( 'mobile' === $request->get_header( 'x-app-channel' ) ) {
+			return (string) ( $request->get_header( 'x-device-id' ) ?? '' );
+		}
+
 		$cookie_id = Bday_Aero_Device_Cookie::get();
 		if ( null !== $cookie_id ) {
 			return $cookie_id;
