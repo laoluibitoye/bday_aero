@@ -23,10 +23,12 @@ foreach ( $state['items'] as $item ) {
 	}
 
 	$cells[] = array(
-		'label'     => $item['label'],
-		'value'     => $item['value'],
-		'note'      => $item['note'],
-		'note_type' => $item['note_type'],
+		'id'          => $item['id'],
+		'label'       => $item['label'],
+		'value'       => $item['value'],
+		'note'        => $item['note'],
+		'note_type'   => $item['note_type'],
+		'description' => $item['description'] ?? '',
 	);
 }
 
@@ -46,27 +48,44 @@ if ( empty( $cells ) ) {
  * a bare `function` declaration here would fatal with "cannot redeclare"
  * the second time.
  *
- * @param array<int, array{label: string, value: string, note: string, note_type: string}> $cells
+ * @param array<int, array{id: string, label: string, value: string, note: string, note_type: string, description: string}> $cells
  */
 $bday_market_pulse_render_cells = function ( array $cells, bool $hidden = false ): void {
 	foreach ( $cells as $cell ) {
-		// A positive percentage change reads in the accent red, matching
-		// the source design exactly (+0.82%, +1.24%, +0.4% are red; -0.31%
-		// stays the muted grey every other kicker uses). A text note (e.g.
-		// "July est.", "Held") is never color-coded this way even if it
-		// happens to start with "+" — note_type decides that, not a string
-		// sniff, now that notes are admin-typed free text.
-		$note_class = 'percent' === $cell['note_type'] && 0 === strpos( $cell['note'], '+' )
-			? 'bday-rd-kicker--accent'
-			: 'bday-rd-kicker--faint';
+		// Mobile-app parity (MarketTickerStrip.tsx): a percentage note reads green when it's a
+		// gain, red when it's a decline — not the old red-for-positive/grey-for-negative scheme,
+		// which was actually backwards from the reader's-eye-view convention the app already
+		// established. A text note (e.g. "July est.", "Held") is never color-coded this way even
+		// if it happens to start with "+" or "-" — note_type decides that, not a string sniff,
+		// since notes are admin-typed free text.
+		$is_percent = 'percent' === $cell['note_type'];
+		$is_up      = $is_percent && 0 !== strpos( trim( $cell['note'] ), '-' );
+		$note_class = ! $is_percent ? 'bday-rd-market-pulse__note--faint' : ( $is_up ? 'bday-rd-market-pulse__note--up' : 'bday-rd-market-pulse__note--down' );
+		$has_detail = ! $hidden && '' !== $cell['description'];
+		$tag        = $has_detail ? 'button' : 'div';
 		?>
-		<div class="bday-rd-market-pulse__cell"<?php echo $hidden ? ' aria-hidden="true"' : ''; ?>>
+		<<?php echo esc_html( $tag ); ?>
+			class="bday-rd-market-pulse__cell<?php echo $has_detail ? ' bday-rd-market-pulse__cell--clickable' : ''; ?>"
+			<?php echo $hidden ? ' aria-hidden="true" tabindex="-1"' : ''; ?>
+			<?php if ( $has_detail ) : ?>
+				type="button"
+				data-bd-pulse-id="<?php echo esc_attr( $cell['id'] ); ?>"
+				data-bd-pulse-label="<?php echo esc_attr( $cell['label'] ); ?>"
+				data-bd-pulse-value="<?php echo esc_attr( $cell['value'] ); ?>"
+				data-bd-pulse-description="<?php echo esc_attr( $cell['description'] ); ?>"
+				aria-haspopup="dialog"
+			<?php endif; ?>
+		>
 			<span class="bday-rd-market-pulse__label-row">
 				<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( $cell['label'] ); ?></span>
 			</span>
 			<span class="bday-rd-market-pulse__value"><?php echo esc_html( $cell['value'] ); ?></span>
-			<?php if ( '' !== $cell['note'] ) : ?><span class="bday-rd-kicker <?php echo esc_attr( $note_class ); ?>"><?php echo esc_html( $cell['note'] ); ?></span><?php endif; ?>
-		</div>
+			<?php if ( '' !== $cell['note'] ) : ?>
+				<span class="bday-rd-kicker <?php echo esc_attr( $note_class ); ?>">
+					<?php echo $is_percent ? ( $is_up ? '&#9650; ' : '&#9660; ' ) : ''; ?><?php echo esc_html( $cell['note'] ); ?>
+				</span>
+			<?php endif; ?>
+		</<?php echo esc_html( $tag ); ?>>
 		<?php
 	}
 };
@@ -83,3 +102,12 @@ $bday_market_pulse_render_cells = function ( array $cells, bool $hidden = false 
 		</div>
 	</div>
 </section>
+
+<div class="bday-market-pulse-popup" id="bd-market-pulse-popup" role="dialog" aria-modal="true" aria-labelledby="bd-market-pulse-popup-title" hidden>
+	<div class="bday-market-pulse-popup__card">
+		<button type="button" class="bday-market-pulse-popup__close" data-bd-pulse-popup-close aria-label="Close">&times;</button>
+		<span class="bday-rd-kicker bday-rd-kicker--faint" data-bd-pulse-popup-title id="bd-market-pulse-popup-title"></span>
+		<span class="bday-market-pulse-popup__value" data-bd-pulse-popup-value></span>
+		<p class="bday-market-pulse-popup__body" data-bd-pulse-popup-body></p>
+	</div>
+</div>

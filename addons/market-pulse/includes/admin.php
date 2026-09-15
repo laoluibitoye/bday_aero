@@ -28,11 +28,12 @@ function bday_market_pulse_migrate_legacy_items( array $legacy ): array {
 	$items = array();
 	foreach ( $map as $id => $field ) {
 		$items[] = array(
-			'id'        => $id,
-			'label'     => $field['label'],
-			'value'     => (string) ( $legacy[ $field['value_key'] ] ?? '' ),
-			'note'      => (string) ( $legacy[ $field['note_key'] ] ?? '' ),
-			'note_type' => $field['note_type'],
+			'id'          => $id,
+			'label'       => $field['label'],
+			'value'       => (string) ( $legacy[ $field['value_key'] ] ?? '' ),
+			'note'        => (string) ( $legacy[ $field['note_key'] ] ?? '' ),
+			'note_type'   => $field['note_type'],
+			'description' => '',
 		);
 	}
 	return $items;
@@ -57,11 +58,12 @@ function bday_market_pulse_normalize( array $values ): array {
 			continue;
 		}
 		$normalized[] = array(
-			'id'        => (string) ( $item['id'] ?? '' ),
-			'label'     => (string) ( $item['label'] ?? '' ),
-			'value'     => (string) ( $item['value'] ?? '' ),
-			'note'      => (string) ( $item['note'] ?? '' ),
-			'note_type' => in_array( $item['note_type'] ?? '', array( 'percent', 'text' ), true ) ? $item['note_type'] : 'percent',
+			'id'          => (string) ( $item['id'] ?? '' ),
+			'label'       => (string) ( $item['label'] ?? '' ),
+			'value'       => (string) ( $item['value'] ?? '' ),
+			'note'        => (string) ( $item['note'] ?? '' ),
+			'note_type'   => in_array( $item['note_type'] ?? '', array( 'percent', 'text' ), true ) ? $item['note_type'] : 'percent',
+			'description' => (string) ( $item['description'] ?? '' ),
 		);
 	}
 
@@ -87,14 +89,15 @@ function bday_render_market_pulse_tab( array $values ): void {
 	?>
 	<p class="description">Each row is one figure on the homepage's scrolling market ticker. Leave a row's value blank (or remove it) to drop it from the strip. Every figure is manually entered — update a value here whenever the desk wants the strip refreshed.</p>
 
-	<table class="widefat striped bday-market-pulse-table" style="max-width:820px;">
+	<table class="widefat striped bday-market-pulse-table" style="max-width:980px;">
 		<thead>
 			<tr>
-				<th style="width:26%;">Label</th>
-				<th style="width:20%;">Value</th>
-				<th style="width:16%;">Note type</th>
-				<th style="width:24%;">Change / note</th>
-				<th style="width:14%;"></th>
+				<th style="width:18%;">Label</th>
+				<th style="width:14%;">Value</th>
+				<th style="width:13%;">Note type</th>
+				<th style="width:17%;">Change / note</th>
+				<th style="width:26%;">Description (shown when a reader taps this stat)</th>
+				<th style="width:12%;"></th>
 			</tr>
 		</thead>
 		<tbody id="bday-market-pulse-rows">
@@ -107,7 +110,7 @@ function bday_render_market_pulse_tab( array $values ): void {
 	<p><button type="button" class="button" id="bday-market-pulse-add-row">+ Add item</button></p>
 
 	<template id="bday-market-pulse-row-template">
-		<?php echo bday_market_pulse_row_html( '__INDEX__', array( 'id' => '', 'label' => '', 'value' => '', 'note' => '', 'note_type' => 'percent' ) ); ?>
+		<?php echo bday_market_pulse_row_html( '__INDEX__', array( 'id' => '', 'label' => '', 'value' => '', 'note' => '', 'note_type' => 'percent', 'description' => '' ) ); ?>
 	</template>
 
 	<h3>Scrolling</h3>
@@ -192,6 +195,9 @@ function bday_market_pulse_row_html( $index, array $item ): string {
 			<input type="text" name="bday_market_pulse[items][<?php echo esc_attr( (string) $index ); ?>][note]" value="<?php echo esc_attr( $item['note'] ); ?>" class="regular-text" placeholder="e.g. +0.82% or &quot;July est.&quot;">
 		</td>
 		<td>
+			<textarea name="bday_market_pulse[items][<?php echo esc_attr( (string) $index ); ?>][description]" rows="2" class="large-text" placeholder="Plain-language context for this figure — optional."><?php echo esc_textarea( $item['description'] ?? '' ); ?></textarea>
+		</td>
+		<td>
 			<button type="button" class="button" data-bday-move-up title="Move up">↑</button>
 			<button type="button" class="button" data-bday-move-down title="Move down">↓</button>
 			<button type="button" class="button" data-bday-remove-row title="Remove">✕</button>
@@ -201,12 +207,13 @@ function bday_market_pulse_row_html( $index, array $item ): string {
 	return (string) ob_get_clean();
 }
 
-/** @return array{items: array<int, array{id: string, label: string, value: string, note: string, note_type: string}>, scroll_seconds: int} */
+/** @return array{items: array<int, array{id: string, label: string, value: string, note: string, note_type: string, description: string}>, scroll_seconds: int} */
 function bday_sanitize_market_pulse( $input ): array {
 	$input = is_array( $input ) ? $input : array();
 	$raw_items = is_array( $input['items'] ?? null ) ? $input['items'] : array();
 
 	$items = array();
+	$used_ids = array();
 	foreach ( $raw_items as $raw ) {
 		if ( ! is_array( $raw ) ) {
 			continue;
@@ -219,13 +226,35 @@ function bday_sanitize_market_pulse( $input ): array {
 		if ( '' === $label && '' === $value ) {
 			continue;
 		}
+		// The row's own `id` field is a hidden input the admin UI never lets anyone type into —
+		// it only ever carries a value forward from a previously-saved row. A row added via
+		// "+ Add item" therefore always starts with an empty id, and nothing used to fill that
+		// gap in: two new rows saved in the same edit both persisted with id === '', which the
+		// mobile ticker (MarketTickerStrip.tsx, `${q.id}-${keySuffix}` as the React key) and any
+		// other id-keyed consumer then saw as a literal collision. Every id is now guaranteed
+		// non-empty and unique within this saved list — derived from the label when blank, with a
+		// numeric suffix if that's already taken (including by an identical label reused twice).
 		$id = sanitize_key( wp_unslash( $raw['id'] ?? '' ) );
+		if ( '' === $id ) {
+			$id = sanitize_title( $label );
+		}
+		if ( '' === $id ) {
+			$id = 'item';
+		}
+		$base_id = $id;
+		$suffix = 2;
+		while ( in_array( $id, $used_ids, true ) ) {
+			$id = $base_id . '-' . $suffix;
+			$suffix++;
+		}
+		$used_ids[] = $id;
 		$items[] = array(
-			'id'        => $id, // '' for a brand-new row is fine — no id is looked up specially anymore.
-			'label'     => $label,
-			'value'     => $value,
-			'note'      => sanitize_text_field( wp_unslash( $raw['note'] ?? '' ) ),
-			'note_type' => in_array( $raw['note_type'] ?? '', array( 'percent', 'text' ), true ) ? $raw['note_type'] : 'percent',
+			'id'          => $id,
+			'label'       => $label,
+			'value'       => $value,
+			'note'        => sanitize_text_field( wp_unslash( $raw['note'] ?? '' ) ),
+			'note_type'   => in_array( $raw['note_type'] ?? '', array( 'percent', 'text' ), true ) ? $raw['note_type'] : 'percent',
+			'description' => sanitize_textarea_field( wp_unslash( $raw['description'] ?? '' ) ),
 		);
 	}
 

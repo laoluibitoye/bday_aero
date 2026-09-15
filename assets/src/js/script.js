@@ -551,6 +551,67 @@ function bdayInitTextToSpeech() {
 	});
 }
 
+/**
+ * Market Pulse (homepage-sections/market-pulse.php) — a stat with an admin-entered description
+ * (Appearance > BusinessDay Theme > Market Pulse) is a button; tapping it opens a single shared
+ * floating popup with that figure's context, mirroring the mobile app's tap-through-to-detail
+ * behavior. A stat with no description was never made a button server-side (no data-bd-pulse-id
+ * attribute), so this only ever wires up cells that actually have something to show.
+ */
+function bdayInitMarketPulse() {
+	var cells = document.querySelectorAll('[data-bd-pulse-id]');
+	if (!cells.length) return;
+
+	var popup = document.getElementById('bd-market-pulse-popup');
+	if (!popup) return;
+	var titleEl = popup.querySelector('[data-bd-pulse-popup-title]');
+	var valueEl = popup.querySelector('[data-bd-pulse-popup-value]');
+	var bodyEl = popup.querySelector('[data-bd-pulse-popup-body]');
+	var closeBtn = popup.querySelector('[data-bd-pulse-popup-close]');
+	var lastTrigger = null;
+
+	function open(cell) {
+		lastTrigger = cell;
+		titleEl.textContent = cell.dataset.bdPulseLabel || '';
+		valueEl.textContent = cell.dataset.bdPulseValue || '';
+		bodyEl.textContent = cell.dataset.bdPulseDescription || '';
+		popup.hidden = false;
+		// Next frame, so the hidden -> visible transition actually animates instead of the
+		// popup appearing already in its open state.
+		requestAnimationFrame(function () {
+			popup.classList.add('is-open');
+		});
+		closeBtn.focus();
+		document.addEventListener('keydown', onKeydown);
+	}
+
+	function close() {
+		popup.classList.remove('is-open');
+		document.removeEventListener('keydown', onKeydown);
+		window.setTimeout(function () {
+			popup.hidden = true;
+			if (lastTrigger) lastTrigger.focus();
+		}, 200);
+	}
+
+	function onKeydown(e) {
+		if (e.key === 'Escape') close();
+	}
+
+	cells.forEach(function (cell) {
+		cell.addEventListener('click', function () {
+			open(cell);
+		});
+	});
+
+	closeBtn.addEventListener('click', close);
+	popup.addEventListener('click', function (e) {
+		// Clicking the dimmed backdrop (the popup's own root, outside the card) closes it —
+		// clicking inside the card itself must not, so only a direct hit on the root counts.
+		if (e.target === popup) close();
+	});
+}
+
 document.addEventListener('DOMContentLoaded', function () {
 	bdayInitHeader();
 	bdayInitFeaturedVideoCards();
@@ -558,6 +619,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	bdayInitReadingProgress();
 	bdayInitTranslate();
 	bdayInitTextToSpeech();
+	bdayInitMarketPulse();
 
 	// Lazy-loaded images (post_thumbnail_html filter emits data-src)
 	var lazyImages = document.querySelectorAll('img.img-lazy-load');
