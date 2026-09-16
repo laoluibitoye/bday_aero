@@ -9,9 +9,14 @@
  * the team-size dropdown options and receiver emails are admin-editable (Aero Admin Console →
  * Marketing → Corporate Inquiries) rather than baked into this template.
  *
- * Deliberately styled as its own self-contained landing page (scoped inline styles below) rather
- * than reusing the rest of the theme's article/homepage styling — a dedicated enterprise-sales
- * page reads better with its own visual identity than inheriting news-reading typography.
+ * Reader-reported: this page used to carry its own bespoke inline <style> block — a different
+ * font stack, hardcoded near-black instead of the theme's --bd-ink, and a subscription-type
+ * radio pair that visibly broke (see the matching CSS fix in sdk/src/styles.ts). Rebuilt on the
+ * same hero/value-grid/banner classes template-subscribe.php already established
+ * (assets/src/scss/components/_topic-list.scss) so this page reads as part of the same site
+ * rather than a one-off landing page with its own visual identity — same get_header()/
+ * get_footer() every other account-flow page already uses, same tokens, same Georgia headline
+ * face for section titles.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -19,83 +24,78 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 get_header();
+
+$bday_corp_benefits = array(
+	array(
+		'title' => 'Client-Facing Roles',
+		'desc'  => 'Become the subject matter expert and land the next deal with relevant, timely business news.',
+		'icon'  => '<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H6l-3 3V11.5a8.5 8.5 0 0 1 8.5-8.5h1A8.5 8.5 0 0 1 21 11.5z"/>',
+	),
+	array(
+		'title' => 'Business Analysts &amp; Researchers',
+		'desc'  => 'Build, validate, and deliver actionable recommendations with trusted and accessible business information and analysis.',
+		'icon'  => '<circle cx="10" cy="10" r="6"/><path d="m20.5 20.5-5-5"/>',
+	),
+	array(
+		'title' => 'Procurement &amp; Vendor Specialists',
+		'desc'  => 'Increase value with subscription bundles that offer immediacy, exclusivity, and reliability.',
+		'icon'  => '<path d="M21 8 12 3 3 8l9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
+	),
+	array(
+		'title' => 'Authoritative, Expert Insights',
+		'desc'  => 'Breaking and in-depth coverage across hundreds of topics and industry segments provides an authoritative voice in business and financial news.',
+		'icon'  => '<path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6l-4 4H4a1 1 0 0 0-1 1z"/><path d="M14 8a4 4 0 0 1 0 8"/><path d="M17 5a8 8 0 0 1 0 14"/>',
+	),
+	array(
+		'title' => 'Robust Business &amp; Financial Data',
+		'desc'  => 'Comprehensive company profiles, market and economic data to create actionable business insights.',
+		'icon'  => '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M4 20h16"/>',
+	),
+	array(
+		'title' => 'Flexible and Easy to Manage',
+		'desc'  => 'Multiple corporate signup options with simple onboarding, so your team spends less time on admin.',
+		'icon'  => '<path d="M4 6h4M12 6h8"/><circle cx="8" cy="6" r="2"/><path d="M4 12h8M16 12h4"/><circle cx="14" cy="12" r="2"/><path d="M4 18h4M12 18h8"/><circle cx="8" cy="18" r="2"/>',
+	),
+);
 ?>
-<style>
-	.bday-corp { --bday-corp-accent: #E30613; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
-	.bday-corp__hero { background: #0d0d0d; color: #fff; padding: 56px 24px; }
-	.bday-corp__hero-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 560px; gap: 48px; align-items: center; }
-	@media (max-width: 900px) { .bday-corp__hero-inner { grid-template-columns: 1fr; } }
-	/* Reader-requested: narrower text column so the form card (fixed column
-	   above) can actually use its extra width — a max-width on the text
-	   itself, not just a smaller grid share, since 1fr would otherwise
-	   still stretch to fill whatever's left. */
-	.bday-corp__text { max-width: 460px; }
-	.bday-corp__eyebrow { font-style: italic; font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--bday-corp-accent); margin: 0 0 12px; }
-	.bday-corp__title { font-size: 34px; line-height: 1.25; font-weight: 700; margin: 0 0 20px; }
-	.bday-corp__lead { font-size: 16px; line-height: 1.7; opacity: 0.85; margin: 0 0 16px; }
-	.bday-corp__form-card { background: #fff; color: #1a1a1a; border-radius: 12px; padding: 32px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); }
-	.bday-corp__benefits { max-width: 1100px; margin: 0 auto; padding: 64px 24px; text-align: center; }
-	.bday-corp__benefits h2 { font-style: italic; font-size: 28px; margin: 0 0 40px; }
-	.bday-corp__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px 24px; text-align: left; margin-bottom: 40px; }
-	@media (max-width: 800px) { .bday-corp__grid { grid-template-columns: 1fr; text-align: center; } }
-	.bday-corp__grid h3 { font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; margin: 0 0 10px; }
-	.bday-corp__grid p { font-size: 14px; line-height: 1.6; color: #555; margin: 0; }
-	.bday-corp__cta-band { background: #0d0d0d; color: #fff; text-align: center; padding: 48px 24px; }
-	.bday-corp__cta-band h2 { font-size: 22px; font-weight: 700; margin: 0 0 20px; }
-	.bday-corp__btn { display: inline-block; background: var(--bday-corp-accent); color: #fff; font-weight: 700; padding: 14px 32px; border-radius: 6px; text-decoration: none; border: none; cursor: pointer; }
-	.bday-corp__tagline { font-style: italic; font-size: 16px; color: #333; margin-top: 32px; }
-	#aero-corporate-subscription-mount .aero-paywall-form { max-width: none; }
-</style>
-
-<div class="bday-corp">
-	<section class="bday-corp__hero">
-		<div class="bday-corp__hero-inner">
-			<div class="bday-corp__text">
-				<p class="bday-corp__eyebrow">BusinessDay Corporate Subscriptions</p>
-				<h1 class="bday-corp__title">Give your organisation the credible, current and complete business intelligence it needs to see clearly and move first.</h1>
-				<p class="bday-corp__lead">Every day, the decisions you take as a leader determine where your company goes next. BusinessDay supports those decisions by bringing award-winning journalism, market data and expert analysis together on one platform — relevant to your world, shaped around your needs, and built to power growth across every level of your business.</p>
-			</div>
-			<div class="bday-corp__form-card">
-				<div id="aero-corporate-subscription-mount"></div>
-			</div>
+<main>
+<section class="bday-corporate-hero">
+	<div class="bday-corporate-hero__inner">
+		<div class="bday-corporate-hero__text">
+			<span class="bday-corporate-hero__eyebrow">BusinessDay Corporate Subscriptions</span>
+			<h1 class="bday-corporate-hero__title">Give your organisation the credible, current and complete business intelligence it needs to see clearly and move first.</h1>
+			<p class="bday-corporate-hero__lead">Every day, the decisions you take as a leader determine where your company goes next. BusinessDay supports those decisions by bringing award-winning journalism, market data and expert analysis together on one platform — relevant to your world, shaped around your needs, and built to power growth across every level of your business.</p>
 		</div>
-	</section>
-
-	<section class="bday-corp__benefits">
-		<h2>Empower Critical Business Decisions</h2>
-		<div class="bday-corp__grid">
-			<div>
-				<h3>Client-Facing Roles</h3>
-				<p>Become the subject matter expert and land the next deal with relevant, timely business news.</p>
-			</div>
-			<div>
-				<h3>Business Analysts &amp; Researchers</h3>
-				<p>Build, validate, and deliver actionable recommendations with trusted and accessible business information and analysis.</p>
-			</div>
-			<div>
-				<h3>Procurement &amp; Vendor Specialists</h3>
-				<p>Increase value with subscription bundles that offer immediacy, exclusivity, and reliability.</p>
-			</div>
-			<div>
-				<h3>Authoritative, Expert Insights</h3>
-				<p>Breaking and in-depth coverage across hundreds of topics and industry segments provides an authoritative voice in business and financial news.</p>
-			</div>
-			<div>
-				<h3>Robust Business &amp; Financial Data</h3>
-				<p>Comprehensive company profiles, market and economic data to create actionable business insights.</p>
-			</div>
-			<div>
-				<h3>Flexible and Easy to Manage</h3>
-				<p>Multiple corporate signup options with simple onboarding, so your team spends less time on admin.</p>
-			</div>
+		<div class="bday-corporate-hero__form">
+			<div id="aero-corporate-subscription-mount"></div>
 		</div>
-		<p class="bday-corp__tagline">Become one of the many companies that empower their workforce with a Corporate Subscription.</p>
-	</section>
+	</div>
+</section>
 
-	<section class="bday-corp__cta-band">
-		<h2>Get the trusted resource your team needs</h2>
-		<a href="#aero-corporate-subscription-mount" class="bday-corp__btn">Get Pricing</a>
-	</section>
-</div>
+<section class="bday-corporate-values">
+	<div class="bday-corporate-values__inner">
+		<h2 class="bday-corporate-values__title">Empower Critical Business Decisions</h2>
+		<div class="bday-corporate-values__grid">
+			<?php foreach ( $bday_corp_benefits as $bday_benefit ) : ?>
+				<div class="bday-corporate-value">
+					<span class="bday-corporate-value__icon" aria-hidden="true">
+						<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><?php echo $bday_benefit['icon']; // phpcs:ignore -- static, hand-authored inline SVG paths, not user input ?></svg>
+					</span>
+					<h3><?php echo wp_kses_post( $bday_benefit['title'] ); ?></h3>
+					<p><?php echo esc_html( $bday_benefit['desc'] ); ?></p>
+				</div>
+			<?php endforeach; ?>
+		</div>
+		<p class="bday-corporate-values__tagline">Become one of the many companies that empower their workforce with a Corporate Subscription.</p>
+	</div>
+</section>
+
+<section class="bday-subscribe-banner">
+	<div class="bday-subscribe-banner__inner">
+		<h2 class="bday-subscribe-banner__headline">Get the trusted resource your team needs</h2>
+		<a href="#aero-corporate-subscription-mount" class="bday-subscribe-banner__cta">Get Pricing</a>
+	</div>
+</section>
+</main>
 <?php
 get_footer();
