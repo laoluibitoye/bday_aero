@@ -248,12 +248,19 @@ final class Bday_Aero_Content_Gate {
 			. '<div class="aero-paywall-mount aero-paywall-mount-checkout" hidden></div>';
 	}
 
-	private static function current_user_has_bypass_role(): bool {
+	/**
+	 * Public (was private) and takes an optional `$user` — class-mobile-api.php's
+	 * resolve_entitlement() has no WP session to read wp_get_current_user() from (a
+	 * mobile reader authenticates purely via a subscription-service JWT), so it
+	 * resolves the WP user itself (by the token's email claim) and passes it in here
+	 * to reuse this exact same bypass-roles check instead of duplicating it.
+	 */
+	public static function current_user_has_bypass_role( ?WP_User $user = null ): bool {
 		$bypass_roles = Bday_Aero_Settings::bypass_roles();
 		if ( empty( $bypass_roles ) ) {
 			return false;
 		}
-		$user = wp_get_current_user();
+		$user = $user ?? wp_get_current_user();
 		if ( ! $user || empty( $user->roles ) ) {
 			return false;
 		}

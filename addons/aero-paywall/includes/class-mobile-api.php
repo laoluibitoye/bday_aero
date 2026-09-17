@@ -215,6 +215,25 @@ final class Bday_Aero_Mobile_Api {
 		$entitlement = null !== $token ? Bday_Aero_Entitlement_Resolver::resolve_for_current_request( $token ) : null;
 		if ( null !== $entitlement ) {
 			/**
+			 * Launch-blocker decision (bypass_roles has no mobile equivalent — Option B): mirrors
+			 * the website's staff/internal bypass_roles setting for mobile. On the website,
+			 * Bday_Aero_Content_Gate checks a live WP session's roles directly; a mobile reader
+			 * has no WP session at all (auth is purely a subscription-service JWT), so this
+			 * resolves the WP user by the token's own `email` claim — always present, every
+			 * subscription-service access token is signed with `sub`+`email` — and reuses the
+			 * exact same bypass_roles() check via the now-public
+			 * Bday_Aero_Content_Gate::current_user_has_bypass_role(), instead of a second,
+			 * independently-drifting implementation of the same rule.
+			 */
+			$email = $entitlement['claims']['email'] ?? null;
+			if ( is_string( $email ) && '' !== $email ) {
+				$wp_user = get_user_by( 'email', $email );
+				if ( $wp_user && Bday_Aero_Content_Gate::current_user_has_bypass_role( $wp_user ) ) {
+					return array( 'open' => true, 'stage' => 'open', 'remaining' => null, 'remainingToRegister' => null, 'isSubscriber' => true );
+				}
+			}
+
+			/**
 			 * A verified, non-staff token only means "this is a real
 			 * signed-in reader" — it does NOT mean "this reader has
 			 * paid." Bug found live while seeding test content: this
