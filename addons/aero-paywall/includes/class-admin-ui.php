@@ -35,6 +35,7 @@ final class Bday_Aero_Admin_Ui {
 	private const BOOL_FIELDS = array(
 		Bday_Aero_Settings::ENABLED,
 		Bday_Aero_Settings::ADFREE_ENABLED,
+		Bday_Aero_Settings::FOLLOW_FEATURE_ENABLED,
 		Bday_Aero_Settings::JSONLD_ENABLED,
 	);
 	private const URL_FIELDS = array(
@@ -213,6 +214,7 @@ final class Bday_Aero_Admin_Ui {
 				Bday_Aero_Settings::APPLE_CLIENT_ID            => Bday_Aero_Settings::apple_client_id(),
 				Bday_Aero_Settings::ACCENT_COLOR               => Bday_Aero_Settings::accent_color(),
 				Bday_Aero_Settings::ADFREE_ENABLED             => Bday_Aero_Settings::adfree_enabled(),
+				Bday_Aero_Settings::FOLLOW_FEATURE_ENABLED     => Bday_Aero_Settings::follow_feature_enabled(),
 				Bday_Aero_Settings::PRIVATE_MODE_ENFORCEMENT   => Bday_Aero_Settings::private_mode_enforcement(),
 				Bday_Aero_Settings::RESTRICTED_POST_TYPES      => $restricted_post_types,
 				Bday_Aero_Settings::PREVIEW_WORD_COUNT         => Bday_Aero_Settings::preview_word_count(),

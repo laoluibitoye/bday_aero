@@ -45,6 +45,7 @@ final class Bday_Aero_Sdk_Loader {
 			'accentColor'  => $branding['accentColor'],
 			'logoUrl'      => $branding['logoUrl'],
 			'adFreeEnabled' => Bday_Aero_Settings::adfree_enabled(),
+			'followEnabled' => Bday_Aero_Settings::follow_feature_enabled(),
 			'privateModeEnforcement' => Bday_Aero_Settings::private_mode_enforcement(),
 			'accountUrl'   => Bday_Aero_Settings::account_page_url() ?: null,
 			// The public /subscribe/ page's Corporate tab links here rather

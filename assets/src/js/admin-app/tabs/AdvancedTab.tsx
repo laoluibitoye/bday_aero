@@ -117,6 +117,15 @@ export function AdvancedTab({
         />
       </Card>
 
+      <Card title="Follow & interests">
+        <Toggle
+          label="Show follow/interests feature"
+          checked={settings.aero_paywall_follow_feature_enabled}
+          onChange={(v) => patchSettings({ aero_paywall_follow_feature_enabled: v })}
+          description="Controls the category/tag follow button, the post-signup interest picker, and the Reader Settings “Followed topics” list, on both the website and the mobile app. Off by default while this feature is reworked."
+        />
+      </Card>
+
       <Card title="Account & sign-in">
         <TextField
           label="My Account page URL"

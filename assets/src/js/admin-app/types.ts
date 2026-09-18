@@ -49,6 +49,7 @@ export interface Settings {
   aero_paywall_apple_client_id: string;
   aero_paywall_accent_color: string;
   aero_paywall_adfree_enabled: boolean;
+  aero_paywall_follow_feature_enabled: boolean;
   aero_paywall_private_mode_enforcement: 'off' | 'soft' | 'hard';
   aero_paywall_restricted_post_types: string[];
   aero_paywall_preview_word_count: number;

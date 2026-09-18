@@ -167,10 +167,12 @@ final class Bday_Aero_Nav_Button {
 							<svg class="aero-paywall-nav-card-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
 						</button>
 
+						<?php if ( class_exists( 'Bday_Aero_Settings' ) && Bday_Aero_Settings::follow_feature_enabled() ) : ?>
 						<button type="button" class="aero-paywall-nav-card" data-aero-nav-card-toggle="my-news">
 							<?php esc_html_e( 'My News', 'bday-premium' ); ?>
 							<svg class="aero-paywall-nav-card-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
 						</button>
+						<?php endif; ?>
 
 						<a href="<?php echo esc_url( $urls['account'] ); ?>" class="aero-paywall-nav-card aero-paywall-nav-card--link"><?php esc_html_e( 'Go to My Account', 'bday-premium' ); ?></a>
 

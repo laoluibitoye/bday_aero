@@ -24,6 +24,7 @@ final class Bday_Aero_Settings {
 	public const RESTRICTED_POST_TYPES      = 'aero_paywall_restricted_post_types';
 	public const ACCENT_COLOR               = 'aero_paywall_accent_color';
 	public const ADFREE_ENABLED             = 'aero_paywall_adfree_enabled';
+	public const FOLLOW_FEATURE_ENABLED     = 'aero_paywall_follow_feature_enabled';
 	public const PRIVATE_MODE_ENFORCEMENT   = 'aero_paywall_private_mode_enforcement';
 	public const ACCOUNT_PAGE_URL           = 'aero_paywall_account_page_url';
 	public const LOGIN_PAGE_URL             = 'aero_paywall_login_page_url';
@@ -104,6 +105,17 @@ final class Bday_Aero_Settings {
 
 	public static function adfree_enabled(): bool {
 		return (bool) get_option( self::ADFREE_ENABLED, true );
+	}
+
+	/**
+	 * Editor-requested (2026-09-18): the category/tag follow button, the
+	 * post-registration interest picker, and the Reader Settings "Followed
+	 * topics" list are all hidden while the feature is reworked. Defaults
+	 * to false (hidden) — the one boolean setting in this class that does
+	 * NOT default to "on", since that's the actually-desired current state.
+	 */
+	public static function follow_feature_enabled(): bool {
+		return (bool) get_option( self::FOLLOW_FEATURE_ENABLED, false );
 	}
 
 	/** 'off' | 'soft' | 'hard' */

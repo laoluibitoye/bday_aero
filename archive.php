@@ -14,7 +14,10 @@ get_header();
  */
 $bday_queried    = get_queried_object();
 $bday_follow_tax = null;
-if ( $bday_queried instanceof WP_Term ) {
+// Editor-requested (2026-09-18): the follow feature is hidden for now —
+// don't even render the (otherwise-empty) mount span when it's off,
+// rather than relying on the SDK alone to leave it unfilled.
+if ( class_exists( 'Bday_Aero_Settings' ) && Bday_Aero_Settings::follow_feature_enabled() && $bday_queried instanceof WP_Term ) {
 	if ( 'category' === $bday_queried->taxonomy ) {
 		$bday_follow_tax = 'category';
 	} elseif ( 'post_tag' === $bday_queried->taxonomy ) {
