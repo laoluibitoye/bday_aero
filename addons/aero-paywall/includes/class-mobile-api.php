@@ -295,28 +295,37 @@ final class Bday_Aero_Mobile_Api {
 		 * complete it) instead of being routed around it.
 		 */
 		$is_mobile = 'mobile' === $request->get_header( 'x-app-channel' );
-		if ( 'profile_prompt' === $stage && $is_mobile ) {
-			$stage = 'open';
-		}
 
 		if ( $is_authenticated_reader ) {
 			// The native mobile app has no "complete your profile" surface at all -
 			// registration only ever collects email/password/firstName, never the
 			// lastName+phone+company profileComplete requires - so that claim can never
-			// become true for a mobile account, signed in or not. The mobile carve-out just
-			// above used to live only in this authenticated-reader branch, which protected a
-			// signed-in mobile reader from getting stuck at "Complete your profile" but left an
-			// anonymous one fully exposed to the exact same dead end (reader-reported live: a
-			// guest whose device meter alone crossed into stage 3, never having registered at
-			// all, still got shown a profile-completion prompt with nowhere in the app to act
-			// on it). Mobile users are told apart by the X-App-Channel header the app sends on
-			// every entitlement request (wpClient.ts's wpEntitledGet) - the web SDK never sends
-			// it, so its profileComplete-gated funnel (comment above) is unaffected either way.
+			// become true for a mobile account, signed in or not: profile_prompt is
+			// unconditionally satisfied for an already-*signed-in* mobile reader. Mobile users
+			// are told apart by the X-App-Channel header the app sends on every entitlement
+			// request (wpClient.ts's wpEntitledGet) - the web SDK never sends it, so its
+			// profileComplete-gated funnel (comment above) is unaffected either way.
 			if ( 'register_prompt' === $stage ) {
 				$stage = 'open';
-			} elseif ( 'profile_prompt' === $stage && ! empty( $entitlement['claims']['profileComplete'] ) ) {
+			} elseif ( 'profile_prompt' === $stage && ( $is_mobile || ! empty( $entitlement['claims']['profileComplete'] ) ) ) {
 				$stage = 'open';
 			}
+		} elseif ( 'profile_prompt' === $stage && $is_mobile ) {
+			/**
+			 * Bug found live (this audit, 17 Sep 2026): the block above collapsing
+			 * profile_prompt→open for mobile used to run unconditionally, BEFORE the
+			 * is_authenticated_reader branch — so it also fired for an anonymous reader whose
+			 * device meter alone had crossed into the profile_prompt band, never having
+			 * registered at all. That handed every anonymous mobile reader one full bonus
+			 * unlocked article at exactly the stage-3 threshold (e.g. their 3rd distinct
+			 * article, with default thresholds) before paid_lock resumed at stage 4 — a real
+			 * gap in the "N free articles, then register" wall, not the intended fix (which
+			 * was only ever meant to rescue an *already-registered* reader from a dead-end
+			 * screen mobile can't render). An anonymous reader hasn't satisfied register_prompt
+			 * either, so the correct fallback is back to register_prompt — still an actionable
+			 * wall, not a silent unlock — never straight to 'open'.
+			 */
+			$stage = 'register_prompt';
 		}
 
 		$open = ! in_array( $stage, array( 'paid_lock', 'register_prompt', 'profile_prompt' ), true );
@@ -367,16 +376,19 @@ final class Bday_Aero_Mobile_Api {
 			200
 		);
 
-		if ( null !== $content ) {
-			// Field-tested finding (2026-09-08): this GET route is exactly
-			// the shape a full-page cache/CDN keys on (same URL, same
-			// method, per-post-id), and it's the actual entitlement body the
-			// SDK/mobile app reveal real content from — a bare 200 with no
-			// cache-control here is a real risk if any HTML/API caching
-			// layer is ever added in front of production, same reasoning as
-			// class-content-gate.php's subscriber fast-path.
-			$response->header( 'Cache-Control', 'private, no-store, no-cache, must-revalidate' );
-		}
+		// Field-tested finding (2026-09-08): this GET route is exactly the shape a full-page
+		// cache/CDN keys on (same URL, same method, per-post-id), and it's the actual
+		// entitlement body the SDK/mobile app reveal real content from — a bare 200 with no
+		// cache-control here is a real risk if any HTML/API caching layer is ever added in
+		// front of production, same reasoning as class-content-gate.php's subscriber fast-path.
+		//
+		// Bug found live (this audit, 17 Sep 2026): this used to only apply when $content was
+		// non-null (an unlocked response) — a *locked* response (register_prompt/profile_prompt/
+		// paid_lock, content always null) had no cache-control at all, so it could get cached
+		// and kept serving a stale "still locked" answer to a reader who has since registered,
+		// completed a checkout, or simply crossed into a new meter cycle. Gating needs to stay
+		// live in both directions, not just the direction that would leak paid content.
+		$response->header( 'Cache-Control', 'private, no-store, no-cache, must-revalidate' );
 
 		return $response;
 	}
