@@ -227,6 +227,16 @@ final class Bday_Aero_Meter_Client {
 	private static function forwarded_headers(): array {
 		$headers = array( 'Content-Type' => 'application/json' );
 
+		// subscription-service now requires the connector API key on /meter/check (it used to be
+		// open, so anyone who found the URL could send fake page views). Same key, same header the
+		// other connector calls (publish-push.php, class-premium-map.php) already use. If it isn't
+		// configured the call is simply refused server-side — which the circuit breaker treats as
+		// any other failure — rather than silently sending an unauthenticated request.
+		$api_key = Bday_Aero_Settings::api_key();
+		if ( '' !== $api_key ) {
+			$headers['X-Api-Key'] = $api_key;
+		}
+
 		if ( ! empty( $_SERVER['HTTP_USER_AGENT'] ) ) {
 			$headers['User-Agent'] = sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) );
 		}
