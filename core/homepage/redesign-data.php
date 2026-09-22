@@ -34,11 +34,12 @@ function bday_get_redesign_homepage_data(): array {
 	// a second time in this numbered list right next to itself.
 	$data['rd_top_news'] = bday_get_posts( array( 'tag' => 'bdlead', 'numberposts' => 8, 'post__not_in' => array( $data['lead'][0]->ID ?? 0 ), 'cache_namespace' => 'homepage' ) );
 
-	// Hero's third column ("Latest News") — genuinely the newest posts
-	// site-wide (no tag), deliberately not the "bdrecent" tag Latest
-	// Stories uses further down the page, so the two lists don't just
-	// repeat the same editorially-curated set twice on one page.
-	$data['rd_hero_latest'] = bday_get_posts( array( 'numberposts' => 8, 'cache_namespace' => 'homepage' ) );
+	// Hero's third column ("Recent") — reader-requested: scoped to the
+	// "bdrecent" tag (same one Latest Stories further down the page
+	// already uses, core/homepage/data.php/latest-stories.php), newest
+	// first within that tag — not just the newest posts site-wide, so an
+	// editor curating "recent" via the tag controls what shows here too.
+	$data['rd_hero_latest'] = bday_get_posts( array( 'tag' => 'bdrecent', 'numberposts' => 8, 'cache_namespace' => 'homepage' ) );
 
 	// Three real categories standing in for the design's Markets/Economy/
 	// Companies trio — this theme has no "Markets" category, so Politics
