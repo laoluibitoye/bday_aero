@@ -117,12 +117,23 @@ function bday_get_redesign_homepage_data(): array {
 	// Columnists key already has (category_name: 'Columnist' — also
 	// currently empty in this database, not something introduced here).
 	$data['rd_editor_pick'] = array_slice( $data['feature_spotlight'], 1, 2 );
-	$data['rd_most_read']   = $data['most_popular'];
+	// Editor-requested (2026-09-22): 'most_popular' (data.php) is a purely
+	// algorithmic, site-wide "most commented" ranking with no editorial
+	// control — anything with comments qualifies regardless of section.
+	// bday_focus_list_posts() (core/homepage/focus-admin.php) is a
+	// manually curated, ordered replacement; falls back to the original
+	// algorithmic ranking the moment that list is empty, same safety-net
+	// convention as Breaking Ticker's own pinned-articles list.
+	$focus_list                      = bday_focus_list_posts();
+	$data['rd_most_read']            = ! empty( $focus_list ) ? $focus_list : $data['most_popular'];
+	$data['rd_most_read_is_curated'] = ! empty( $focus_list );
 	// Fills the empty space under the "Focus" (Most Read) list, which
 	// otherwise runs shorter than the Editor's Pick column beside it —
 	// offset: 3 skips the lead + 2 grid picks already shown above, so
 	// this is genuinely more editorial-desk content, not a repeat.
-	$data['rd_editor_pick_more'] = bday_get_posts( array( 'category_name' => 'editorial', 'numberposts' => 5, 'offset' => 3, 'cache_namespace' => 'homepage' ) );
+	// Editor-requested (2026-09-22): raised from 5 to 10 to fill out the
+	// column further.
+	$data['rd_editor_pick_more'] = bday_get_posts( array( 'category_name' => 'editorial', 'numberposts' => 10, 'offset' => 3, 'cache_namespace' => 'homepage' ) );
 
 	$data['rd_investigates'] = bday_section_source_posts( 'investigates' );
 	$data['rd_interview']    = bday_section_source_posts( 'interview' );

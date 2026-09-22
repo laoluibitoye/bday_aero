@@ -14,6 +14,7 @@ $spotlight = $data['feature_spotlight'] ?? array();
 $lead      = $spotlight[0] ?? null;
 $picks     = $data['rd_editor_pick'] ?? array();
 $most_read = $data['rd_most_read'] ?? array();
+$most_read_is_curated = ! empty( $data['rd_most_read_is_curated'] );
 $more_picks = $data['rd_editor_pick_more'] ?? array();
 if ( ! $lead && empty( $most_read ) ) {
 	return;
@@ -55,7 +56,7 @@ if ( ! $lead && empty( $most_read ) ) {
 				<div class="bday-rd-section-head">
 					<h2>Focus</h2>
 					<span class="bday-rd-rule"></span>
-					<span class="bday-rd-kicker bday-rd-kicker--faint">This week</span>
+					<span class="bday-rd-kicker bday-rd-kicker--faint"><?php echo esc_html( $most_read_is_curated ? "Editor's picks" : 'This week' ); ?></span>
 				</div>
 				<ol class="bday-rd-most-read">
 					<?php foreach ( $most_read as $i => $post ) : ?>
