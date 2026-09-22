@@ -53,13 +53,28 @@ if ( have_posts() ) :
 				<?php bday_ad_zone( 'below_article_recirculation', get_post() ); ?>
 
 				<?php
-				$more_events = bday_get_posts(
+				// Cached by post_type only, current event filtered out in
+				// PHP — same cardinality fix as single-default.php's "Read
+				// Also"/"You Might Also Like" (2026-09-22/23, see
+				// class-query-cache.php): post__not_in in the cache key
+				// gave every event its own cache entry instead of sharing
+				// one across all of them.
+				$more_events_pool = bday_get_posts(
 					array(
-						'post_type'      => 'events',
-						'post__not_in'   => array( $post_id ),
-						'numberposts'    => 3,
+						'post_type'       => 'events',
+						'numberposts'     => 4,
 						'cache_namespace' => 'events',
 					)
+				);
+				$more_events      = array_slice(
+					array_filter(
+						$more_events_pool,
+						static function ( WP_Post $candidate ) use ( $post_id ): bool {
+							return $candidate->ID !== $post_id;
+						}
+					),
+					0,
+					3
 				);
 				if ( ! empty( $more_events ) ) :
 					?>

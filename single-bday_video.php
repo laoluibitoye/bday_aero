@@ -59,7 +59,21 @@ if ( have_posts() ) :
 					$playlist_terms = wp_get_post_terms( $post_id, 'video_playlist' );
 					$primary_playlist = ( ! is_wp_error( $playlist_terms ) && ! empty( $playlist_terms ) ) ? $playlist_terms[0] : null;
 					if ( $primary_playlist ) :
-						$more_videos = bday_get_posts( array( 'post_type' => 'bday_video', 'tax_query' => array( array( 'taxonomy' => 'video_playlist', 'field' => 'term_id', 'terms' => $primary_playlist->term_id ) ), 'post__not_in' => array( $post_id ), 'numberposts' => 3, 'cache_namespace' => 'videos' ) );
+						// Cached by playlist only, current video filtered
+						// out in PHP — same cardinality fix as
+						// single-default.php's "Read Also" (2026-09-22/23,
+						// see class-query-cache.php).
+						$more_videos_pool = bday_get_posts( array( 'post_type' => 'bday_video', 'tax_query' => array( array( 'taxonomy' => 'video_playlist', 'field' => 'term_id', 'terms' => $primary_playlist->term_id ) ), 'numberposts' => 4, 'cache_namespace' => 'videos' ) );
+						$more_videos      = array_slice(
+							array_filter(
+								$more_videos_pool,
+								static function ( WP_Post $candidate ) use ( $post_id ): bool {
+									return $candidate->ID !== $post_id;
+								}
+							),
+							0,
+							3
+						);
 						if ( ! empty( $more_videos ) ) :
 							?>
 							<div class="bday-ymal">

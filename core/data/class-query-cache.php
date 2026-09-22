@@ -175,6 +175,21 @@ final class Bday_Query_Cache {
  * editorial publish/update frequency is far lower than reader-traffic
  * frequency, so a little over-invalidation here is cheap; getting the
  * mapping subtly wrong and leaving something stale is not.
+ *
+ * Audited 2026-09-23 against every cache_namespace value actually used
+ * with bday_get_posts()/Bday_Query_Cache theme-wide (grep
+ * cache_namespace across the repo to re-verify if a new one is added) —
+ * the original 2026-09-22 mapping only covered post/bday_video/podcast/
+ * events and missed 'sections', 'news_carousel', 'e_edition' (all
+ * populated by post_type => 'post', same as 'article'/'homepage') and
+ * the bday_edition/cartoons post types entirely (which populate
+ * 'homepage', 'todays_paper', 'editions', and 'cartoons' but weren't
+ * wired to bump anything). 'podcast' vs 'podcasts' (plural) are two
+ * separate existing namespaces for the same post type — a pre-existing
+ * naming inconsistency between single-podcast.php and
+ * taxonomy-podcast_series.php, not something introduced here; both are
+ * bumped together since fixing the inconsistency itself is a separate,
+ * lower-priority cleanup.
  */
 add_action(
 	'save_post',
@@ -183,10 +198,12 @@ add_action(
 			return;
 		}
 		$namespaces_by_type = array(
-			'post'       => array( 'core', 'homepage', 'article', 'breaking_ticker', 'todays_paper' ),
-			'bday_video' => array( 'videos' ),
-			'podcast'    => array( 'podcast' ),
-			'events'     => array( 'homepage' ),
+			'post'         => array( 'core', 'homepage', 'article', 'breaking_ticker', 'todays_paper', 'sections', 'news_carousel', 'e_edition' ),
+			'bday_video'   => array( 'videos', 'homepage' ),
+			'podcast'      => array( 'podcast', 'podcasts', 'homepage' ),
+			'events'       => array( 'homepage', 'events' ),
+			'cartoons'     => array( 'homepage', 'cartoons' ),
+			'bday_edition' => array( 'homepage', 'todays_paper', 'editions' ),
 		);
 		foreach ( $namespaces_by_type[ $post->post_type ] ?? array() as $namespace ) {
 			Bday_Query_Cache::bump_generation( $namespace );

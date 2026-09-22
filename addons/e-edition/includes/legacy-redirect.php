@@ -38,12 +38,17 @@ add_action(
 		}
 
 		if ( is_page() && 'templates/todays-epaper.php' === get_page_template_slug() ) {
-			$target = get_posts(
+			// Cached, not a raw get_posts() — every query in this theme
+			// goes through Bday_Query_Cache per its own docblock; this one
+			// was the sole exception (2026-09-23 audit), and it fires on
+			// template_redirect for every visit to this legacy URL.
+			$target = bday_get_posts(
 				array(
-					'post_type'      => 'page',
-					'posts_per_page' => 1,
-					'meta_key'       => '_wp_page_template',
-					'meta_value'     => 'templates/template-todays-paper.php',
+					'post_type'       => 'page',
+					'numberposts'     => 1,
+					'meta_key'        => '_wp_page_template',
+					'meta_value'      => 'templates/template-todays-paper.php',
+					'cache_namespace' => 'core',
 				)
 			);
 			if ( ! empty( $target ) ) {

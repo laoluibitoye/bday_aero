@@ -77,7 +77,21 @@ if ( have_posts() ) :
 					$series_terms = wp_get_post_terms( $post_id, 'podcast_series' );
 					$primary_series = ( ! is_wp_error( $series_terms ) && ! empty( $series_terms ) ) ? $series_terms[0] : null;
 					if ( $primary_series ) :
-						$more_episodes = bday_get_posts( array( 'post_type' => 'podcast', 'tax_query' => array( array( 'taxonomy' => 'podcast_series', 'field' => 'term_id', 'terms' => $primary_series->term_id ) ), 'post__not_in' => array( $post_id ), 'numberposts' => 3, 'cache_namespace' => 'podcast' ) );
+						// Cached by series only, current episode filtered
+						// out in PHP — same cardinality fix as
+						// single-default.php's "Read Also" (2026-09-22/23,
+						// see class-query-cache.php).
+						$more_episodes_pool = bday_get_posts( array( 'post_type' => 'podcast', 'tax_query' => array( array( 'taxonomy' => 'podcast_series', 'field' => 'term_id', 'terms' => $primary_series->term_id ) ), 'numberposts' => 4, 'cache_namespace' => 'podcast' ) );
+						$more_episodes      = array_slice(
+							array_filter(
+								$more_episodes_pool,
+								static function ( WP_Post $candidate ) use ( $post_id ): bool {
+									return $candidate->ID !== $post_id;
+								}
+							),
+							0,
+							3
+						);
 						if ( ! empty( $more_episodes ) ) :
 							?>
 							<div class="bday-ymal">
