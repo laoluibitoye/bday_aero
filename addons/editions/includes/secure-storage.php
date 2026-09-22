@@ -172,8 +172,19 @@ function bday_edition_type_is_restricted(): bool {
  * capability — subscription-service is the only thing that can presign
  * against the bucket); returns null for anything else, and the caller
  * falls back to the normal gated SDK flow in that case.
+ *
+ * TTL defaults to a week, not the restricted flow's 5 minutes — this link
+ * is embedded directly in server-rendered HTML (single-bday_edition.php,
+ * template-todays-paper.php), which a page cache (confirmed live here:
+ * Cloudflare APO) can serve unchanged to every visitor for far longer
+ * than 5 minutes, making the link dead on arrival for anyone who hits a
+ * cached copy. A short expiry buys no real security here in exchange —
+ * there's no entitlement check gating this link at all (that's what
+ * "unrestricted" means); the signature only exists to route through one
+ * canonical endpoint and stop the postId being tampered with, not to
+ * bound a reader's access window the way the restricted flow's does.
  */
-function bday_edition_build_signed_download_url( int $post_id, int $ttl_seconds = 300 ): ?string {
+function bday_edition_build_signed_download_url( int $post_id, int $ttl_seconds = WEEK_IN_SECONDS ): ?string {
 	$object_key = (string) get_post_meta( $post_id, '_bday_edition_object_key', true );
 	$local      = bday_edition_parse_local_object_key( $object_key );
 	if ( null === $local ) {
