@@ -61,6 +61,24 @@ final class Bday_Section_Registry {
 				// loader's own "no config yet = show it" first-run posture.
 				'default_enabled' => 'no' !== strtolower( trim( $headers['default'] ) ),
 				'part'            => 'homepage-sections/' . basename( $file, '.php' ),
+				'is_custom'       => false,
+			);
+		}
+
+		// Admin-defined sections (Bday_Custom_Sections) — added from the
+		// Homepage Sections tab's "Add Section" button, no file on disk.
+		// Merged in here so they reorder/enable alongside the file-based
+		// ones through the exact same option and admin table; rendered by
+		// bday_render_custom_homepage_section() instead of
+		// get_template_part(), see render_active() below.
+		foreach ( Bday_Custom_Sections::all() as $id => $custom ) {
+			self::$sections[ $id ] = array(
+				'label'           => '' !== ( $custom['title'] ?? '' ) ? $custom['title'] : $id,
+				'description'     => sprintf( '%s: %s', 'post_tag' === ( $custom['source_taxonomy'] ?? '' ) ? 'Tag' : 'Category', $custom['source_term'] ?? '' ),
+				'file'            => null,
+				'default_enabled' => true,
+				'part'            => null,
+				'is_custom'       => true,
 			);
 		}
 
@@ -146,6 +164,14 @@ final class Bday_Section_Registry {
 
 		foreach ( self::ordered_active() as $slug ) {
 			if ( ! isset( $discovered[ $slug ] ) ) {
+				continue;
+			}
+			// A custom (admin-defined) section has no file/part — it fetches
+			// its own posts directly from its saved tag/category rather than
+			// reading anything out of $data, so render_active() doesn't need
+			// to widen $data's shape for it.
+			if ( $discovered[ $slug ]['is_custom'] ) {
+				bday_render_custom_homepage_section( $slug );
 				continue;
 			}
 			get_template_part( $discovered[ $slug ]['part'], null, array( 'data' => $data ) );

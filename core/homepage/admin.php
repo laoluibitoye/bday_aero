@@ -102,6 +102,12 @@ function bday_render_homepage_sections_tab( array $values ): void {
 		repurposed — different content, different look — without touching a template file. Sections built from
 		more than one source, or already configurable elsewhere (Your News, Off the Clock), show "—" for both.
 	</p>
+	<p class="description" style="margin-bottom:16px;">
+		<strong>Add Section</strong> creates a brand-new section from scratch — pick a Title, a source tag or
+		category, and a Style, and it renders on the homepage immediately, reorderable and toggleable here just
+		like the built-in ones. Unlike the built-in sections, a custom one can be removed entirely with its own
+		Remove button below.
+	</p>
 	<table class="widefat bday-sections-table" id="bday-homepage-sections-table">
 		<thead>
 			<tr>
@@ -120,6 +126,11 @@ function bday_render_homepage_sections_tab( array $values ): void {
 			<?php endforeach; ?>
 		</tbody>
 	</table>
+	<p><button type="button" class="button" id="bday-homepage-sections-add">Add Section</button></p>
+
+	<template id="bday-homepage-section-row-template">
+		<?php bday_render_homepage_section_row( '__INDEX__', array( 'slug' => '__ID__', 'enabled' => true ), array( 'is_custom' => true ) ); ?>
+	</template>
 	<style>
 		.bday-sections-table tr.is-dragging { opacity: 0.4; }
 		.bday-sections-table td { vertical-align: middle; }
@@ -143,7 +154,10 @@ function bday_render_homepage_sections_tab( array $values ): void {
 	<script>
 	(function () {
 		var tbody = document.getElementById( 'bday-homepage-sections-tbody' );
+		var addBtn = document.getElementById( 'bday-homepage-sections-add' );
+		var template = document.getElementById( 'bday-homepage-section-row-template' );
 		var dragged = null;
+		var counter = <?php echo (int) count( $rows ); ?>;
 
 		function bindRow( row ) {
 			row.setAttribute( 'draggable', 'true' );
@@ -166,9 +180,31 @@ function bday_render_homepage_sections_tab( array $values ): void {
 				var before = ( e.clientY - rect.top ) < rect.height / 2;
 				row.parentNode.insertBefore( dragged, before ? row : row.nextSibling );
 			} );
+			var remove = row.querySelector( '.bday-section-remove' );
+			if ( remove ) {
+				remove.addEventListener( 'click', function () {
+					row.remove();
+				} );
+			}
 		}
 
 		Array.prototype.forEach.call( tbody.querySelectorAll( 'tr' ), bindRow );
+
+		addBtn.addEventListener( 'click', function () {
+			// A short, sufficiently-unique id generated client-side — no
+			// server round-trip needed before the row is usable, and it's
+			// the same id used for both this row's hidden slug (the reorder/
+			// enable list) and its bday_custom_homepage_sections[] fields
+			// (the section's own title/source/style), so the two options
+			// stay in sync on save with no reconciliation step required.
+			var id = 'custom-' + Date.now().toString( 36 ) + Math.random().toString( 36 ).slice( 2, 6 );
+			var html = template.innerHTML.replace( /__INDEX__/g, 'new' + ( counter++ ) ).replace( /__ID__/g, id );
+			var wrapper = document.createElement( 'tbody' );
+			wrapper.innerHTML = html.trim();
+			var row = wrapper.firstElementChild;
+			tbody.appendChild( row );
+			bindRow( row );
+		} );
 	})();
 	</script>
 	<?php
@@ -183,9 +219,63 @@ function bday_render_homepage_sections_tab( array $values ): void {
 	}
 }
 
-/** @param int $index @param array{slug: string, enabled: bool} $row @param array<string, mixed> $meta */
-function bday_render_homepage_section_row( int $index, array $row, array $meta ): void {
-	$slug            = $row['slug'];
+/** @param int|string $index @param array{slug: string, enabled: bool} $row @param array<string, mixed> $meta */
+function bday_render_homepage_section_row( $index, array $row, array $meta ): void {
+	$slug = $row['slug'];
+
+	// A custom (admin-defined) section has no shipped default to fall back
+	// to and no bespoke markup of its own — Title/Source/Style are its
+	// entire definition, not an override, so every field is always
+	// editable (never the "—" placeholder the built-in rows show when a
+	// field doesn't apply), and it gets its own Remove button since,
+	// unlike a built-in section, deleting the row really does delete it.
+	if ( ! empty( $meta['is_custom'] ) ) {
+		$custom = Bday_Custom_Sections::get( $slug ) ?? array();
+		?>
+		<tr>
+			<td><span class="bday-drag-handle dashicons dashicons-menu"></span></td>
+			<td>
+				<label>
+					<input type="hidden" name="bday_homepage_sections[<?php echo esc_attr( $index ); ?>][slug]" value="<?php echo esc_attr( $slug ); ?>">
+					<input type="checkbox" name="bday_homepage_sections[<?php echo esc_attr( $index ); ?>][enabled]" value="1" <?php checked( $row['enabled'] ); ?>>
+				</label>
+			</td>
+			<td><span class="description">Custom</span></td>
+			<td>
+				<input
+					type="text"
+					class="regular-text"
+					name="bday_custom_homepage_sections[<?php echo esc_attr( $slug ); ?>][title]"
+					value="<?php echo esc_attr( $custom['title'] ?? '' ); ?>"
+					placeholder="Section title"
+				>
+			</td>
+			<td>
+				<select name="bday_custom_homepage_sections[<?php echo esc_attr( $slug ); ?>][source_taxonomy]">
+					<option value="category" <?php selected( $custom['source_taxonomy'] ?? 'category', 'category' ); ?>>Category</option>
+					<option value="post_tag" <?php selected( $custom['source_taxonomy'] ?? 'category', 'post_tag' ); ?>>Tag</option>
+				</select>
+				<input
+					type="text"
+					class="small-text"
+					name="bday_custom_homepage_sections[<?php echo esc_attr( $slug ); ?>][source_term]"
+					value="<?php echo esc_attr( $custom['source_term'] ?? '' ); ?>"
+					placeholder="slug"
+				>
+			</td>
+			<td>
+				<select name="bday_custom_homepage_sections[<?php echo esc_attr( $slug ); ?>][style]">
+					<option value="grid" <?php selected( $custom['style'] ?? 'grid', 'grid' ); ?>>Grid — lead + author grid</option>
+					<option value="investigative" <?php selected( $custom['style'] ?? 'grid', 'investigative' ); ?>>Investigative — dark wide feature</option>
+					<option value="premium" <?php selected( $custom['style'] ?? 'grid', 'premium' ); ?>>Premium rail — feature + medium + list</option>
+				</select>
+			</td>
+			<td><button type="button" class="button-link bday-section-remove" aria-label="Remove section">&times; Remove</button></td>
+		</tr>
+		<?php
+		return;
+	}
+
 	$title_defaults  = Bday_Section_Content::title_defaults();
 	$sources         = bday_section_sources();
 	$content         = Bday_Section_Content::row( $slug );
@@ -299,6 +389,15 @@ add_action(
 			'bday_homepage_sections',
 			'bday_homepage_section_content',
 			array( 'sanitize_callback' => array( 'Bday_Section_Content', 'sanitize' ) )
+		);
+		// Same one-form-one-submit reasoning as above — a custom section's
+		// own Title/Source/Style (its full definition, not an override)
+		// saves alongside the reorder/enable list and the built-in
+		// sections' overrides in the same click.
+		register_setting(
+			'bday_homepage_sections',
+			'bday_custom_homepage_sections',
+			array( 'sanitize_callback' => array( 'Bday_Custom_Sections', 'sanitize' ) )
 		);
 	}
 );

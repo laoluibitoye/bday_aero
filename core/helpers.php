@@ -371,6 +371,57 @@ function bday_render_section_by_style( string $style, array $args ): void {
 }
 
 /**
+ * Renders one Technical-Team-defined custom homepage section — added from
+ * the Homepage Sections tab's "Add Section" button (Bday_Custom_Sections),
+ * not a homepage-sections/*.php file. Unlike a built-in single-source
+ * section (section-sources.php), a custom one has no template file and no
+ * pre-fetched entry in $data, so it fetches its own posts directly here,
+ * same query shape as bday_section_source_posts(), and dispatches to
+ * whichever of the three shared layouts (bday_render_section_by_style())
+ * its Style is set to. An id with no saved definition (the option changed
+ * between Bday_Section_Registry::discover() and this call — essentially
+ * never in practice) or an empty result set renders nothing, never fatal.
+ */
+function bday_render_custom_homepage_section( string $id ): void {
+	$section = Bday_Custom_Sections::get( $id );
+	if ( null === $section ) {
+		return;
+	}
+
+	// Same post-count-per-style convention as the built-in single-source
+	// sections (section-sources.php) — each shared layout only ever reads
+	// up to this many posts from its $args['posts'] array anyway (lead/
+	// feature + up to 6/3/10 more, see each render function's own docblock).
+	$counts = array(
+		'grid'          => 7,
+		'investigative' => 4,
+		'premium'       => 11,
+	);
+	$count = $counts[ $section['style'] ] ?? 7;
+
+	$query_args = array( 'numberposts' => $count, 'cache_namespace' => 'homepage' );
+	$query_args[ 'post_tag' === $section['source_taxonomy'] ? 'tag' : 'category_name' ] = $section['source_term'];
+	$posts = bday_get_posts( $query_args );
+
+	if ( empty( $posts ) ) {
+		return;
+	}
+
+	$term         = get_term_by( 'slug', $section['source_term'], $section['source_taxonomy'] );
+	$see_more_url = ( $term && ! is_wp_error( $term ) ) ? (string) get_term_link( $term ) : '';
+
+	bday_render_section_by_style(
+		$section['style'],
+		array(
+			'posts'        => $posts,
+			'heading'      => $section['title'],
+			'see_more_url' => $see_more_url,
+			'screen_label' => $section['title'],
+		)
+	);
+}
+
+/**
  * A "Load more" button replacing page-number pagination sitewide (reader-requested — no
  * `?paged=2` links anywhere in the theme anymore). Deliberately not a new AJAX/REST endpoint:
  * `assets/src/js/load-more.js` just fetches the next page's full URL (a plain, cacheable GET,
