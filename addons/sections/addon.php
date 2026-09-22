@@ -37,6 +37,11 @@ require_once __DIR__ . '/includes/admin.php';
 
 // First-run default only — add_option() is a no-op if the option already
 // exists, so this never overwrites an admin's edits on subsequent loads.
+// Every row here is one of the four keys a real template reads (see
+// includes/admin.php's bday_sections_wired_keys()) — 'editorial' was
+// missing from this seed until it was noticed that bday_section_url(
+// 'editorial' ) (feature-spotlight.php's "Big Read" link) had nothing to
+// resolve on a fresh install and fell back to '#'.
 add_option(
 	'bday_sections',
 	array(
@@ -57,6 +62,12 @@ add_option(
 			'label'     => 'Opinion',
 			'taxonomy'  => 'category',
 			'term_slug' => 'opinion',
+		),
+		array(
+			'key'       => 'editorial',
+			'label'     => 'Big Read',
+			'taxonomy'  => 'category',
+			'term_slug' => 'editorial',
 		),
 	)
 );
