@@ -44,7 +44,11 @@ function bday_todays_paper_posts_for_date( int $year, int $month, int $day, stri
 	return bday_get_posts(
 		array(
 			'post_type'       => 'post',
-			'numberposts'     => -1,
+			// Bounded by date_query below to a single day already, so this
+			// is a safety cap, not an expected real-world limit — flagged
+			// unbounded (numberposts => -1) in the 2026-08-27 resource
+			// audit as a non-indexed meta_query scan worth capping.
+			'numberposts'     => 300,
 			'meta_query'      => $meta_query,
 			'date_query'      => array(
 				array(

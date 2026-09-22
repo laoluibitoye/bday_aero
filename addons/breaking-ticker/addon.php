@@ -62,6 +62,94 @@ function bday_breaking_ticker_resolve_pinned( array $raw ): array {
 	return $posts;
 }
 
+/**
+ * Same for every visitor (not per-article, unlike "Read Also"), so this is
+ * pulled into its own function rather than inlined in the render callback:
+ * a WP-Cron pre-warm job (registered below) calls this on a fixed interval
+ * with the exact same args the render path uses, so the cache entry it
+ * reads from is (almost) never actually computed on a reader's request —
+ * added 2026-09-22 after this query, firing on every single pageview
+ * site-wide via bday_header_ticker_zone with only a 120s TTL, showed up as
+ * a top contributor to an RDS resource-spike incident.
+ *
+ * @return WP_Post[]
+ */
+function bday_breaking_ticker_get_posts(): array {
+	$settings = get_option( 'bday_addon_breaking_ticker', array() );
+	if ( ! isset( $settings['enabled'] ) || ! $settings['enabled'] ) {
+		return array();
+	}
+	$count = ! empty( $settings['count'] ) ? (int) $settings['count'] : 8;
+
+	// Pinned articles always show in full, in the order they were pinned
+	// — an editor who deliberately picked specific stories shouldn't have
+	// one silently dropped because of a count meant to bound the
+	// *auto-filled* pool. Auto-fill only tops up whatever room is left
+	// under $count, excluding anything already pinned so nothing shows
+	// twice.
+	$pinned_posts = bday_breaking_ticker_resolve_pinned( (array) ( $settings['pinned'] ?? array() ) );
+	$remaining    = max( 0, $count - count( $pinned_posts ) );
+
+	// TTL raised from 120s now that save_post invalidates this namespace
+	// directly (class-query-cache.php) — a fresh "bdlead" tag no longer
+	// needs a short TTL to show up promptly, and the cron pre-warm below
+	// keeps this from ever going stale for long regardless.
+	$auto_posts = $remaining > 0
+		? bday_get_posts(
+			array(
+				'tag'             => 'bdlead',
+				'numberposts'     => $remaining,
+				'post__not_in'    => wp_list_pluck( $pinned_posts, 'ID' ),
+				'cache_namespace' => 'breaking_ticker',
+				'cache_ttl'       => 15 * MINUTE_IN_SECONDS,
+			)
+		)
+		: array();
+
+	$posts = array_merge( $pinned_posts, $auto_posts );
+
+	// Safety net for a fresh install (or one that hasn't started using
+	// "bdlead" or pinning yet) — falls back to the strip's original
+	// unconditional behavior (most recent posts site-wide) rather than
+	// just going empty. Never runs once either mechanism has anything in
+	// it.
+	if ( empty( $posts ) ) {
+		$posts = bday_get_posts( array( 'numberposts' => $count, 'cache_namespace' => 'breaking_ticker', 'cache_ttl' => 15 * MINUTE_IN_SECONDS ) );
+	}
+
+	return $posts;
+}
+
+/**
+ * Custom 5-minute schedule for the pre-warm below — none of WP's built-in
+ * recurrences (hourly and up) are frequent enough to keep this cache
+ * entry from ever going cold between editorial changes.
+ */
+add_filter(
+	'cron_schedules',
+	static function ( array $schedules ): array {
+		$schedules['bday_five_minutes'] = array(
+			'interval' => 5 * MINUTE_IN_SECONDS,
+			'display'  => 'Every 5 minutes (BusinessDay)',
+		);
+		return $schedules;
+	}
+);
+
+add_action(
+	'init',
+	static function (): void {
+		if ( ! wp_next_scheduled( 'bday_breaking_ticker_prewarm' ) ) {
+			wp_schedule_event( time(), 'bday_five_minutes', 'bday_breaking_ticker_prewarm' );
+		}
+	}
+);
+
+// Result intentionally discarded — this call exists purely to populate
+// Bday_Query_Cache on a schedule; the render callback below reads it back
+// via bday_get_posts()'s normal cache-hit path with identical args.
+add_action( 'bday_breaking_ticker_prewarm', 'bday_breaking_ticker_get_posts' );
+
 add_action(
 	'bday_header_ticker_zone',
 	static function (): void {
@@ -69,40 +157,8 @@ add_action(
 		if ( ! isset( $settings['enabled'] ) || ! $settings['enabled'] ) {
 			return;
 		}
-		$count = ! empty( $settings['count'] ) ? (int) $settings['count'] : 8;
 		$label = ! empty( $settings['label'] ) ? (string) $settings['label'] : 'Top News';
-
-		// Pinned articles always show in full, in the order they were
-		// pinned — an editor who deliberately picked specific stories
-		// shouldn't have one silently dropped because of a count meant to
-		// bound the *auto-filled* pool. Auto-fill only tops up whatever
-		// room is left under $count, excluding anything already pinned so
-		// nothing shows twice.
-		$pinned_posts = bday_breaking_ticker_resolve_pinned( (array) ( $settings['pinned'] ?? array() ) );
-		$remaining    = max( 0, $count - count( $pinned_posts ) );
-
-		$auto_posts = $remaining > 0
-			? bday_get_posts(
-				array(
-					'tag'             => 'bdlead',
-					'numberposts'     => $remaining,
-					'post__not_in'    => wp_list_pluck( $pinned_posts, 'ID' ),
-					'cache_namespace' => 'breaking_ticker',
-					'cache_ttl'       => 120,
-				)
-			)
-			: array();
-
-		$posts = array_merge( $pinned_posts, $auto_posts );
-
-		// Safety net for a fresh install (or one that hasn't started using
-		// "bdlead" or pinning yet) — falls back to the strip's original
-		// unconditional behavior (most recent posts site-wide) rather than
-		// just going empty. Never runs once either mechanism has anything
-		// in it.
-		if ( empty( $posts ) ) {
-			$posts = bday_get_posts( array( 'numberposts' => $count, 'cache_namespace' => 'breaking_ticker', 'cache_ttl' => 120 ) );
-		}
+		$posts = bday_breaking_ticker_get_posts();
 		if ( empty( $posts ) ) {
 			return;
 		}

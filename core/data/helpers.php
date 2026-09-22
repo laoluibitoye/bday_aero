@@ -28,15 +28,17 @@ function bday_get_posts( array $args = array() ): array {
 
 	$args = wp_parse_args( $args, $defaults );
 
-	// Editor-reported: 300s (5 min) meant a newly published/edited post
-	// could sit invisible on cached listings (homepage sections, archives)
-	// for up to 5 minutes with no way to force a refresh — none of these
-	// hashed-args cache keys can be selectively invalidated on save_post
-	// (see Bday_Query_Cache::forget()'s own docblock), so freshness here
-	// is purely a function of this TTL. 60s still meaningfully absorbs
-	// repeated hits within any given traffic burst, just without the
-	// multi-minute editorial lag.
-	$ttl = isset( $args['cache_ttl'] ) ? (int) $args['cache_ttl'] : MINUTE_IN_SECONDS;
+	// Freshness on publish/update is now handled by save_post bumping the
+	// namespace's generation (class-query-cache.php), not by a short TTL —
+	// a hashed-args key here can be invalidated the moment relevant
+	// content changes, generation and all, without needing to know the
+	// specific key in advance. That resolved the original 60s-default
+	// trade-off (editorial staleness vs. read-traffic recompute cost): a
+	// 60s TTL under real reader traffic was a top contributor to an RDS
+	// resource-spike incident (2026-09-22), recomputing several of these
+	// listings dozens of times a minute. TTL is now a safety-net expiry,
+	// not the freshness mechanism, so it can be much longer.
+	$ttl = isset( $args['cache_ttl'] ) ? (int) $args['cache_ttl'] : 10 * MINUTE_IN_SECONDS;
 	unset( $args['cache_ttl'] );
 
 	$namespace = isset( $args['cache_namespace'] ) ? (string) $args['cache_namespace'] : 'core';

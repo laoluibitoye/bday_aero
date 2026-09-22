@@ -188,8 +188,25 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 				<?php if ( $primary_category && ! bday_aero_is_post_gated( $post_id ) ) :
 					$tags = get_the_tags( $post_id );
 					if ( ! empty( $tags ) ) :
-						$tag_ids   = wp_list_pluck( $tags, 'term_id' );
-						$read_also = bday_get_posts( array( 'tag__in' => $tag_ids, 'post__not_in' => array( $post_id ), 'numberposts' => 3, 'cache_namespace' => 'article' ) );
+						$tag_ids = wp_list_pluck( $tags, 'term_id' );
+						// Cached by tag set only, not by post__not_in — every
+						// article sharing this tag combination reuses one
+						// cache entry instead of each getting its own, which
+						// was a top contributor to an RDS resource-spike
+						// incident (2026-09-22, see class-query-cache.php).
+						// Fetches one extra so filtering the current post
+						// out in PHP still leaves 3.
+						$read_also_pool = bday_get_posts( array( 'tag__in' => $tag_ids, 'numberposts' => 4, 'cache_namespace' => 'article' ) );
+						$read_also      = array_slice(
+							array_filter(
+								$read_also_pool,
+								static function ( WP_Post $candidate ) use ( $post_id ): bool {
+									return $candidate->ID !== $post_id;
+								}
+							),
+							0,
+							3
+						);
 						if ( ! empty( $read_also ) ) :
 							?>
 							<div class="bday-read-also">
@@ -270,7 +287,19 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 			<div id="aero-paywall-comments-mount" class="bday-comments" data-aero-comments-post-id="<?php echo esc_attr( (string) $post_id ); ?>"></div>
 
 			<?php if ( $primary_category ) :
-				$ymal = bday_get_posts( array( 'category_name' => $primary_category->slug, 'post__not_in' => array( $post_id ), 'numberposts' => 3, 'cache_namespace' => 'article' ) );
+				// Same cardinality fix as "Read Also" above — cached by
+				// category only, current post filtered out in PHP.
+				$ymal_pool = bday_get_posts( array( 'category_name' => $primary_category->slug, 'numberposts' => 4, 'cache_namespace' => 'article' ) );
+				$ymal      = array_slice(
+					array_filter(
+						$ymal_pool,
+						static function ( WP_Post $candidate ) use ( $post_id ): bool {
+							return $candidate->ID !== $post_id;
+						}
+					),
+					0,
+					3
+				);
 				if ( ! empty( $ymal ) ) :
 					?>
 					<div class="bday-ymal">
