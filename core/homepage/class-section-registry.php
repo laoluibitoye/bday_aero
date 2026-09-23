@@ -166,15 +166,28 @@ final class Bday_Section_Registry {
 			if ( ! isset( $discovered[ $slug ] ) ) {
 				continue;
 			}
-			// A custom (admin-defined) section has no file/part — it fetches
-			// its own posts directly from its saved tag/category rather than
-			// reading anything out of $data, so render_active() doesn't need
-			// to widen $data's shape for it.
-			if ( $discovered[ $slug ]['is_custom'] ) {
-				bday_render_custom_homepage_section( $slug );
-				continue;
+			// Each section renders inside its own try/catch — found live
+			// 2026-09-22: a single section throwing (bad saved data, a
+			// template bug, anything) is a PHP fatal that aborts the *entire*
+			// request, silently blanking out every section after it with no
+			// error shown to the reader (display_errors is off in
+			// production). One broken section must never be able to take
+			// the rest of the homepage down with it; \Throwable also catches
+			// TypeError/Error, not just Exception, since PHP 7+ fatals are
+			// themselves Throwable. Logged so it's still diagnosable.
+			try {
+				// A custom (admin-defined) section has no file/part — it
+				// fetches its own posts directly from its saved tag/category
+				// rather than reading anything out of $data, so this doesn't
+				// need to widen $data's shape for it.
+				if ( $discovered[ $slug ]['is_custom'] ) {
+					bday_render_custom_homepage_section( $slug );
+				} else {
+					get_template_part( $discovered[ $slug ]['part'], null, array( 'data' => $data ) );
+				}
+			} catch ( \Throwable $e ) {
+				error_log( sprintf( '[bday] homepage section "%s" failed to render: %s', $slug, $e->getMessage() ) );
 			}
-			get_template_part( $discovered[ $slug ]['part'], null, array( 'data' => $data ) );
 		}
 	}
 }
