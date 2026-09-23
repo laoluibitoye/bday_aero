@@ -2,7 +2,7 @@
 /**
  * Section Name: In Other News
  * Section Slug: in-other-news
- * Description: A story list plus a sidebar (today's e-paper, an Opinion box, Most Popular, and the sidebar ad zone the classic homepage's own rail also carries).
+ * Description: A story list plus a sidebar (today's e-paper, an editor-uploaded ad banner, and the sidebar ad zone the classic homepage's own rail also carries).
  * Default Enabled: yes
  */
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,8 +12,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 $data     = $args['data'] ?? array();
 $stories  = array_slice( $data['other_news'] ?? array(), 0, 5 );
 $e_paper  = $data['e_paper'][0] ?? null;
-$opinion  = array_slice( $data['opinion'] ?? array(), 0, 3 );
-$popular  = $data['most_popular'] ?? array();
 if ( empty( $stories ) ) {
 	return;
 }
@@ -50,25 +48,17 @@ if ( empty( $stories ) ) {
 				</div>
 			<?php endif; ?>
 
-			<?php if ( ! empty( $opinion ) ) : ?>
-				<div class="bday-rd-rail__block bday-rd-rail__block--tint">
-					<span class="bday-rd-kicker">Opinion</span>
-					<?php foreach ( $opinion as $post ) : ?>
-						<a href="<?php echo esc_url( get_permalink( $post ) ); ?>"><?php echo esc_html( get_the_title( $post ) ); ?></a>
-					<?php endforeach; ?>
-				</div>
-			<?php endif; ?>
-
-			<?php if ( ! empty( $popular ) ) : ?>
-				<div class="bday-rd-rail__block">
-					<span class="bday-rd-kicker">Most Popular</span>
-					<ul class="bday-list">
-						<?php foreach ( $popular as $post ) : ?>
-							<li><a href="<?php echo esc_url( get_permalink( $post ) ); ?>"><?php echo esc_html( get_the_title( $post ) ); ?></a></li>
-						<?php endforeach; ?>
-					</ul>
-				</div>
-			<?php endif; ?>
+			<?php
+			/**
+			 * Editor-requested (2026-09-23): the fixed Opinion box and
+			 * algorithmic Most Popular list that used to sit here weren't
+			 * admin-configurable — replaced with one editor-uploaded ad
+			 * banner (addons/homepage-rail-banner/), landscape or portrait,
+			 * any dimensions. No-ops entirely until an image is uploaded
+			 * and the addon's "Enabled" box is checked.
+			 */
+			do_action( 'bday_homepage_rail_banner_zone' );
+			?>
 			<?php bday_ad_zone( 'sidebar' ); ?>
 		</aside>
 	</div>
