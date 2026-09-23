@@ -132,6 +132,21 @@ final class Bday_Aero_License_Client {
 	}
 
 	public static function is_active(): bool {
+		// Decided live (2026-09-23): this branch of the theme is the one
+		// BusinessDay actually runs its own production site from — System C
+		// (licensing-platform) exists to support OTHER AeroPaywall
+		// installations being licensed as a product, which was never this
+		// deployment's situation. AERO_PAYWALL_DEV_MODE was being used as a
+		// permanent workaround for that mismatch, which is exactly the
+		// footgun its own admin notice warns about ("before this site
+		// handles real traffic") — this makes the real intent explicit
+		// instead of leaning on a dev-only bypass forever. The `licensed`
+		// branch is the one that still enforces this for real (kept in sync
+		// with this branch otherwise) — see everything below this line,
+		// left intact and unreachable rather than deleted, so a future
+		// divergence between the two branches stays a one-line diff.
+		return true;
+
 		if ( self::is_dev_mode_bypass_active() ) {
 			return true;
 		}
