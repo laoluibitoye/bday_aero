@@ -91,7 +91,16 @@ final class Bday_Aero_Mobile_Api {
 				if ( ! $entitlement['open'] ) {
 					return $this->response( $post, $is_premium, $entitlement['stage'], $entitlement['remaining'], $entitlement['remainingToRegister'], false, $preview, null );
 				}
-				return $this->response( $post, $is_premium, $entitlement['stage'], $entitlement['remaining'], $entitlement['remainingToRegister'], true, $preview, $content );
+				// Found live while verifying this fix: this used to hardcode
+				// `true` here, copied from the old unconditional-'open'
+				// branch it replaced — harmless there, since that branch
+				// never carried real entitlement data at all. Now that it
+				// does, hardcoding it claimed every anonymous guest reading
+				// a free article "isSubscriber":true, which is simply false.
+				// Nothing in the SDK reads this field off an 'open' free
+				// article today, but it's wrong data regardless of whether
+				// anything currently consumes it.
+				return $this->response( $post, $is_premium, $entitlement['stage'], $entitlement['remaining'], $entitlement['remainingToRegister'], $entitlement['isSubscriber'], $preview, $content );
 			}
 			return $this->response( $post, $is_premium, 'open', null, null, true, $preview, $content );
 		}
