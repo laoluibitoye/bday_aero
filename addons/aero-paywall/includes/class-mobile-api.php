@@ -69,22 +69,29 @@ final class Bday_Aero_Mobile_Api {
 		$preview = wp_trim_words( wp_strip_all_tags( $post->post_content ), Bday_Aero_Settings::preview_word_count() );
 
 		if ( ! $is_gated ) {
-			// Reader-asked: "if reading a free article records nothing, how
-			// do we know when a reader has read the number of allowed free
-			// articles?" — same gap and same fix as class-content-gate.php's
-			// maybe_count_ungated_view(): Hybrid mode counts every article
-			// view, not just gated ones, but this endpoint used to answer
-			// 'open' here without ever calling the meter for a non-premium
-			// post. This is the entitlement endpoint the SDK/mobile app
-			// actually calls, so leaving this gap here — even after fixing
-			// the page-render gate — would mean web and mobile never count
-			// a free-article view either way. Fire-and-forget: nothing
-			// about this response depends on the answer, only the count.
-			if ( in_array( $scope_mode, array( 'hybrid', 'global_lock' ), true ) ) {
-				$device_id = self::resolve_device_id( $request );
-				if ( '' !== $device_id ) {
-					Bday_Aero_Meter_Client::record_async( $device_id, $post_id );
+			// Reader-reported live: guests kept reading indefinitely, never
+			// once prompted to register, on a site whose free content vastly
+			// outnumbers its premium content. Root cause — this branch used
+			// to always answer 'open' unconditionally (after a fire-and-
+			// forget count), regardless of how many free articles this
+			// reader had already read. Hybrid's own description ("every
+			// article a reader views counts toward their limit") means a
+			// free article has to be capable of blocking too, once the
+			// reader is over the threshold — not just counting silently
+			// forever. resolve_entitlement() already computes the real
+			// stage from the same device meter (register_prompt/
+			// profile_prompt/paid_lock) and already handles bypass roles,
+			// signed-in-but-not-subscribed readers, etc. — reusing it here
+			// is what actually turns "counts every view" into "and gates
+			// once you're over the line," not a second, parallel check.
+			// (Only 'hybrid' ever reaches this branch in practice —
+			// global_lock/hard_wall already forced $is_gated true above.)
+			if ( 'hybrid' === $scope_mode ) {
+				$entitlement = $this->resolve_entitlement( $request, $post_id );
+				if ( ! $entitlement['open'] ) {
+					return $this->response( $post, $is_premium, $entitlement['stage'], $entitlement['remaining'], $entitlement['remainingToRegister'], false, $preview, null );
 				}
+				return $this->response( $post, $is_premium, $entitlement['stage'], $entitlement['remaining'], $entitlement['remainingToRegister'], true, $preview, $content );
 			}
 			return $this->response( $post, $is_premium, 'open', null, null, true, $preview, $content );
 		}
