@@ -27,6 +27,7 @@ $bday_footer_columns = array(
 		'Copyright'      => home_url( '/copyright/' ),
 	),
 	'Quick Links'     => array(
+		'Contact Us'      => home_url( '/contact-us/' ),
 		'Adverts & Rates' => home_url( '/advert-and-rates/' ),
 		'Companies'       => home_url( '/category/companies/' ),
 		'Market'          => home_url( '/category/markets/' ),
