@@ -46,6 +46,41 @@ final class Bday_Aero_Mobile_Api {
 			return new WP_REST_Response( array( 'error' => 'Not found' ), 404 );
 		}
 
+		/**
+		 * Team-member bypass (Editor-requested, 2026-09-28): "every staff role except
+		 * Subscriber, logged into wp-admin, reads every article — free or premium — without
+		 * being asked to register or subscribe." class-content-gate.php's gate_content()
+		 * already does exactly this for the server-rendered page (its own
+		 * current_user_has_bypass_role() check, first thing in the function) — but that
+		 * covers only the initial HTML. The SDK always ALSO calls this REST route on page
+		 * load to decide what to actually show (init.ts's resolveAndRender() — see its own
+		 * docblock for why it can no longer skip this call), and this route had no equivalent
+		 * check at all: it would answer from the anonymous device-meter path even for a
+		 * browser that's plainly logged into wp-admin, so the SDK would swap the real,
+		 * already-rendered content back out for a register/profile/paywall prompt moments
+		 * after the page loaded.
+		 *
+		 * Bug found live (this request, 28 Sep 2026) while building this: wp_get_current_user()
+		 * — what gate_content() and the rest of this class's own bypass check rely on — does
+		 * NOT resolve a real, logged-in-to-wp-admin browser inside a REST callback unless the
+		 * request also carries a valid X-WP-Nonce header (confirmed against a live WordPress
+		 * instance: the exact same request that renders as logged-in on a normal page load
+		 * came back rest_not_logged_in here). The SDK has no reason to know about WP nonces —
+		 * it's built for subscription-service-authenticated readers and mobile apps, neither
+		 * of which have a WP session at all. Rather than teach the SDK about WordPress's nonce
+		 * system for this one case, this reads and validates the raw wp-admin session cookie
+		 * directly via wp_validate_auth_cookie() — the same core function is_user_logged_in()
+		 * itself calls on an ordinary page load, just invoked here without going through the
+		 * nonce-gated REST current-user bootstrap. Read-only and informational (does this
+		 * browser belong to a staff member), never a state-changing action, so the nonce's
+		 * actual purpose — CSRF protection — doesn't apply here anyway.
+		 */
+		if ( self::wp_session_bypass_user() ) {
+			$content = apply_filters( 'the_content', $post->post_content );
+			$preview = wp_trim_words( wp_strip_all_tags( $post->post_content ), Bday_Aero_Settings::preview_word_count() );
+			return $this->response( $post, $this->premium_map->is_premium( $post_id ), 'open', null, null, true, $preview, $content );
+		}
+
 		$is_premium = $this->premium_map->is_premium( $post_id );
 		// Same fix as class-content-gate.php's is_gated_by_mode(): a
 		// non-premium post used to always short-circuit straight to
@@ -166,6 +201,31 @@ final class Bday_Aero_Mobile_Api {
 	 * directly instead of entering the cookie-preferring path meant for
 	 * browsers.
 	 */
+	/**
+	 * Validates the raw wp-admin session cookie directly (bypassing the nonce-gated REST
+	 * current-user bootstrap — see resolve_article()'s own docblock for why that's
+	 * necessary) and, if it belongs to a bypass-role staff member, returns that WP_User.
+	 * Returns null for anything short of that: no cookie, an invalid/expired/tampered one,
+	 * or a real staff session whose role isn't in the configured bypass list — Subscriber
+	 * (the one role deliberately excluded, so a paying reader who also has a WP account
+	 * still goes through the real funnel) falls through here same as a logged-out visitor.
+	 */
+	private static function wp_session_bypass_user(): ?WP_User {
+		$cookie = $_COOKIE[ LOGGED_IN_COOKIE ] ?? '';
+		if ( '' === $cookie ) {
+			return null;
+		}
+		$user_id = wp_validate_auth_cookie( $cookie, 'logged_in' );
+		if ( ! $user_id ) {
+			return null;
+		}
+		$user = get_user_by( 'id', $user_id );
+		if ( ! $user instanceof WP_User ) {
+			return null;
+		}
+		return Bday_Aero_Content_Gate::current_user_has_bypass_role( $user ) ? $user : null;
+	}
+
 	private static function resolve_device_id( WP_REST_Request $request ): string {
 		if ( 'mobile' === $request->get_header( 'x-app-channel' ) ) {
 			return (string) ( $request->get_header( 'x-device-id' ) ?? '' );
