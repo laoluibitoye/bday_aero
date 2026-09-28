@@ -156,6 +156,17 @@ export function GatingTab({
         />
       </Card>
 
+      <Card
+        title="Registration exceptions"
+        description="Content in these categories/tags never asks a reader to register or complete their profile, however many free articles they've read — Hybrid mode only. Sponsored posts and partnered content are the usual case: readable by anyone, always. Separate from the exceptions above — this is about the register/profile prompts, not premium status; a post can be exempt here and still charge for access if it's also marked premium."
+      >
+        <ExceptionsEditor
+          value={settings.aero_paywall_registration_exempt_terms}
+          taxonomies={boot.taxonomies}
+          onChange={(value) => patchSettings({ aero_paywall_registration_exempt_terms: value })}
+        />
+      </Card>
+
       <details className="aero-advanced">
         <summary className="aero-advanced__summary">Advanced</summary>
         <div className="aero-advanced__body">
@@ -189,6 +200,12 @@ export function GatingTab({
               checked={connectorSettings.meter_ip_fallback_enabled ?? false}
               onChange={(v) => saveMeteringField('meter_ip_fallback_enabled', v)}
               description="Also count reads by IP address, so clearing cookies alone doesn't reset a reader's free-article count. Off by default — a shared office/campus IP would otherwise share one allowance."
+            />
+            <Toggle
+              label="Free reads for guests (Hybrid only)"
+              checked={connectorSettings.hybrid_guest_free_articles_enabled ?? false}
+              onChange={(v) => saveMeteringField('hybrid_guest_free_articles_enabled', v)}
+              description="A signed-out reader never sees the register/profile prompt on a free (non-premium) article. Premium content, and an already-registered reader's own funnel, are unaffected. Off by default; also editable from admin-web's Platform Settings page."
             />
           </Card>
 

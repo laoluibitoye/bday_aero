@@ -185,7 +185,12 @@ final class Bday_Aero_Content_Gate {
 		if ( null === $device_id ) {
 			return;
 		}
-		Bday_Aero_Meter_Client::record_async( $device_id, $post_id );
+		// Registration-exempt content (Sponsored/Partnered Content, etc. — Editor-requested,
+		// 2026-09-28) — passed through regardless of scope mode; MeterController.check() is
+		// the one place that decides whether it actually applies (hybrid + non-premium only),
+		// this call site's only job is to report the fact honestly.
+		$exempt = ! $is_premium && Bday_Aero_Registration_Exemptions::matches( $post_id );
+		Bday_Aero_Meter_Client::record_async( $device_id, $post_id, $exempt );
 	}
 
 	/**

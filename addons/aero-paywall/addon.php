@@ -47,6 +47,7 @@ require_once __DIR__ . '/includes/class-settings.php';
 require_once __DIR__ . '/includes/class-device-cookie.php';
 require_once __DIR__ . '/includes/class-restriction-rules.php';
 require_once __DIR__ . '/includes/class-premium-map.php';
+require_once __DIR__ . '/includes/class-registration-exemptions.php';
 require_once __DIR__ . '/includes/class-meter-client.php';
 require_once __DIR__ . '/includes/class-paywall-config-client.php';
 require_once __DIR__ . '/includes/class-branding-client.php';

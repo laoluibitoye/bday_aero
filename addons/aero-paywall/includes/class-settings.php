@@ -39,6 +39,7 @@ final class Bday_Aero_Settings {
 	public const JSONLD_ENABLED             = 'aero_paywall_jsonld_enabled';
 	public const RESTRICTION_EXCEPTIONS     = 'aero_paywall_restriction_exceptions';
 	public const PROMPT_COPY                = 'aero_paywall_prompt_copy';
+	public const REGISTRATION_EXEMPT_TERMS  = 'aero_paywall_registration_exempt_terms';
 
 	public static function enabled(): bool {
 		return (bool) get_option( self::ENABLED, false );
@@ -174,6 +175,27 @@ final class Bday_Aero_Settings {
 	/** @return array<string, int[]> */
 	public static function restriction_exceptions(): array {
 		$terms = get_option( self::RESTRICTION_EXCEPTIONS, array() );
+		return is_array( $terms ) ? $terms : array();
+	}
+
+	/**
+	 * @return array<string, int[]> taxonomy => term ids
+	 *
+	 * Content in these terms never requires registration under Hybrid scope
+	 * mode, however far the reader's own free-article count has climbed —
+	 * "sponsored"/"partnered content" is the motivating case (Editor-
+	 * requested, 2026-09-28). Deliberately its own setting, not a reuse of
+	 * restriction_exceptions() above: that one only ever affects whether a
+	 * post is classified *premium*, which Hybrid's register/profile ladder
+	 * runs regardless of — a post can be exempt here and still be free (the
+	 * common case), still be premium (this setting then does nothing; see
+	 * Bday_Aero_Registration_Exemptions), or an exceptions-listed category
+	 * could independently also be listed here. Empty by default, same as
+	 * restriction_exceptions() — no behavior change until an admin
+	 * deliberately picks terms on the Restrictions tab.
+	 */
+	public static function registration_exempt_terms(): array {
+		$terms = get_option( self::REGISTRATION_EXEMPT_TERMS, array() );
 		return is_array( $terms ) ? $terms : array();
 	}
 

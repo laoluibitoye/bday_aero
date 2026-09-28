@@ -34,8 +34,14 @@ final class Bday_Aero_Meter_Client {
 	private const CB_FAILURE_WINDOW    = 30; // seconds a failure counts toward the threshold before expiring on its own
 	private const CB_COOLDOWN          = 15; // seconds the breaker stays open once tripped, before the next request is allowed to probe again
 
-	/** @return array{stage: string, remaining: int|null, remainingToRegister: int|null}|null */
-	public static function check( string $device_id, int $post_id ): ?array {
+	/**
+	 * @param bool $exempt Registration-exempt content (Bday_Aero_Registration_Exemptions) —
+	 *   forwarded as-is; subscription-service is the one place that also knows whether
+	 *   this post is premium, so it (not this call site) makes the final "does exempt
+	 *   actually apply here" call — see MeterController.check()'s own `isExempt` guard.
+	 * @return array{stage: string, remaining: int|null, remainingToRegister: int|null}|null
+	 */
+	public static function check( string $device_id, int $post_id, bool $exempt = false ): ?array {
 		$base_url = Bday_Aero_Settings::api_base_url();
 		if ( '' === $base_url ) {
 			return null;
@@ -59,6 +65,7 @@ final class Bday_Aero_Meter_Client {
 						array(
 							'deviceId' => $device_id,
 							'postId'   => (string) $post_id,
+							'exempt'   => $exempt,
 						),
 						self::current_traffic_context()
 					)
@@ -149,7 +156,7 @@ final class Bday_Aero_Meter_Client {
 	 * right here, since the caller was never going to use the response
 	 * anyway.
 	 */
-	public static function record_async( string $device_id, int $post_id ): void {
+	public static function record_async( string $device_id, int $post_id, bool $exempt = false ): void {
 		$base_url = Bday_Aero_Settings::api_base_url();
 		if ( '' === $base_url ) {
 			return;
@@ -163,6 +170,7 @@ final class Bday_Aero_Meter_Client {
 						array(
 							'deviceId' => $device_id,
 							'postId'   => (string) $post_id,
+							'exempt'   => $exempt,
 						),
 						self::current_traffic_context()
 					)

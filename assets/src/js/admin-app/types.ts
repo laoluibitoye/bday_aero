@@ -56,6 +56,7 @@ export interface Settings {
   aero_paywall_bypass_roles: string[];
   aero_paywall_jsonld_enabled: boolean;
   aero_paywall_restriction_exceptions: Record<string, number[]>;
+  aero_paywall_registration_exempt_terms: Record<string, number[]>;
   aero_paywall_prompt_copy: PromptCopy;
   /** category term IDs only — {category: number[]} */
   aero_paywall_premium_terms: { category: number[] };
@@ -88,6 +89,7 @@ export interface ConnectorSettings {
   funnel_thresholds?: FunnelThresholds;
   meter_ip_fallback_enabled?: boolean;
   restrictions_combine_mode?: boolean;
+  hybrid_guest_free_articles_enabled?: boolean;
 }
 
 export interface BootstrapData {
