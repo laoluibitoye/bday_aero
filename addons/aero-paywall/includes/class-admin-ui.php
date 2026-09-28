@@ -221,6 +221,7 @@ final class Bday_Aero_Admin_Ui {
 				Bday_Aero_Settings::BYPASS_ROLES               => Bday_Aero_Settings::bypass_roles(),
 				Bday_Aero_Settings::JSONLD_ENABLED             => Bday_Aero_Settings::jsonld_enabled(),
 				Bday_Aero_Settings::RESTRICTION_EXCEPTIONS     => Bday_Aero_Settings::restriction_exceptions(),
+				Bday_Aero_Settings::REGISTRATION_EXEMPT_TERMS  => Bday_Aero_Settings::registration_exempt_terms(),
 				Bday_Aero_Settings::PROMPT_COPY                => Bday_Aero_Settings::prompt_copy(),
 				Bday_Aero_Settings::PREMIUM_TERMS              => self::normalized_premium_terms(),
 			),
@@ -400,6 +401,11 @@ final class Bday_Aero_Admin_Ui {
 		if ( array_key_exists( Bday_Aero_Settings::RESTRICTION_EXCEPTIONS, $input ) ) {
 			$saved[ Bday_Aero_Settings::RESTRICTION_EXCEPTIONS ] = self::sanitize_taxonomy_term_map( $input[ Bday_Aero_Settings::RESTRICTION_EXCEPTIONS ] );
 			update_option( Bday_Aero_Settings::RESTRICTION_EXCEPTIONS, $saved[ Bday_Aero_Settings::RESTRICTION_EXCEPTIONS ] );
+		}
+
+		if ( array_key_exists( Bday_Aero_Settings::REGISTRATION_EXEMPT_TERMS, $input ) ) {
+			$saved[ Bday_Aero_Settings::REGISTRATION_EXEMPT_TERMS ] = self::sanitize_taxonomy_term_map( $input[ Bday_Aero_Settings::REGISTRATION_EXEMPT_TERMS ] );
+			update_option( Bday_Aero_Settings::REGISTRATION_EXEMPT_TERMS, $saved[ Bday_Aero_Settings::REGISTRATION_EXEMPT_TERMS ] );
 		}
 
 		if ( array_key_exists( Bday_Aero_Settings::PREMIUM_TERMS, $input ) ) {

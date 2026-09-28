@@ -87,7 +87,7 @@ final class Bday_Aero_Mobile_Api {
 			// (Only 'hybrid' ever reaches this branch in practice —
 			// global_lock/hard_wall already forced $is_gated true above.)
 			if ( 'hybrid' === $scope_mode ) {
-				$entitlement = $this->resolve_entitlement( $request, $post_id );
+				$entitlement = $this->resolve_entitlement( $request, $post_id, $is_premium, $scope_mode );
 				if ( ! $entitlement['open'] ) {
 					return $this->response( $post, $is_premium, $entitlement['stage'], $entitlement['remaining'], $entitlement['remainingToRegister'], false, $preview, null );
 				}
@@ -113,7 +113,7 @@ final class Bday_Aero_Mobile_Api {
 			}
 		}
 
-		$entitlement = $this->resolve_entitlement( $request, $post_id );
+		$entitlement = $this->resolve_entitlement( $request, $post_id, $is_premium, $scope_mode );
 		if ( $entitlement['open'] ) {
 			return $this->response( $post, $is_premium, $entitlement['stage'], $entitlement['remaining'], $entitlement['remainingToRegister'], $entitlement['isSubscriber'], $preview, $content );
 		}
@@ -217,8 +217,17 @@ final class Bday_Aero_Mobile_Api {
 		return '';
 	}
 
-	/** @return array{open: bool, stage: string, remaining: int|null, remainingToRegister: int|null, isSubscriber: bool} */
-	private function resolve_entitlement( WP_REST_Request $request, int $post_id ): array {
+	/**
+	 * @param bool $is_premium Whether $post_id is premium — needed here (rather than
+	 *   re-derived) because both new Hybrid-only reader-facing knobs below
+	 *   (registration-exempt terms, the guest-free-articles toggle) only ever apply to
+	 *   non-premium content; the caller already knows this (resolve_article() computes
+	 *   it before either of its two call sites here), so this avoids a second lookup.
+	 * @param string $scope_mode Same reasoning — both knobs are Hybrid-only, per how
+	 *   this was asked for; the caller already has this resolved too.
+	 * @return array{open: bool, stage: string, remaining: int|null, remainingToRegister: int|null, isSubscriber: bool}
+	 */
+	private function resolve_entitlement( WP_REST_Request $request, int $post_id, bool $is_premium, string $scope_mode ): array {
 		$is_authenticated_reader = false;
 
 		$auth  = self::get_authorization_header( $request );
@@ -281,7 +290,16 @@ final class Bday_Aero_Mobile_Api {
 			return array( 'open' => false, 'stage' => 'paid_lock', 'remaining' => 0, 'remainingToRegister' => 0, 'isSubscriber' => false );
 		}
 
-		$meter = Bday_Aero_Meter_Client::check( $device_id, $post_id );
+		// Registration-exempt content (WP-admin's "Registration exceptions" category/tag
+		// picker — Sponsored, Partnered Content, etc.; Editor-requested, 2026-09-28) —
+		// resolved here, WP-side, since only WordPress knows a post's taxonomy terms;
+		// subscription-service (MeterController.check()) is what actually decides
+		// whether it applies (hybrid + non-premium — both already guaranteed by the
+		// two call sites that reach this function, but re-checked server-side too,
+		// same defense-in-depth as every other gating decision in this codebase).
+		$is_exempt = ! $is_premium && 'hybrid' === $scope_mode && Bday_Aero_Registration_Exemptions::matches( $post_id );
+
+		$meter = Bday_Aero_Meter_Client::check( $device_id, $post_id, $is_exempt );
 		if ( null === $meter ) {
 			// Unreachable subscription-service: fail closed, unlike the cosmetic clients.
 			return array( 'open' => false, 'stage' => 'paid_lock', 'remaining' => 0, 'remainingToRegister' => 0, 'isSubscriber' => false );
@@ -342,6 +360,33 @@ final class Bday_Aero_Mobile_Api {
 			 * wall, not a silent unlock — never straight to 'open'.
 			 */
 			$stage = 'register_prompt';
+		}
+
+		/**
+		 * Site-wide "free reads for guests" toggle (hybrid_guest_free_articles_enabled —
+		 * Editor-requested, 2026-09-28). Off by default; Hybrid behaves exactly as it did
+		 * before this existed until an admin turns it on. When on, a fully anonymous
+		 * reader (no session at all — $is_authenticated_reader is only ever true once a
+		 * verified, non-staff token was resolved above) never sees register_prompt or
+		 * profile_prompt on a non-premium article. Deliberately its own, separate check
+		 * run AFTER the auth-aware collapsing above rather than folded into it — it needs
+		 * to catch $stage regardless of how it got there, including the mobile-specific
+		 * profile_prompt→register_prompt rewrite just above, and it must never apply to
+		 * an authenticated reader (they have their own, already-correct rules above) or
+		 * to premium content (a real subscription is still required there).
+		 *
+		 * Deliberately does NOT change whether this view counts — recordView above still
+		 * runs exactly as it does today (see MeterController.check(), untouched by this).
+		 * A guest's real position in the funnel keeps advancing silently, same as an
+		 * already-registered reader's free reads already do; only what they're SHOWN
+		 * changes. That means turning this off again later drops a returning guest back
+		 * in at their true, honest count — no jump, no free reset.
+		 */
+		if ( ! $is_authenticated_reader && ! $is_premium && 'hybrid' === $scope_mode
+			&& in_array( $stage, array( 'register_prompt', 'profile_prompt' ), true )
+			&& ! empty( Bday_Aero_Paywall_Config_Client::get()['hybrid_guest_free_articles_enabled'] )
+		) {
+			$stage = 'open';
 		}
 
 		$open = ! in_array( $stage, array( 'paid_lock', 'register_prompt', 'profile_prompt' ), true );

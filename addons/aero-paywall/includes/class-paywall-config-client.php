@@ -38,6 +38,7 @@ final class Bday_Aero_Paywall_Config_Client {
 				'stage4' => 4,
 			),
 			'meter_ip_fallback_enabled' => false,
+			'hybrid_guest_free_articles_enabled' => false,
 			'captcha'                   => null,
 		);
 	}
