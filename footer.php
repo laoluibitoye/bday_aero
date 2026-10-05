@@ -113,6 +113,16 @@ $bday_footer_columns = array(
 	</div>
 </div>
 
+<?php
+/**
+ * Reader-requested (2026-10-06): site-wide popups (addons/popups/) —
+ * each matching, published popup's markup + trigger/device config, for
+ * bdayInitPopups() (script.js) to act on. No-ops entirely when no popup
+ * matches the current page (render.php's own early return).
+ */
+do_action( 'bday_popup_zone' );
+?>
+
 <?php wp_footer(); ?>
 </body>
 </html>

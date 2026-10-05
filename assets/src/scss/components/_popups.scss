@@ -1,0 +1,199 @@
+// Site-wide popups (addons/popups/) — reader-requested 2026-10-06,
+// modeled on wppopups.com's feature set. One shared markup shape
+// (.bday-popup > .bday-popup__card > close + .bday-popup__body) styled
+// five different ways per position; bdayInitPopups() (script.js) only
+// ever toggles [hidden]/.is-open, same open/close contract as the
+// Download App modal and the Market Pulse popup. Global tokens only
+// (--color-*, --font-ui) since a popup can appear on any page.
+
+.bday-popup {
+	position: fixed;
+	z-index: 998; // one below the Download App modal/Market Pulse popup (999), so neither fights a popup for top stacking if both are ever open
+	pointer-events: none;
+	transition: background-color 200ms ease;
+
+	&.is-open {
+		pointer-events: auto;
+	}
+
+	&__close {
+		position: absolute;
+		top: 10px;
+		right: 12px;
+		width: 28px;
+		height: 28px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background: none;
+		color: var(--color-ink-3);
+		font-size: 22px;
+		line-height: 1;
+		cursor: pointer;
+		border-radius: 50%;
+		z-index: 1;
+
+		&:hover {
+			background: var(--color-accent-tint);
+			color: var(--color-accent);
+		}
+	}
+
+	&__body {
+		font-family: var(--font-ui);
+		color: var(--color-ink-1);
+		overflow-y: auto;
+
+		// The popup body is raw post content (the block editor's own
+		// output) — baseline spacing/typography so an editor's headings,
+		// paragraphs, images, and buttons read cleanly without having to
+		// hand-tune every popup individually.
+		> *:first-child { margin-top: 0; }
+		> *:last-child { margin-bottom: 0; }
+		p { margin: 0 0 12px; line-height: 1.5; }
+		h1, h2, h3, h4 { font-family: var(--rd-font-display, var(--font-ui)); line-height: 1.2; margin: 0 0 12px; }
+		img { max-width: 100%; height: auto; display: block; border-radius: 8px; margin: 0 0 12px; }
+		a.wp-block-button__link,
+		.wp-block-button__link {
+			display: inline-flex;
+			color: #fff;
+			background: var(--color-accent);
+			font-weight: 700;
+			text-decoration: none;
+
+			&:hover { background: var(--color-accent-strong); color: #fff; }
+		}
+	}
+
+	&__image img { width: 100%; height: auto; display: block; }
+}
+
+// ---- Center modal / Full screen — full-viewport backdrop, flex-centered card ----
+
+.bday-popup--center,
+.bday-popup--fullscreen {
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	background: transparent;
+
+	&.is-open { background: rgba(0, 0, 0, 0.5); }
+
+	.bday-popup__card {
+		background: var(--color-bg-raised);
+		border: 1px solid var(--color-border);
+		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+		position: relative;
+		transform: translateY(16px) scale(0.98);
+		opacity: 0;
+		transition: transform 200ms ease, opacity 200ms ease;
+		overflow: hidden;
+	}
+
+	&.is-open .bday-popup__card {
+		transform: translateY(0) scale(1);
+		opacity: 1;
+	}
+}
+
+.bday-popup--center .bday-popup__card {
+	width: 480px;
+	max-width: 100%;
+	max-height: 85vh;
+	border-radius: 16px;
+	padding: 32px 28px;
+}
+
+.bday-popup--fullscreen .bday-popup__card {
+	width: 100%;
+	height: 100%;
+	max-width: 960px;
+	max-height: 90vh;
+	border-radius: 16px;
+	padding: 48px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+// ---- Top bar / Bottom bar — full-width strip, no backdrop ----
+
+.bday-popup--top_bar,
+.bday-popup--bottom_bar {
+	left: 0;
+	right: 0;
+	background: transparent;
+
+	.bday-popup__card {
+		background: var(--color-bg-raised);
+		border-color: var(--color-border);
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+		padding: 14px 48px 14px 20px;
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		transition: transform 200ms ease;
+	}
+
+	.bday-popup__body {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		flex-wrap: wrap;
+
+		p { margin: 0; }
+	}
+
+	.bday-popup__image { display: none; } // no room for a full image in a one-line bar
+}
+
+.bday-popup--top_bar {
+	top: 0;
+	.bday-popup__card { border-bottom: 1px solid var(--color-border); transform: translateY(-100%); }
+	&.is-open .bday-popup__card { transform: translateY(0); }
+}
+
+.bday-popup--bottom_bar {
+	bottom: 0;
+	.bday-popup__card { border-top: 1px solid var(--color-border); transform: translateY(100%); }
+	&.is-open .bday-popup__card { transform: translateY(0); }
+}
+
+// ---- Bottom-right corner — same toast shape as the Market Pulse popup (_homepage-redesign.scss) ----
+
+.bday-popup--bottom_right {
+	right: 24px;
+	bottom: 24px;
+	left: auto;
+
+	.bday-popup__card {
+		width: 340px;
+		max-width: calc(100vw - 48px);
+		max-height: min(70vh, 480px);
+		overflow-y: auto;
+		background: var(--color-bg-raised);
+		border: 1px solid var(--color-border);
+		border-radius: 16px 16px 4px 16px;
+		box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+		padding: 20px 22px;
+		transform: translateY(16px) scale(0.98);
+		opacity: 0;
+		transition: transform 200ms ease, opacity 200ms ease;
+	}
+
+	&.is-open .bday-popup__card {
+		transform: translateY(0) scale(1);
+		opacity: 1;
+	}
+
+	@include bd-down($bp-tablet) {
+		right: 12px;
+		bottom: 12px;
+		left: 12px;
+
+		.bday-popup__card { width: 100%; max-width: 100%; }
+	}
+}

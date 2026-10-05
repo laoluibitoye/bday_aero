@@ -204,6 +204,7 @@ add_action(
 			'events'       => array( 'homepage', 'events' ),
 			'cartoons'     => array( 'homepage', 'cartoons' ),
 			'bday_edition' => array( 'homepage', 'todays_paper', 'editions' ),
+			'bday_popup'   => array( 'popups' ),
 		);
 		foreach ( $namespaces_by_type[ $post->post_type ] ?? array() as $namespace ) {
 			Bday_Query_Cache::bump_generation( $namespace );

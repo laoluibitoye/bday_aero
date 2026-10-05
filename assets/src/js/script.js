@@ -662,6 +662,138 @@ function bdayInitDownloadAppModal() {
 	});
 }
 
+// Site-wide popups (addons/popups/, reader-requested 2026-10-06) — reads
+// the per-popup trigger/device config footer.php's bday_popup_zone hook
+// emitted as JSON, decides client-side whether/when each one should
+// show. Device targeting runs here rather than server-side on purpose:
+// this site is cache-fronted (Cloudflare/Redis), so baking "mobile vs
+// desktop" into the cached HTML would serve the wrong popup to whichever
+// device type didn't generate that cache entry — matchMedia against the
+// same $bp-tablet breakpoint the rest of the theme already uses for
+// "mobile" is the one check that's always correct per visitor regardless
+// of caching. Display rules (which page this is) are still resolved
+// server-side in render.php, since that's safe under caching — a cached
+// page is still legitimately that same page for every visitor.
+function bdayInitPopups() {
+	var dataEl = document.getElementById('bd-popups-data');
+	if (!dataEl) return;
+
+	var configs;
+	try {
+		configs = JSON.parse(dataEl.textContent);
+	} catch (e) {
+		return;
+	}
+	if (!Array.isArray(configs) || !configs.length) return;
+
+	var isDesktop = window.matchMedia('(min-width: 769px)').matches;
+	var popupOpenId = null; // only one popup shows at a time — a later trigger waits until the open one is closed
+
+	function dismissKey(id) {
+		return 'bd-popup-dismissed-' + id;
+	}
+
+	function alreadyDismissed(id) {
+		try {
+			return sessionStorage.getItem(dismissKey(id)) === '1';
+		} catch (e) {
+			return false; // private-browsing/storage-blocked — never block a popup over a storage read failure
+		}
+	}
+
+	function markDismissed(id) {
+		try {
+			sessionStorage.setItem(dismissKey(id), '1');
+		} catch (e) {}
+	}
+
+	configs.forEach(function (config) {
+		var id = config.id;
+		var el = document.getElementById('bday-popup-' + id);
+		if (!el) return;
+
+		// Device target: 'both' always passes; 'desktop'/'mobile' must match
+		// this visitor's actual viewport.
+		if (config.device === 'desktop' && !isDesktop) return;
+		if (config.device === 'mobile' && isDesktop) return;
+		if (alreadyDismissed(id)) return;
+
+		var closeBtn = el.querySelector('[data-bday-popup-close]');
+		var hasBackdrop = el.classList.contains('bday-popup--center') || el.classList.contains('bday-popup--fullscreen');
+		var triggerBound = false;
+
+		function show() {
+			if (popupOpenId !== null || el.dataset.bdayPopupShown) return;
+			el.dataset.bdayPopupShown = '1';
+			popupOpenId = id;
+			el.hidden = false;
+			requestAnimationFrame(function () {
+				el.classList.add('is-open');
+			});
+			if (closeBtn) closeBtn.focus();
+			document.addEventListener('keydown', onKeydown);
+		}
+
+		function close() {
+			el.classList.remove('is-open');
+			document.removeEventListener('keydown', onKeydown);
+			markDismissed(id);
+			popupOpenId = null;
+			window.setTimeout(function () {
+				el.hidden = true;
+			}, 200);
+		}
+
+		function onKeydown(e) {
+			if (e.key === 'Escape') close();
+		}
+
+		if (closeBtn) closeBtn.addEventListener('click', close);
+		if (hasBackdrop) {
+			el.addEventListener('click', function (e) {
+				if (e.target === el) close();
+			});
+		}
+
+		function bindTrigger() {
+			if (triggerBound) return;
+			triggerBound = true;
+
+			if (config.trigger === 'delay') {
+				window.setTimeout(show, Math.max(0, config.delay || 0) * 1000);
+			} else if (config.trigger === 'scroll') {
+				var threshold = Math.max(0, Math.min(100, config.scroll || 0));
+				var onScroll = function () {
+					var scrollable = document.documentElement.scrollHeight - window.innerHeight;
+					var pct = scrollable > 0 ? (window.scrollY / scrollable) * 100 : 100;
+					if (pct >= threshold) {
+						window.removeEventListener('scroll', onScroll);
+						show();
+					}
+				};
+				window.addEventListener('scroll', onScroll, { passive: true });
+			} else if (config.trigger === 'exit_intent') {
+				// Classic exit-intent signal: the cursor leaves the viewport via
+				// its top edge (relatedTarget null + clientY <= 0) — meaningful
+				// on desktop only by nature (no cursor on a touch device), so
+				// this simply never fires there rather than needing a separate
+				// mobile-specific exit signal.
+				var onMouseOut = function (e) {
+					if (!e.relatedTarget && e.clientY <= 0) {
+						document.removeEventListener('mouseout', onMouseOut);
+						show();
+					}
+				};
+				document.addEventListener('mouseout', onMouseOut);
+			} else {
+				show(); // 'immediate'
+			}
+		}
+
+		bindTrigger();
+	});
+}
+
 document.addEventListener('DOMContentLoaded', function () {
 	bdayInitHeader();
 	bdayInitFeaturedVideoCards();
@@ -671,6 +803,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	bdayInitTextToSpeech();
 	bdayInitMarketPulse();
 	bdayInitDownloadAppModal();
+	bdayInitPopups();
 
 	// Lazy-loaded images (post_thumbnail_html filter emits data-src)
 	var lazyImages = document.querySelectorAll('img.img-lazy-load');
