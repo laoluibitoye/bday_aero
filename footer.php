@@ -67,6 +67,15 @@ $bday_footer_columns = array(
 					<li><a href="tel:+2348026011296">+234 802 601 1296</a></li>
 					<li><a href="tel:+2348138243822">+234 813 824 3822</a></li>
 				</ul>
+				<?php
+				/**
+				 * Reader-requested (2026-10-05): same "Download App" modal
+				 * as the header trigger (bdayInitDownloadAppModal() in
+				 * script.js binds every [data-bd-download-app-trigger] on
+				 * the page, not just the header's).
+				 */
+				?>
+				<button type="button" class="bd-footer__download-app" data-bd-download-app-trigger>Download App</button>
 			</div>
 		</div>
 	</div>
@@ -78,6 +87,31 @@ $bday_footer_columns = array(
 		</div>
 	</div>
 </footer>
+
+<?php
+/**
+ * Reader-requested (2026-10-05): the "Download App" modal — a QR code
+ * plus a single store-agnostic download link (onelink.to resolves to the
+ * right store per device), opened from the header trigger beside Today's
+ * Paper and the footer trigger in Support. Rendered once, globally, here
+ * (not per-section like the market-pulse popup) since both triggers live
+ * on every page. bdayInitDownloadAppModal() (script.js) binds every
+ * [data-bd-download-app-trigger] on the page to this one dialog.
+ */
+?>
+<div class="bd-download-app-modal" id="bd-download-app-modal" role="dialog" aria-modal="true" aria-labelledby="bd-download-app-modal-title" hidden>
+	<div class="bd-download-app-modal__card">
+		<button type="button" class="bd-download-app-modal__close" data-bd-download-app-close aria-label="Close">&times;</button>
+		<h2 class="bd-download-app-modal__title" id="bd-download-app-modal-title">Download the BusinessDay App</h2>
+		<img class="bd-download-app-modal__qr" src="<?php echo esc_url( BDAY_THEME_URI . 'assets/build/images/app-download-qr.png' ); ?>" alt="QR code to download the BusinessDay app" width="180" height="180" loading="lazy">
+		<p class="bd-download-app-modal__caption">Scan to download</p>
+		<a class="bd-download-app-modal__cta" href="https://onelink.to/p9exap" target="_blank" rel="noopener">
+			<i class="bi bi-apple" aria-hidden="true"></i>
+			<i class="bi bi-google-play" aria-hidden="true"></i>
+			Click here to download
+		</a>
+	</div>
+</div>
 
 <?php wp_footer(); ?>
 </body>

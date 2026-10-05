@@ -175,6 +175,16 @@
 				 */
 				?>
 				<a class="bd-header__todays-paper" href="<?php echo esc_url( bday_epaper_url() ); ?>">Today's Paper</a>
+				<?php
+				/**
+				 * Reader-requested (2026-10-05): a "Download App" trigger
+				 * right beside Today's Paper, opening a centered modal with
+				 * a QR code and a store-agnostic download link
+				 * (onelink.to) — see the modal markup at the end of
+				 * footer.php and bdayInitDownloadAppModal() in script.js.
+				 */
+				?>
+				<button type="button" class="bd-download-app-trigger" data-bd-download-app-trigger>Download App</button>
 			</div>
 
 			<div class="bd-header__brand">

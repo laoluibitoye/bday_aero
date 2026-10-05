@@ -612,6 +612,56 @@ function bdayInitMarketPulse() {
 	});
 }
 
+// Reader-requested (2026-10-05): "Download App" trigger in the header
+// (beside Today's Paper) and the footer (Support column) both open the
+// same centered modal (footer.php) — same open/close/focus/Escape
+// pattern as bdayInitMarketPulse() above, generalized to "every trigger
+// on the page opens the one shared modal" since there are two triggers,
+// not one per instance.
+function bdayInitDownloadAppModal() {
+	var triggers = document.querySelectorAll('[data-bd-download-app-trigger]');
+	if (!triggers.length) return;
+
+	var modal = document.getElementById('bd-download-app-modal');
+	if (!modal) return;
+	var closeBtn = modal.querySelector('[data-bd-download-app-close]');
+	var lastTrigger = null;
+
+	function open(trigger) {
+		lastTrigger = trigger;
+		modal.hidden = false;
+		requestAnimationFrame(function () {
+			modal.classList.add('is-open');
+		});
+		closeBtn.focus();
+		document.addEventListener('keydown', onKeydown);
+	}
+
+	function close() {
+		modal.classList.remove('is-open');
+		document.removeEventListener('keydown', onKeydown);
+		window.setTimeout(function () {
+			modal.hidden = true;
+			if (lastTrigger) lastTrigger.focus();
+		}, 200);
+	}
+
+	function onKeydown(e) {
+		if (e.key === 'Escape') close();
+	}
+
+	triggers.forEach(function (trigger) {
+		trigger.addEventListener('click', function () {
+			open(trigger);
+		});
+	});
+
+	closeBtn.addEventListener('click', close);
+	modal.addEventListener('click', function (e) {
+		if (e.target === modal) close();
+	});
+}
+
 document.addEventListener('DOMContentLoaded', function () {
 	bdayInitHeader();
 	bdayInitFeaturedVideoCards();
@@ -620,6 +670,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	bdayInitTranslate();
 	bdayInitTextToSpeech();
 	bdayInitMarketPulse();
+	bdayInitDownloadAppModal();
 
 	// Lazy-loaded images (post_thumbnail_html filter emits data-src)
 	var lazyImages = document.querySelectorAll('img.img-lazy-load');

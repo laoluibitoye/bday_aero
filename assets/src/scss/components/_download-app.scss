@@ -1,0 +1,191 @@
+// "Download App" trigger + modal (reader-requested 2026-10-05) — a QR
+// code plus a single store-agnostic download link (onelink.to), shown in
+// a centered modal from a trigger beside Today's Paper in the header and
+// another after the phone numbers in the footer's Support column. Unlike
+// the market-pulse popup (_homepage-redesign.scss's
+// .bday-market-pulse-popup, a corner-anchored toast), this is a
+// full-viewport centered dialog — the QR code needs real visual
+// presence, not a small corner card. Global tokens only (--color-*,
+// --font-ui) since both header.php and footer.php render on every page,
+// not just the "Redesign 2026" homepage variant.
+
+.bd-download-app-trigger {
+	// Intentionally mirrors .bd-header__todays-paper's pill treatment
+	// (_header.scss) rather than extending that class directly — the two
+	// read as a matched pair by design (reader-requested: "beside the
+	// Today's Paper button"), but kept as separate rules so either can
+	// change independently later without silently affecting the other.
+	display: none;
+	align-items: center;
+	font-family: var(--font-ui);
+	font-size: var(--text-sm);
+	font-weight: 600;
+	color: var(--color-ink-1);
+	background: none;
+	white-space: nowrap;
+	padding: 8px 16px;
+	border: 1.5px solid var(--color-border);
+	border-radius: 999px;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+
+	@include bd-up($bp-tablet) {
+		display: inline-flex;
+	}
+
+	&:hover {
+		border-color: var(--color-accent);
+		background: var(--color-accent-tint);
+		color: var(--color-accent);
+	}
+}
+
+// Footer placement (Support column, after the phone numbers) — a small
+// solid button rather than the header pill, so it reads as an action
+// amid a list of plain text links instead of blending in as one more of
+// them.
+.bd-footer__download-app {
+	display: inline-flex;
+	align-items: center;
+	margin-top: var(--space-2, 8px);
+	padding: 8px 14px;
+	font-family: var(--font-ui);
+	font-size: var(--text-xs, 0.75rem);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #fff;
+	background: var(--color-accent);
+	border: none;
+	border-radius: 999px;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+
+	&:hover {
+		background: var(--color-accent-strong);
+	}
+}
+
+.bd-download-app-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	background: transparent;
+	pointer-events: none;
+	transition: background-color 200ms ease;
+
+	&.is-open {
+		background: rgba(0, 0, 0, 0.5);
+		pointer-events: auto;
+	}
+
+	&__card {
+		width: 360px;
+		max-width: 100%;
+		background: var(--color-bg-raised);
+		border: 1px solid var(--color-border);
+		border-radius: 16px;
+		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+		padding: 32px 28px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 16px;
+		text-align: center;
+		position: relative;
+		transform: translateY(16px) scale(0.98);
+		opacity: 0;
+		transition: transform 200ms ease, opacity 200ms ease;
+
+		.is-open & {
+			transform: translateY(0) scale(1);
+			opacity: 1;
+		}
+	}
+
+	&__close {
+		position: absolute;
+		top: 12px;
+		right: 14px;
+		width: 28px;
+		height: 28px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background: none;
+		color: var(--color-ink-3);
+		font-size: 22px;
+		line-height: 1;
+		cursor: pointer;
+		border-radius: 50%;
+
+		&:hover {
+			background: var(--color-accent-tint);
+			color: var(--color-accent);
+		}
+	}
+
+	&__title {
+		font-family: var(--font-ui);
+		font-size: 20px;
+		font-weight: 700;
+		color: var(--color-ink-1);
+		margin: 4px 0 0;
+	}
+
+	// Fixed white background regardless of site theme — a QR code needs
+	// real light-on-dark contrast to scan reliably, the same reason the
+	// code itself is rendered black-on-white rather than theme-relative.
+	&__qr {
+		width: 180px;
+		height: 180px;
+		display: block;
+		border: 1px solid var(--color-border);
+		border-radius: 8px;
+		padding: 8px;
+		background: #fff;
+	}
+
+	&__caption {
+		font-family: var(--font-ui);
+		font-size: var(--text-sm, 0.875rem);
+		color: var(--color-ink-3);
+		margin: -8px 0 0;
+	}
+
+	// Store-agnostic CTA (onelink.to resolves to the right store itself) —
+	// --color-accent is used rather than --color-ink-1 specifically
+	// because --color-ink-1 is theme-relative (near-white in dark mode),
+	// which would make a white-icon button invisible there; --color-accent
+	// stays a saturated red/orange across all three themes.
+	&__cta {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+		width: 100%;
+		padding: 13px 20px;
+		font-family: var(--font-ui);
+		font-size: var(--text-sm, 0.875rem);
+		font-weight: 700;
+		color: #fff;
+		background: var(--color-accent);
+		border-radius: 10px;
+		text-decoration: none;
+		transition: background-color 0.15s ease;
+
+		i {
+			font-size: 18px;
+			color: #fff;
+		}
+
+		&:hover {
+			background: var(--color-accent-strong);
+		}
+	}
+}
