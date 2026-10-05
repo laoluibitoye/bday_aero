@@ -10,33 +10,41 @@
 // not just the "Redesign 2026" homepage variant.
 
 .bd-download-app-trigger {
-	// Intentionally mirrors .bd-header__todays-paper's pill treatment
-	// (_header.scss) rather than extending that class directly — the two
-	// read as a matched pair by design (reader-requested: "beside the
-	// Today's Paper button"), but kept as separate rules so either can
-	// change independently later without silently affecting the other.
+	// Reader-requested (2026-10-05): "bold and noticeable, like Subscribe
+	// Now" — intentionally mirrors .bd-header__subscribe-now's solid-fill
+	// treatment (_header.scss) rather than extending that class directly,
+	// same "separate rules, matched look" reasoning as this file's own
+	// earlier revision of this class.
 	display: none;
 	align-items: center;
 	font-family: var(--font-ui);
 	font-size: var(--text-sm);
-	font-weight: 600;
-	color: var(--color-ink-1);
-	background: none;
+	font-weight: 700;
+	color: #fff;
+	background: var(--color-accent);
 	white-space: nowrap;
-	padding: 8px 16px;
-	border: 1.5px solid var(--color-border);
+	padding: 9px 18px;
+	border: none;
 	border-radius: 999px;
 	cursor: pointer;
-	transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+	transition: background-color 0.15s ease;
 
 	@include bd-up($bp-tablet) {
 		display: inline-flex;
 	}
 
+	// Re-asserts color — a global `a:hover`-style rule elsewhere in this
+	// theme falls back to an inherited/dark color on hover unless a
+	// component explicitly re-states it (same fix .bd-header__subscribe-now
+	// itself needed, see its own comment in this file).
 	&:hover {
-		border-color: var(--color-accent);
-		background: var(--color-accent-tint);
-		color: var(--color-accent);
+		background: var(--color-accent-strong);
+		color: #fff;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--color-focus-ring);
+		outline-offset: 2px;
 	}
 }
 
@@ -184,8 +192,17 @@
 			color: #fff;
 		}
 
+		// Re-asserts color/icon color on hover — same global `a:hover`
+		// fallback-to-dark collision as .bd-download-app-trigger above;
+		// without this the text (and, in some browsers, the icon glyphs)
+		// turned black on hover instead of staying white.
 		&:hover {
 			background: var(--color-accent-strong);
+			color: #fff;
+
+			i {
+				color: #fff;
+			}
 		}
 	}
 }
