@@ -184,7 +184,7 @@
 				 * footer.php and bdayInitDownloadAppModal() in script.js.
 				 */
 				?>
-				<button type="button" class="bd-download-app-trigger" data-bd-download-app-trigger>Download BusinessDay App</button>
+				<button type="button" class="bd-download-app-trigger" data-bd-download-app-trigger>Download App</button>
 			</div>
 
 			<div class="bd-header__brand">
