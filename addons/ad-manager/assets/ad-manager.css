@@ -39,8 +39,9 @@
 	overflow: hidden;
 }
 
-/* A subscriber whose plan is ad-free: hidden before first paint by the inline head check. */
-.bday-ads-off .bday-ad { display: none !important; }
+/* A subscriber whose plan is ad-free: third-party ads hidden before first paint by the inline head
+   check. Local banners are never gated, so they stay. */
+.bday-ads-off .bday-ad:not(.bday-ad--banner) { display: none !important; }
 
 /* Local banners */
 .bday-ad__banners { width: 100%; text-align: center; }

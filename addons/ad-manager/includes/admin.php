@@ -243,7 +243,7 @@ function bday_ads_render_unit_card( $i, array $u, bool $is_template = false ): v
 				<tr><th>Partner</th><td><?php echo bday_ads_select( $n . '[partner]', bday_ads_partner_labels(), $u['partner'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td></tr>
 				<tr><th>Status</th><td><?php echo bday_ads_select( $n . '[status]', array( 'active' => 'Active', 'paused' => 'Paused (never shown)' ), $u['status'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td></tr>
 				<tr><th>Show on</th><td><?php echo bday_ads_select( $n . '[device]', array( 'all' => 'All devices', 'desktop' => 'Desktop / tablet only', 'mobile' => 'Mobile only' ), $u['device'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td></tr>
-				<tr><th>Ad category</th><td><?php echo bday_ads_select( $n . '[category]', $cats, $u['category'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?><p class="description">What a subscription plan switches on or off.</p></td></tr>
+				<tr><th>Ad category</th><td><?php echo bday_ads_select( $n . '[category]', $cats, $u['category'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?><p class="description">What a subscription plan switches on or off for ad-network units. <strong>Local banners ignore this</strong> — they always show to every reader, subscribers included.</p></td></tr>
 				<tr><th>Sizes</th><td>
 					Desktop <input type="text" class="regular-text" name="<?php echo esc_attr( $n ); ?>[sizes_desktop]" value="<?php echo esc_attr( $u['sizes_desktop'] ); ?>" placeholder="970x90, 728x90, fluid"><br>
 					Mobile <input type="text" class="regular-text" name="<?php echo esc_attr( $n ); ?>[sizes_mobile]" value="<?php echo esc_attr( $u['sizes_mobile'] ); ?>" placeholder="320x100, 300x250">

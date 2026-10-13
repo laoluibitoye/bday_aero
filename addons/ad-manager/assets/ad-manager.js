@@ -381,16 +381,25 @@
     if (!unit) { dropEl(el, 'unknown unit'); return; }
 
     if (!deviceMatches(unit.device)) { dropEl(el, 'device'); return; }
+
+    // Local banners are editor-placed house/direct-sold creative and are shown to EVERYONE:
+    // anonymous, registered and every subscriber plan. Reader policy (ad-free, hidden
+    // categories, the per-page cap) applies only to third-party ad partners. A banner's own
+    // schedule is the only thing that can hide it.
+    if (unit.partner === 'banner') {
+      if (outsideSchedule(el)) { dropEl(el, 'schedule'); return; }
+      initBanner(el);
+      return;
+    }
+
     if (!categoryAllowed(unit.category)) { dropEl(el, 'policy:category'); return; }
     if (policy.max && allowedCount >= policy.max) { dropEl(el, 'policy:max'); return; }
-    if (unit.partner === 'banner' && outsideSchedule(el)) { dropEl(el, 'schedule'); return; }
 
     allowedCount++;
     switch (unit.partner) {
       case 'gam': gamRun(function () { defineGamSlot(el, unit); }); break;
       case 'adsense': startAdsense(el); break;
       case 'html': startHtml(el, unitId, unit); break;
-      case 'banner': initBanner(el); break;
     }
   }
 
