@@ -49,7 +49,22 @@ function bday_get_homepage_data(): array {
 		// column (WSJ-layout adoption) instead of a small box further down
 		// the page, so it needs to actually fill that column.
 		'opinion'     => bday_get_posts( array( 'category_name' => 'opinion', 'numberposts' => 5, 'cache_namespace' => 'homepage' ) ),
-		'e_paper'     => bday_get_posts( array( 'category_name' => 'e-paper', 'numberposts' => 1, 'cache_namespace' => 'homepage' ) ),
+		// Reader-reported (2026-10-13): the homepage "Today's E-Paper" thumbnail never updates
+		// when a new edition is published. Root cause: this was still querying the legacy
+		// `category=e-paper` on post_type=post — the pre-Phase-14 mechanism editions.php's own
+		// comment (legacy-migration-core.php) documents as superseded. Nothing creates a post in
+		// that category anymore; new editions are published as `bday_edition` CPT entries tagged
+		// with the `edition_publication` taxonomy instead. Switched to the same CPT+taxonomy
+		// pattern already proven correct by the (already-updating) E-Editions row/carousel —
+		// see addons/editions/includes/homepage.php:51-58 and redesign-data.php's rd_editions.
+		'e_paper'     => bday_get_posts( array(
+			'post_type'       => 'bday_edition',
+			'numberposts'     => 1,
+			'tax_query'       => array(
+				array( 'taxonomy' => 'edition_publication', 'field' => 'slug', 'terms' => 'e-paper' ),
+			),
+			'cache_namespace' => 'homepage',
+		) ),
 		// "Most Popular" sidebar (WSJ-layout adoption) — comment_count is
 		// the only real engagement signal this codebase tracks; no
 		// page-view counter exists, so this is the honest proxy rather
