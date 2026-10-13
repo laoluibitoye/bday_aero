@@ -1,0 +1,67 @@
+/*
+ * BDay Ad Manager front-end styles.
+ * Space is reserved from the unit's own sizes (--bday-ad-min-d / -m, set in
+ * render.php) so a late ad never shoves the article down; a container that
+ * comes back empty collapses, a filled one keeps its "Advertisement" label.
+ */
+.bday-ad {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	margin: 1.25rem auto;
+	max-width: 100%;
+	min-height: var(--bday-ad-min-d, 0);
+	clear: both;
+	transition: min-height 0.2s ease;
+}
+
+.bday-ad__label {
+	display: none;
+	font: 600 10px/1 monospace;
+	letter-spacing: 0.3em;
+	text-transform: uppercase;
+	color: #767676;
+	margin-bottom: 6px;
+}
+
+.bday-ad.is-filled .bday-ad__label,
+.bday-ad--banner .bday-ad__label { display: block; }
+
+.bday-ad__slot { max-width: 100%; text-align: center; }
+.bday-ad__slot:empty { min-height: 0; }
+
+.bday-ad.is-collapsed {
+	min-height: 0;
+	margin: 0;
+	height: 0;
+	overflow: hidden;
+}
+
+/* A subscriber whose plan is ad-free: hidden before first paint by the inline head check. */
+.bday-ads-off .bday-ad { display: none !important; }
+
+/* Local banners */
+.bday-ad__banners { width: 100%; text-align: center; }
+.bday-ad__creative { display: block; line-height: 0; aspect-ratio: var(--bday-ad-ar-d, auto); }
+.bday-ad__creative[hidden] { display: none; }
+.bday-ad__creative picture,
+.bday-ad__creative img { display: inline-block; max-width: 100%; height: auto; }
+
+/* Device-targeted units */
+@media (max-width: 767px) {
+	.bday-ad { min-height: var(--bday-ad-min-m, 0); }
+	.bday-ad--desktop-only { display: none !important; }
+	.bday-ad__creative { aspect-ratio: var(--bday-ad-ar-m, var(--bday-ad-ar-d, auto)); }
+}
+@media (min-width: 768px) {
+	.bday-ad--mobile-only { display: none !important; }
+}
+
+/* Inside a story-card grid an ad takes a whole row. */
+.bday-card-grid > .bday-ad { grid-column: 1 / -1; }
+
+/* Sidebars: keep tall formats from overflowing the column. */
+.bday-sidebar .bday-ad,
+.bday-rd-rail .bday-ad { margin: 1rem 0; }

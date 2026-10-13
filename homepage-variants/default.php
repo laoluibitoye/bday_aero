@@ -44,6 +44,8 @@ if ( ! empty( $data['other_news'] ) ) {
 	echo '</div></div></section>';
 }
 
+bday_ad_zone( 'home_mid_1' );
+
 // 5. Subscribe banner.
 get_template_part( 'template-parts/homepage/subscribe-banner' );
 
@@ -90,12 +92,14 @@ if ( ! empty( $data['recent'] ) ) {
 	}
 	echo '</ul></div>';
 }
-bday_ad_zone( 'sidebar' );
+bday_ad_zone( 'home_sidebar' );
 echo '</aside>';
 echo '</div>';
 
 // 8. Video row (BD TV).
 get_template_part( 'template-parts/homepage/video-row' );
+
+bday_ad_zone( 'home_mid_2' );
 
 // 9. Real Estate | Sports two-up.
 echo '<div class="bday-container bday-two-col bday-two-col--even">';

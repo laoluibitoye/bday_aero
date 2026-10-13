@@ -51,7 +51,7 @@
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
 
-<?php do_action( 'bday_homepage_leaderboard_zone' ); ?>
+<?php bday_ad_zone( 'top_leaderboard' ); ?>
 
 <header class="bd-header" data-bd-header>
 	<div class="bd-header__utility">

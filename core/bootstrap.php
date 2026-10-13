@@ -44,3 +44,24 @@ require_once BDAY_THEME_DIR . 'core/migrate.php';
 
 add_action( 'bday_core_loaded', array( 'Bday_Addon_Loader', 'boot' ) );
 do_action( 'bday_core_loaded' );
+
+// Templates call these unconditionally. If the Ad Manager add-on is switched
+// off they must still exist (and do nothing) rather than fatal the page.
+if ( ! function_exists( 'bday_ad_zone' ) ) {
+	function bday_ad_zone( string $zone, ?WP_Post $post = null ): void {}
+}
+if ( ! function_exists( 'bday_ads_inject_in_content' ) ) {
+	function bday_ads_inject_in_content( string $html, ?WP_Post $post = null ): string {
+		return $html;
+	}
+}
+if ( ! function_exists( 'bday_ads_allowed' ) ) {
+	function bday_ads_allowed(): bool {
+		return false;
+	}
+}
+if ( ! function_exists( 'bday_page_allows_ads' ) ) {
+	function bday_page_allows_ads(): bool {
+		return false;
+	}
+}

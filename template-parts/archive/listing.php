@@ -46,7 +46,7 @@ $results = Bday_Query_Cache::query( 'listing', md5( wp_json_encode( $query_args 
 			<?php while ( $results->have_posts() ) : $results->the_post(); ?>
 				<?php echo bday_card_html( get_post(), array( 'show_byline' => true, 'show_excerpt' => true ) ); ?>
 				<?php if ( 0 === ( $results->current_post + 1 ) % 6 ) : ?>
-					<?php bday_ad_zone( 'below_article_recirculation' ); ?>
+					<?php bday_ad_zone( 'listing_inline' ); ?>
 				<?php endif; ?>
 			<?php endwhile; ?>
 		</div>
