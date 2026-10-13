@@ -49,17 +49,10 @@ if ( empty( $stories ) ) {
 			<?php endif; ?>
 
 			<?php
-			/**
-			 * Editor-requested (2026-09-23): the fixed Opinion box and
-			 * algorithmic Most Popular list that used to sit here weren't
-			 * admin-configurable — replaced with one editor-uploaded ad
-			 * banner (addons/homepage-rail-banner/), landscape or portrait,
-			 * any dimensions. No-ops entirely until an image is uploaded
-			 * and the addon's "Enabled" box is checked.
-			 */
-			do_action( 'bday_homepage_rail_banner_zone' );
+			// Editor-managed banner and/or ad-server unit — both now assigned
+			// to this placement from Ad Manager → Ad Placements.
+			bday_ad_zone( 'home_other_news_rail' );
 			?>
-			<?php bday_ad_zone( 'sidebar' ); ?>
 		</aside>
 	</div>
 </section>

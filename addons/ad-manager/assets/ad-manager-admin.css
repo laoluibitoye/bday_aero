@@ -1,0 +1,20 @@
+.bday-ad-unit { background: #fff; border: 1px solid #dcdcde; border-radius: 4px; margin: 0 0 10px; }
+.bday-ad-unit > summary { cursor: pointer; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bday-ad-unit__body { padding: 0 18px 12px; border-top: 1px solid #f0f0f1; }
+.bday-ad-unit .form-table th { width: 170px; padding: 12px 10px 12px 0; }
+.bday-ad-chip { display: inline-block; font-size: 11px; line-height: 1; padding: 4px 7px; border-radius: 10px; background: #f0f0f1; color: #50575e; }
+.bday-ad-chip--cat { background: #e8f0fe; color: #1d4ed8; }
+.bday-ad-chip--off { background: #fcf0f1; color: #b32d2e; }
+.bday-ad-chip--use { background: #edfaef; color: #1a7f37; }
+.bday-ad-warn { color: #8a4b00; background: #fff8e5; border-left: 3px solid #dba617; padding: 6px 10px; margin: 8px 0; }
+.bday-creative { display: flex; flex-wrap: wrap; gap: 16px; padding: 12px; margin-bottom: 10px; border: 1px dashed #c3c4c7; border-radius: 4px; }
+.bday-creative__img { width: 230px; }
+.bday-creative__preview img { max-width: 220px; height: auto; display: block; border: 1px solid #ddd; margin: 6px 0; }
+.bday-creative__meta { flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 8px; }
+.bday-ad-placement { background: #fff; border: 1px solid #dcdcde; border-radius: 4px; padding: 4px 18px 8px; margin-bottom: 14px; }
+.bday-ad-placement h3 { display: flex; gap: 8px; align-items: center; }
+.bday-ad-rec { margin: 4px 0 0; }
+.bday-ad-pick { display: block; margin: 4px 0; }
+[data-partner-section] { display: none; }
+[data-partner-section].is-on { display: block; }
+.bday-ad-picklist { max-height: 210px; overflow: auto; border: 1px solid #dcdcde; border-radius: 3px; padding: 6px 10px; background: #fcfcfc; }

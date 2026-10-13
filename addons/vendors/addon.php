@@ -2,12 +2,12 @@
 /**
  * Addon Name: Vendors & Integrations
  * Addon Slug: vendors
- * Description: Third-party integrations: GAM, GA4, Chartbeat, Matomo, Taboola, TradingView, and more.
+ * Description: Third-party integrations: GA4, Chartbeat, Matomo, Taboola, TradingView, and more.
  * Cache Namespace: vendors
  * Settings Tab: Integrations
  * Default: on
  *
- * One driver per third-party script (GAM, GA4, Chartbeat, Matomo, Taboola,
+ * One driver per third-party script (GA4, Chartbeat, Matomo, Taboola,
  * Lytics, GetSiteControl, Terrific, TradingView, Playstream), each
  * independently configurable and independently kill-switchable — where the
  * previous theme had exactly one kill switch (ads-only, staging-only) for
@@ -21,7 +21,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/class-vendor-driver.php';
-require_once __DIR__ . '/drivers/class-gam.php';
 require_once __DIR__ . '/drivers/class-ga4.php';
 require_once __DIR__ . '/drivers/class-chartbeat.php';
 require_once __DIR__ . '/drivers/class-matomo.php';
@@ -31,52 +30,6 @@ require_once __DIR__ . '/drivers/class-getsitecontrol.php';
 require_once __DIR__ . '/drivers/class-terrific.php';
 require_once __DIR__ . '/drivers/class-tradingview.php';
 require_once __DIR__ . '/drivers/class-playstream.php';
-
-/**
- * Master ads kill switch — replaces $ad_is_live. Live by default; disabled
- * automatically on staging hostnames so ads never pollute staging metrics.
- */
-function bday_ads_allowed(): bool {
-	static $allowed = null;
-	if ( null !== $allowed ) {
-		return $allowed;
-	}
-
-	$opt = get_option( 'bday_addon_vendors', array() );
-	if ( isset( $opt['ads_master_switch'] ) && ! $opt['ads_master_switch'] ) {
-		$allowed = false;
-		return $allowed;
-	}
-
-	$host = $_SERVER['HTTP_HOST'] ?? '';
-	$is_staging = ( false !== strpos( $host, 'stg' ) || false !== strpos( $host, 'staging' ) )
-		|| ( defined( 'WP_HOME' ) && ( false !== strpos( WP_HOME, 'stg' ) || false !== strpos( WP_HOME, 'staging' ) ) );
-
-	$allowed = ! $is_staging;
-	return $allowed;
-}
-
-/**
- * Ads run on posts, archives/search (post listings), and the front page —
- * never on a WordPress Page, since a Page is as likely to be a sales-funnel
- * or account/transactional screen as an article, and those shouldn't
- * compete with ads for the one task a reader is there to complete. The
- * front page is its own exception even when it's a static Page (it is
- * here — templates/masterpage.php) because it's still the main editorial
- * surface, not a transactional one.
- */
-function bday_page_allows_ads(): bool {
-	if ( ! bday_ads_allowed() ) {
-		return false;
-	}
-	if ( is_404() ) {
-		return false;
-	}
-	if ( is_page() && ! is_front_page() ) {
-		return false;
-	}
-	return true;
-}
 
 function bday_current_page_section(): string {
 	if ( is_front_page() ) {
@@ -104,7 +57,6 @@ function bday_vendor_drivers(): array {
 	static $drivers = null;
 	if ( null === $drivers ) {
 		$drivers = array(
-			new Bday_Vendor_Gam(),
 			new Bday_Vendor_Ga4(),
 			new Bday_Vendor_Chartbeat(),
 			new Bday_Vendor_Matomo(),
@@ -150,28 +102,6 @@ add_action(
 	}
 );
 
-/**
- * Phase 5 of the roadmap: the connecting piece. ads-sharing-matrix's
- * bday_ad_zone() (addons/ads-sharing-matrix/includes/data.php) already does
- * real gating and fires bday_render_ad_zone — nothing in the theme ever
- * listened for it. Same dispatch shape as the wp_head/wp_footer loops
- * above: every configured driver gets a chance to render, and every
- * driver except GAM's render_zone() override is a no-op, so this is safe
- * to leave unconditional.
- */
-add_action(
-	'bday_render_ad_zone',
-	static function ( string $zone, ?WP_Post $post ): void {
-		foreach ( bday_vendor_drivers() as $driver ) {
-			if ( $driver->is_configured() ) {
-				$driver->render_zone( $zone, $post );
-			}
-		}
-	},
-	10,
-	2
-);
-
 // Settings tab: one collapsible section per driver, plus the ads master switch.
 // The actual field list is built by bday_render_vendors_tab() itself
 // (below) per driver — this schema entry uses 'render', not 'fields', so
@@ -194,10 +124,7 @@ add_filter(
 function bday_render_vendors_tab(): void {
 	$saved = get_option( 'bday_addon_vendors', array() );
 	echo '<table class="form-table" role="presentation"><tbody>';
-	printf(
-		'<tr><th scope="row">Ads enabled site-wide</th><td><label><input type="checkbox" name="bday_addon_vendors[ads_master_switch]" value="1" %s /> Enabled</label><p class="description">Auto-disabled on staging hostnames regardless of this setting.</p></td></tr>',
-		checked( $saved['ads_master_switch'] ?? true, true, false )
-	);
+	echo '<tr><th scope="row">Advertising</th><td><p class="description">Ad serving (Google Ad Manager, AdSense, ad tags and banners) now lives under <strong>Ads &amp; Monetization → Ad Manager</strong>.</p></td></tr>';
 	foreach ( bday_vendor_drivers() as $driver ) {
 		$slug   = $driver->slug();
 		$values = $saved[ $slug ] ?? array();
@@ -220,9 +147,7 @@ add_action(
 			array(
 				'sanitize_callback' => static function ( $input ) {
 					$input  = is_array( $input ) ? $input : array();
-					$output = array(
-						'ads_master_switch' => ! empty( $input['ads_master_switch'] ),
-					);
+					$output = array();
 					foreach ( bday_vendor_drivers() as $driver ) {
 						$slug           = $driver->slug();
 						$sub            = is_array( $input[ $slug ] ?? null ) ? $input[ $slug ] : array();

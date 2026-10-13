@@ -39,6 +39,6 @@ $columnists = $data['columnists'] ?? array();
 			</div>
 		<?php endif; ?>
 
-		<?php bday_ad_zone( 'sidebar' ); ?>
+		<?php bday_ad_zone( 'home_rail' ); ?>
 	</div>
 </section>

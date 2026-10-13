@@ -28,6 +28,10 @@ if ( ! bday_aero_is_post_gated( $post_id ) ) {
 	$heading_data      = bday_add_heading_anchors( $rendered_content );
 	$rendered_content  = $heading_data['content'];
 	$toc               = $heading_data['toc'];
+	// In-article ad placements (Ad Manager) — spliced in after the headings
+	// are anchored, so an ad can't shift the ToC, and only for ungated
+	// reads: a paywall teaser is too short to carry one.
+	$rendered_content  = bday_ads_inject_in_content( $rendered_content, get_post() );
 }
 $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 ?>
@@ -157,7 +161,6 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 			<?php endif; ?>
 
 			<?php echo bday_social_share_html( $post_id ); ?>
-			<?php bday_ad_zone( 'in_article_after_p2', get_post() ); ?>
 
 			<?php if ( count( $toc ) >= 3 ) : ?>
 				<nav class="bday-toc" aria-label="Table of contents">
@@ -324,13 +327,9 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 		<?php endif; ?>
 		<?php get_template_part( 'template-parts/sidebar-google-news' ); ?>
 		<?php
-		/**
-		 * Editor-uploaded promotional material/custom ads
-		 * (addons/sidebar-promo/) — a dedicated image+link+label slot an
-		 * editor manages from wp-admin, separate from the GAM/direct-sold
-		 * ad_zone below it (which stays code/vendor-configured).
-		 */
-		do_action( 'bday_article_sidebar_zone' );
+		// Editor-managed banners and house ads live in the same Ad Manager as
+		// the ad-server slots now: "sidebar_top" is for those, "sidebar" below.
+		bday_ad_zone( 'sidebar_top', get_post() );
 		?>
 		<?php bday_ad_zone( 'sidebar', get_post() ); ?>
 	</aside>

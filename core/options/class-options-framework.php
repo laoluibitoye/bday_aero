@@ -102,6 +102,7 @@ final class Bday_Options_Framework {
 	private const GROUP_LABELS = array(
 		'editorial' => 'Editorial & Content',
 		'technical' => 'Technical & Infrastructure',
+		'monetization' => 'Ads & Monetization',
 	);
 
 	public static function register_menu(): void {
@@ -168,7 +169,8 @@ final class Bday_Options_Framework {
 
 	/** @param array<string, mixed> $tab */
 	private static function group_of( array $tab ): string {
-		return ( $tab['group'] ?? 'technical' ) === 'editorial' ? 'editorial' : 'technical';
+		$group = $tab['group'] ?? 'technical';
+		return isset( self::GROUP_LABELS[ $group ] ) ? $group : 'technical';
 	}
 
 	/**
@@ -217,7 +219,8 @@ final class Bday_Options_Framework {
 			$visible,
 			static function ( string $a, string $b ) use ( $schema ): int {
 				$rank = static function ( string $slug ) use ( $schema ): int {
-					return 'editorial' === self::group_of( $schema[ $slug ] ) ? 0 : 1;
+					$order = array( 'editorial' => 0, 'monetization' => 1, 'technical' => 2 );
+					return $order[ self::group_of( $schema[ $slug ] ) ] ?? 2;
 				};
 				return $rank( $a ) <=> $rank( $b );
 			}
