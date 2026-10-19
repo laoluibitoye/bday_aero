@@ -108,9 +108,63 @@ function bday_ads_policy_editor( string $name, array $policy ): void {
 	);
 }
 
+/**
+ * Ad code pasted into the theme's Custom Code boxes (Header / Body open / Footer) that talks to
+ * Google Publisher Tag directly. It runs outside Ad Manager, so it can fight with it: a second
+ * interstitial/anchor of the same format is refused by GPT, and one early enableServices() call
+ * stops Ad Manager's lazy loading and single-request settings from applying.
+ *
+ * @return array<int, array{slot:string, paths:string[], enables_services:bool, loads_gpt:bool}>
+ */
+function bday_ads_custom_code_conflicts(): array {
+	if ( ! function_exists( 'bday_custom_code' ) ) {
+		return array();
+	}
+	$found = array();
+	foreach ( array( 'header' => 'Header', 'body_open' => 'Body open', 'footer' => 'Footer' ) as $key => $label ) {
+		$code = bday_custom_code( $key );
+		if ( '' === $code || ! preg_match( '/googletag|gpt\.js|adsbygoogle/i', $code ) ) {
+			continue;
+		}
+		preg_match_all( '#["\'](/\d[\w,.\-/]*)["\']#', $code, $m );
+		$found[] = array(
+			'slot'             => $label,
+			'paths'            => array_values( array_unique( $m[1] ) ),
+			'enables_services' => (bool) preg_match( '/enableServices\s*\(/', $code ),
+			'loads_gpt'        => (bool) preg_match( '/gpt\.js/', $code ),
+		);
+	}
+	return $found;
+}
+
+function bday_ads_render_conflict_notice(): void {
+	$conflicts = bday_ads_custom_code_conflicts();
+	if ( ! $conflicts ) {
+		return;
+	}
+	echo '<div class="notice notice-warning inline" style="margin:12px 0;padding:10px 14px;"><p><strong>Ad code found in Custom Code.</strong> This runs outside Ad Manager and can conflict with it:</p><ul style="list-style:disc;margin-left:20px;">';
+	foreach ( $conflicts as $c ) {
+		echo '<li><strong>' . esc_html( $c['slot'] ) . '</strong>: ';
+		$bits = array();
+		if ( $c['paths'] ) {
+			$bits[] = 'defines ad units ' . implode( ', ', array_map( static fn( $p ) => '<code>' . esc_html( $p ) . '</code>', $c['paths'] ) );
+		}
+		if ( $c['loads_gpt'] ) {
+			$bits[] = 'loads the Google ad script itself';
+		}
+		if ( $c['enables_services'] ) {
+			$bits[] = 'calls <code>enableServices()</code> early, which stops Ad Manager\'s lazy loading and single-request settings from applying';
+		}
+		echo $bits ? implode( '; ', $bits ) : 'contains ad-network code'; // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped parts.
+		echo '</li>';
+	}
+	echo '</ul><p>Best fix: add each unit under <strong>Ad Units</strong> (use the Format setting for interstitial / anchor units), assign it on <strong>Ad Placements</strong>, then delete the snippet from Custom Code. Google allows only one interstitial and one anchor per page, so two definitions mean one is silently dropped.</p></div>';
+}
+
 /* ── Tab 1: settings ────────────────────────────────────────────── */
 
 function bday_ads_render_settings_tab(): void {
+	bday_ads_render_conflict_notice();
 	$s    = Bday_Ads_Store::settings();
 	$name = Bday_Ads_Store::SETTINGS;
 	$cats = '';
@@ -402,6 +456,7 @@ function bday_ads_banner_warnings( array $u, array $usage ): array {
 }
 
 function bday_ads_render_units_tab(): void {
+	bday_ads_render_conflict_notice();
 	$units = array_values( Bday_Ads_Store::units() );
 	echo '<div data-bday-units>';
 	foreach ( $units as $i => $u ) {

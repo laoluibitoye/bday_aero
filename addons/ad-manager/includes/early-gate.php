@@ -25,6 +25,12 @@ add_action(
 		?>
 		<script>
 		(function () {
+			// Same width rule as ad-manager.js: the smaller of layout width and device width.
+			try {
+				var w = window.innerWidth, s = window.screen && window.screen.width;
+				if (s && s < w) w = s;
+				document.documentElement.setAttribute('data-bday-ad-device', w < <?php echo (int) Bday_Ads_Store::settings()['breakpoint']; ?> ? 'mobile' : 'desktop');
+			} catch (e) {}
 			try {
 				var m = document.cookie.match(/(?:^|; )ap_access_token=([^;]*)/);
 				if (!m) return;
