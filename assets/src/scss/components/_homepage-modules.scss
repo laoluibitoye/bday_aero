@@ -79,6 +79,16 @@
 	padding-bottom: var(--space-4, 16px);
 }
 
+.bday-promo-banner {
+	// min-width:0 + max-width:100% matter on a flex item: without them the item sizes to its
+	// image's natural width, so `img { max-width: 100% }` resolves against an auto-sized parent
+	// (circular) and does nothing. A wide upload then pushed the whole page past the screen on
+	// phones (found live: a 958px portrait banner made the page 978px wide at a 390px viewport,
+	// which also made every width-based check — including the ad loader's — read a phone as desktop).
+	min-width: 0;
+	max-width: 100%;
+}
+
 .bday-promo-banner img {
 	display: block;
 	max-width: 100%;
@@ -90,5 +100,5 @@
 }
 
 .bday-promo-banner--portrait {
-	flex: 0 0 auto;
+	flex: 0 1 auto;
 }

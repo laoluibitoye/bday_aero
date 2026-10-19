@@ -66,3 +66,17 @@
 /* Sidebars: keep tall formats from overflowing the column. */
 .bday-sidebar .bday-ad,
 .bday-rd-rail .bday-ad { margin: 1rem 0; }
+
+/*
+ * Device rules keyed to the loader's own signal (data-bday-ad-device, set pre-paint by the inline
+ * head script and again by ad-manager.js). The media queries above see the *layout* width, which a
+ * single over-wide element can inflate on phones; these see the device. Higher specificity, so they
+ * win whenever the attribute is present; the media queries remain the no-JS fallback.
+ */
+html[data-bday-ad-device="mobile"] .bday-ad--desktop-only,
+html[data-bday-ad-device="desktop"] .bday-ad--mobile-only { display: none !important; }
+html[data-bday-ad-device="mobile"] .bday-ad { min-height: var(--bday-ad-min-m, 0); }
+html[data-bday-ad-device="desktop"] .bday-ad { min-height: var(--bday-ad-min-d, 0); }
+html[data-bday-ad-device="mobile"] .bday-ad__creative { aspect-ratio: var(--bday-ad-ar-m, var(--bday-ad-ar-d, auto)); }
+html[data-bday-ad-device="desktop"] .bday-ad__creative { aspect-ratio: var(--bday-ad-ar-d, auto); }
+html[data-bday-ad-device] .bday-ad.is-collapsed { min-height: 0; }

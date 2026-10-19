@@ -120,7 +120,26 @@
     document.addEventListener(evt, function () { lastActivity = Date.now(); }, { passive: true });
   });
 
-  function isMobileViewport() { return window.innerWidth < C.bp; }
+  /**
+   * Viewport width the ad decisions use. innerWidth alone is unsafe on phones: one element wider
+   * than the screen makes mobile browsers lay the page out wider (a 390px phone reported 978px on
+   * the live site), which silently turned every phone into "desktop". screen.width is the device's
+   * own width, so the smaller of the two is the real viewport in every case — a genuinely narrow
+   * desktop window still has innerWidth < screen.width and counts as mobile.
+   */
+  function adViewportWidth() {
+    var w = window.innerWidth;
+    var s = window.screen && window.screen.width;
+    return s && s < w ? s : w;
+  }
+
+  function isMobileViewport() { return adViewportWidth() < C.bp; }
+
+  // Mirror the decision onto <html> so CSS (device-only containers, reserved heights) follows the
+  // same signal instead of its own media queries, which see the inflated layout width.
+  function markDevice() {
+    document.documentElement.setAttribute('data-bday-ad-device', isMobileViewport() ? 'mobile' : 'desktop');
+  }
 
   function deviceMatches(device) {
     if (device === 'desktop') { return !isMobileViewport(); }
@@ -178,19 +197,40 @@
 
     googletag.cmd.push(function () {
       var pubads = googletag.pubads();
-      pubads.enableSingleRequest();
-      pubads.setTargeting('reader', readerState);
+
+      var targeting = { reader: readerState };
       if (C.targeting) {
-        Object.keys(C.targeting).forEach(function (k) { pubads.setTargeting(k, [String(C.targeting[k])]); });
+        Object.keys(C.targeting).forEach(function (k) { targeting[k] = String(C.targeting[k]); });
       }
-      if (C.lazy && C.lazy.fetch > 0) {
-        pubads.enableLazyLoad({ fetchMarginPercent: C.lazy.fetch, renderMarginPercent: C.lazy.render, mobileScaling: 2.0 });
+
+      // singleRequest and lazyLoad only take effect before enableServices(). If other code on the
+      // page (e.g. a snippet pasted into Custom Code) already enabled services, they would be
+      // ignored — say so in debug mode instead of silently running without them.
+      var servicesAlreadyOn = !!googletag.pubadsReady;
+      if (servicesAlreadyOn) {
+        log('GPT services were already enabled by other page code — lazy loading / single request cannot be configured. Move that code into Ad Units.');
+      }
+
+      var lazy = C.lazy && C.lazy.fetch > 0
+        ? { fetchMarginPercent: C.lazy.fetch, renderMarginPercent: C.lazy.render, mobileScaling: 2.0 }
+        : null;
+
+      // googletag.setConfig is GPT's current API; the pubads() setters it replaces are deprecated
+      // and log a warning on every page view. Fall back for any build that predates it.
+      if (typeof googletag.setConfig === 'function') {
+        var cfg = { singleRequest: true, targeting: targeting };
+        if (lazy) { cfg.lazyLoad = lazy; }
+        googletag.setConfig(cfg);
+      } else {
+        pubads.enableSingleRequest();
+        Object.keys(targeting).forEach(function (k) { pubads.setTargeting(k, [targeting[k]]); });
+        if (lazy) { pubads.enableLazyLoad(lazy); }
       }
 
       pubads.addEventListener('slotRenderEnded', onSlotRendered);
       pubads.addEventListener('impressionViewable', onImpressionViewable);
 
-      googletag.enableServices();
+      if (!servicesAlreadyOn) { googletag.enableServices(); }
       gamState = 'ready';
       log('GPT ready');
       gamQueue.splice(0).forEach(function (fn) { fn(); });
@@ -219,7 +259,9 @@
     slot.defineSizeMapping(
       googletag.sizeMapping().addSize([C.bp, 0], desktop).addSize([0, 0], mobile).build()
     );
-    if (unit.refresh) { slot.setTargeting('refresh', 'true'); }
+    if (unit.refresh) {
+      if (typeof slot.setConfig === 'function') { slot.setConfig({ targeting: { refresh: 'true' } }); } else { slot.setTargeting('refresh', 'true'); }
+    }
     slot.addService(googletag.pubads());
     slotInfo[slotEl.id] = { unit: unit, refreshes: 0, timer: null, el: el };
     googletag.display(slotEl.id);
@@ -303,6 +345,36 @@
     });
   }
 
+  /**
+   * Hand-pasted AdSense tags already sitting in article bodies (<ins class="adsbygoogle"> from
+   * the editor). On their own they never worked here: the page loads no AdSense library, and the
+   * accompanying inline script calls jQuery's $(), which the theme doesn't ship. Adopt them: they
+   * follow the same reader policy as any 'display' ad, and the library is loaded from the tag's
+   * own publisher ID the first time one is allowed.
+   */
+  function adoptStrayAdsense(root) {
+    var stray = Array.prototype.filter.call(
+      (root || document).querySelectorAll('ins.adsbygoogle'),
+      function (el) { return !el.closest('[data-bday-ad]') && !el.getAttribute('data-bday-adopted'); }
+    );
+    stray.forEach(function (el) {
+      el.setAttribute('data-bday-adopted', '1');
+      var allowed = categoryAllowed('display') && !(policy.max && allowedCount >= policy.max);
+      if (!allowed) { el.parentNode && el.parentNode.removeChild(el); log('stray AdSense removed by policy'); return; }
+      allowedCount++;
+      var client = el.getAttribute('data-ad-client') || C.adsense;
+      if (!client) { return; }
+      if (!adsenseLoaded && !document.querySelector('script[src*="adsbygoogle.js"]')) {
+        adsenseLoaded = true;
+        loadScript('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(client), { crossorigin: 'anonymous' });
+      }
+      whenNearViewport(el, function () {
+        if (el.getAttribute('data-adsbygoogle-status')) { return; }
+        try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { log('stray AdSense push failed', e); }
+      });
+    });
+  }
+
   /* ── Third-party (pasted) tags ───────────────────────────────────── */
 
   function startHtml(el, unitId, unit) {
@@ -327,6 +399,12 @@
     wrap.setAttribute('data-ready', '1');
     var items = Array.prototype.slice.call(wrap.querySelectorAll('.bday-ad__creative'));
     if (!items.length) { return; }
+
+    // <source media="(max-width: …)"> follows the layout width; on a phone whose page was laid out
+    // wider than the screen it would never match, so the mobile creative would never show.
+    if (isMobileViewport()) {
+      Array.prototype.forEach.call(wrap.querySelectorAll('source[media]'), function (s) { s.setAttribute('media', 'all'); });
+    }
 
     var idx = items.length > 1 ? Math.floor(Math.random() * items.length) : 0;
     function show(i) { items.forEach(function (n, k) { n.hidden = k !== i; }); }
@@ -407,6 +485,7 @@
     if (!policy) { return; }
     var list = (root || document).querySelectorAll('[data-bday-ad]');
     Array.prototype.forEach.call(list, processContainer);
+    adoptStrayAdsense(root || document);
   }
 
   function startOutOfPage() {
@@ -419,12 +498,13 @@
   }
 
   function start(claims) {
+    markDevice();
     policy = policyFor(claims);
     readerState = readerLabel(claims);
     log('reader', readerState, 'policy', policy);
 
     if (policy.mode === 'none') {
-      scan(document); // removes every container; nothing is loaded
+      scan(document); // removes every container (and stray AdSense tags); nothing is loaded
       document.documentElement.classList.add('bday-ads-off');
       return;
     }
