@@ -82,7 +82,7 @@ function bday_news_carousel_settings_tab(): void {
 	$count    = max( 1, count( $columns ) ?: 4 );
 	?>
 	<table class="form-table" role="presentation"><tbody>
-		<tr><th scope="row">Number of columns</th><td><input type="number" name="bday_addon_news_carousel[column_count]" value="<?php echo esc_attr( (string) $count ); ?>" min="1" max="6" /><p class="description">How many columns to configure below (1–6). Reducing this number doesn't delete a column's saved settings, it just stops showing it — raise the number again to bring it back.</p></td></tr>
+		<tr><th scope="row">Number of columns</th><td><input type="number" name="bday_addon_news_carousel[column_count]" value="<?php echo esc_attr( (string) $count ); ?>" min="1" /><p class="description">How many columns to configure below. Reducing this number doesn't delete a column's saved settings, it just stops showing it — raise the number again to bring it back.</p></td></tr>
 		<tr><th scope="row">Auto-scroll</th><td><label><input type="checkbox" name="bday_addon_news_carousel[auto_scroll]" value="1" <?php checked( ! empty( $settings['auto_scroll'] ) ); ?> /> Enabled</label><p class="description">Automatically advances the carousel on a timer, pausing whenever a reader's mouse is over it. Off by default so a reader controls the pace themselves via the arrow buttons or drag.</p></td></tr>
 		<tr><th scope="row">Scroll speed (ms)</th><td><input type="number" name="bday_addon_news_carousel[scroll_speed]" value="<?php echo esc_attr( (string) ( $settings['scroll_speed'] ?? 5000 ) ); ?>" min="1000" /><p class="description">Only matters if Auto-scroll is enabled above — milliseconds between each automatic advance (5000 = 5 seconds).</p></td></tr>
 	</tbody></table>
@@ -106,7 +106,7 @@ function bday_news_carousel_settings_tab(): void {
 /** @param mixed $input @return array<string, mixed> */
 function bday_news_carousel_sanitize( $input ): array {
 	$input  = is_array( $input ) ? $input : array();
-	$count  = max( 1, min( 6, (int) ( $input['column_count'] ?? 4 ) ) );
+	$count  = max( 1, (int) ( $input['column_count'] ?? 4 ) );
 	$output = array(
 		'auto_scroll'  => ! empty( $input['auto_scroll'] ),
 		'scroll_speed' => max( 1000, (int) ( $input['scroll_speed'] ?? 5000 ) ),
