@@ -805,24 +805,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	bdayInitDownloadAppModal();
 	bdayInitPopups();
 
-	// Lazy-loaded images (post_thumbnail_html filter emits data-src)
-	var lazyImages = document.querySelectorAll('img.img-lazy-load');
-	if ('IntersectionObserver' in window && lazyImages.length) {
-		var imageObserver = new IntersectionObserver(function (entries, observer) {
-			entries.forEach(function (entry) {
-				if (!entry.isIntersecting) return;
-				var img = entry.target;
-				if (img.dataset.src) img.src = img.dataset.src;
-				if (img.dataset.srcset) img.srcset = img.dataset.srcset;
-				img.classList.remove('img-lazy-load');
-				observer.unobserve(img);
-			});
-		});
-		lazyImages.forEach(function (img) {
-			imageObserver.observe(img);
-		});
-	}
-
 	// Premium leaderboard rotation (addons/premium-leaderboard)
 	document.querySelectorAll('.bday-leaderboard').forEach(function (board) {
 		var slides = board.querySelectorAll('.bday-leaderboard__slide');

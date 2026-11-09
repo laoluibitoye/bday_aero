@@ -154,42 +154,63 @@ remove_action( 'admin_print_scripts', 'print_emoji_detection_script' );
 remove_action( 'wp_print_styles', 'print_emoji_styles' );
 remove_action( 'admin_print_styles', 'print_emoji_styles' );
 
-/**
- * Lazy-loads post thumbnails via a data-src swap (script.js activates it).
- * No jQuery dependency — the previous theme's script.js required jQuery
- * for this and unrelated UI, then a separate hook deregistered jQuery
- * after the fact (a real, reproducible bug fixed by this rebuild's script.js
- * being dependency-free vanilla JS instead).
+/*
+ * Post thumbnails use WordPress's own <img> markup: real src/srcset,
+ * width/height and native loading="lazy". This replaced a data-src swap
+ * that needed script.js, which AMP pages strip, so AMP only ever showed
+ * the grey placeholder. The width/height attributes are neutralised in
+ * CSS (components/_post-thumbnail.scss) so existing sizing rules still
+ * apply.
+ */
+
+add_filter(
+	'wp_get_attachment_image_attributes',
+	static function ( array $attr, WP_Post $attachment ): array {
+		if ( ! isset( $attr['class'] ) || ! str_contains( $attr['class'], 'wp-post-image' ) ) {
+			return $attr;
+		}
+		// Keep the old alt fallback: no alt text set → use the image's title.
+		if ( '' === trim( (string) ( $attr['alt'] ?? '' ) ) ) {
+			$attr['alt'] = get_the_title( $attachment );
+		}
+		// AMP ignores a CSS object-fit on <amp-img>; it needs the attribute.
+		// The theme crops every thumbnail with object-fit: cover.
+		if ( function_exists( 'amp_is_request' ) && amp_is_request() ) {
+			$attr['object-fit'] = 'cover';
+		}
+		return $attr;
+	},
+	20, // after core adds the wp-post-image class (priority 10)
+	2
+);
+
+/*
+ * Core skips lazy-loading for every image between the header and the main
+ * loop. The homepage never runs the main loop, so without this cap every
+ * thumbnail on it would load at once. Outside the main loop, only the
+ * first few thumbnails (core's own threshold, 3 by default) load eagerly.
  */
 add_filter(
-	'post_thumbnail_html',
-	static function ( string $html, int $post_id, $thumbnail_id, $size, $attr ): string {
-		if ( is_admin() || ( is_array( $attr ) && ! empty( $attr['no_lazy'] ) ) ) {
-			return $html;
-		}
-		$id     = get_post_thumbnail_id( $post_id );
-		$src    = wp_get_attachment_image_src( $id, $size );
-		$srcset = wp_get_attachment_image_srcset( $id, $size );
-		$sizes  = wp_get_attachment_image_sizes( $id, $size );
-		$alt    = get_the_title( $id );
-		$class  = is_array( $attr ) && ! empty( $attr['class'] ) ? $attr['class'] : '';
+	'wp_get_loading_optimization_attributes',
+	static function ( $loading_attrs, $tag_name, $attr, $context ) {
+		static $eager_count = 0;
 
-		if ( empty( $src ) ) {
-			return $html;
+		if (
+			'the_post_thumbnail' !== $context
+			|| ! is_array( $loading_attrs )
+			|| isset( $loading_attrs['loading'] )                   // already lazy
+			|| isset( $attr['loading'] ) || isset( $attr['fetchpriority'] ) // caller chose
+			|| ( in_the_loop() && is_main_query() )                 // core counts these
+		) {
+			return $loading_attrs;
 		}
 
-		$placeholder = apply_filters( 'bday_thumbnail_fallback_url', 'https://cdn.businessday.ng/wp-content/uploads/2023/11/Business-Day-Grey-e1691776368938.jpg' );
-
-		return sprintf(
-			'<img src="%1$s" data-src="%2$s" data-srcset="%3$s" sizes="%4$s" alt="%5$s" class="%6$s img-lazy-load">',
-			esc_url( $placeholder ),
-			esc_url( $src[0] ),
-			esc_attr( (string) $srcset ),
-			esc_attr( (string) $sizes ),
-			esc_attr( $alt ),
-			esc_attr( trim( $class ) )
-		);
+		if ( ++$eager_count > wp_omit_loading_attr_threshold() ) {
+			unset( $loading_attrs['fetchpriority'] );
+			$loading_attrs['loading'] = 'lazy';
+		}
+		return $loading_attrs;
 	},
-	99,
-	5
+	10,
+	4
 );

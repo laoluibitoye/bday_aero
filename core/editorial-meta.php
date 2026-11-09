@@ -129,7 +129,7 @@ add_filter( 'the_content_feed', 'bday_rss_featured_image', 1000 );
 function bday_rss_featured_image( string $content ): string {
 	global $post;
 	if ( isset( $post->ID ) && has_post_thumbnail( $post->ID ) ) {
-		return get_the_post_thumbnail( $post->ID, 'large', array( 'no_lazy' => true ) ) . $content;
+		return get_the_post_thumbnail( $post->ID, 'large' ) . $content;
 	}
 	return $content;
 }
