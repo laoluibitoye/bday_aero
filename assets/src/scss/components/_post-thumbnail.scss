@@ -1,0 +1,10 @@
+// Post thumbnails come from WordPress with width/height attributes. Many
+// theme rules size images with only a width or an aspect-ratio, so those
+// attributes would otherwise squash or stretch them. :where() has zero
+// specificity, so every existing sizing rule still wins over this; it only
+// overrides the attributes themselves. Browsers still use the attributes'
+// ratio to reserve space while an image loads.
+:where(img.wp-post-image) {
+	width: auto;
+	height: auto;
+}
