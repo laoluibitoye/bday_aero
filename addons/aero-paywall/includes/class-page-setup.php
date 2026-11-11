@@ -24,9 +24,28 @@ final class Bday_Aero_Page_Setup {
 
 	private const PAGE_MARKER_META_KEY = '_bday_aero_auto_page';
 
+	// find_marked_page() runs on reader-facing pages through url_for() (the SDK config on every
+	// page, plus the subscribe, Today's Paper and e-edition templates), so its postmeta lookup goes
+	// through the query cache. Any page save/trash/delete drops the cached lookups, since that page
+	// may be one of ours or have a new permalink; pages change rarely, so this costs little.
+	private const CACHE_NAMESPACE = 'page_setup';
+	private const CACHE_TTL       = 12 * HOUR_IN_SECONDS;
+
 	public function __construct() {
 		add_action( 'after_switch_theme', array( self::class, 'create_missing_pages' ) );
 		add_action( 'wp_ajax_bday_aero_create_pages', array( $this, 'handle_create_pages' ) );
+		add_action( 'save_post_page', array( self::class, 'flush_cache' ) );
+		add_action( 'deleted_post', array( self::class, 'flush_cache_on_delete' ), 10, 2 );
+	}
+
+	public static function flush_cache(): void {
+		Bday_Query_Cache::bump_generation( self::CACHE_NAMESPACE );
+	}
+
+	public static function flush_cache_on_delete( int $post_id, $post = null ): void {
+		if ( $post instanceof WP_Post && 'page' === $post->post_type ) {
+			self::flush_cache();
+		}
 	}
 
 	/** @return array<string, array{label: string, content: string, template: string, slug?: string}> */
@@ -91,9 +110,14 @@ final class Bday_Aero_Page_Setup {
 	}
 
 	public static function create_missing_pages(): void {
+		// Start from fresh lookups so a stale cached "not found" can never create a duplicate page,
+		// and flush again afterwards: wp_insert_post() fires save_post before ensure_page() adds the
+		// marker meta, so a lookup cached in between would otherwise miss the new page.
+		self::flush_cache();
 		foreach ( array_keys( self::definitions() ) as $key ) {
 			self::ensure_page( $key );
 		}
+		self::flush_cache();
 	}
 
 	/** Idempotent: a page already marked (or an explicit admin choice already on record for 'account') is never re-created or overridden. */
@@ -140,14 +164,17 @@ final class Bday_Aero_Page_Setup {
 	}
 
 	private static function find_marked_page( string $key ): ?WP_Post {
-		$pages = get_posts(
+		$pages = Bday_Query_Cache::posts(
+			self::CACHE_NAMESPACE,
+			'marked:' . $key,
 			array(
 				'post_type'   => 'page',
 				'post_status' => 'any',
 				'numberposts' => 1,
 				'meta_key'    => self::PAGE_MARKER_META_KEY,
 				'meta_value'  => $key,
-			)
+			),
+			self::CACHE_TTL
 		);
 		return $pages[0] ?? null;
 	}
