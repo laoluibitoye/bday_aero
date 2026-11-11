@@ -39,6 +39,16 @@ cd "$THEME_ROOT"
 ALLOWLIST=(
   "core/data/class-query-cache.php"
   "addons/aero-paywall/includes/class-premium-map.php"
+  # Migration/backfill code that never runs on a reader's page view, and must NOT be cached: each
+  # one walks the live data it is about to change, so a stale cached list would skip or repeat
+  # posts. Checked 2026-11-11 against every caller:
+  #   - legacy-migration-core.php: bday_edition_get_legacy_posts() is called only from the
+  #     wp-admin migration wizard and the `wp bday migrate-legacy-editions` WP-CLI command.
+  #   - migrate-custom-author-byline.php and backfill-published-posts.php: WP-CLI commands,
+  #     only loaded when WP_CLI is defined (see each addon.php).
+  "addons/editions/includes/legacy-migration-core.php"
+  "addons/author-profile/includes/migrate-custom-author-byline.php"
+  "addons/follow-notify/includes/backfill-published-posts.php"
 )
 
 is_allowlisted() {
