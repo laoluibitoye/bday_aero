@@ -188,6 +188,17 @@ final class Bday_Section_Registry {
 			} catch ( \Throwable $e ) {
 				error_log( sprintf( '[bday] homepage section "%s" failed to render: %s', $slug, $e->getMessage() ) );
 			}
+
+			// Ad Manager's "between sections" slots: any slot an editor pointed at this section
+			// renders here, directly after it. Guarded so the homepage still works if the add-on
+			// is switched off, and isolated so an ad error can never take the sections after it down.
+			if ( function_exists( 'bday_ads_after_section' ) ) {
+				try {
+					bday_ads_after_section( $slug );
+				} catch ( \Throwable $e ) {
+					error_log( sprintf( '[bday] ad slot after section "%s" failed: %s', $slug, $e->getMessage() ) );
+				}
+			}
 		}
 	}
 }

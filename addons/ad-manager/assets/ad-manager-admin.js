@@ -65,6 +65,8 @@
 			e.preventDefault();
 			var field = t.closest('[data-media-field]');
 			var frame = wp.media({ title: 'Select banner image', multiple: false, library: { type: 'image' } });
+			// WordPress opens a fresh picker on "Upload files"; editors almost always want to reuse an image.
+			frame.on('open', function () { try { frame.content.mode('browse'); } catch (err) { /* older WP */ } });
 			frame.on('select', function () {
 				var a = frame.state().get('selection').first().toJSON();
 				field.querySelector('[data-media-input]').value = a.id;
@@ -86,4 +88,58 @@
 			f.querySelector('.bday-creative__preview').innerHTML = '';
 		}
 	});
+
+	/* Reader policy: the category list and cap only belong to "Limited". */
+	document.addEventListener('change', function (e) {
+		if (!e.target.matches('[data-policy] select')) { return; }
+		var detail = e.target.closest('[data-policy]').querySelector('[data-policy-detail]');
+		if (detail) { detail.style.display = e.target.value === 'limited' ? '' : 'none'; }
+	});
+
+	/*
+	 * Ad Units: post the whole registry as ONE field. Each unit has ~25 form fields, and PHP silently
+	 * drops everything beyond max_input_vars (1000 by default) — roughly 40 units — which used to lose
+	 * the newest units on save with no warning. Fields are parsed from their bracketed names, so the
+	 * server reads exactly what the plain form would have sent.
+	 */
+	function setPath(root, path, value) {
+		var node = root;
+		for (var i = 0; i < path.length - 1; i++) {
+			if (node[path[i]] === undefined || typeof node[path[i]] !== 'object') { node[path[i]] = {}; }
+			node = node[path[i]];
+		}
+		var last = path[path.length - 1];
+		if (last === '') { // name[] -> push
+			var key = path[path.length - 2];
+			return;
+		}
+		node[last] = value;
+	}
+
+	if (units) {
+		var form = units.closest('form');
+		form.addEventListener('submit', function () {
+			var data = {};
+			var fields = units.querySelectorAll('[name]');
+			Array.prototype.forEach.call(fields, function (el) {
+				if (el.disabled) { return; }
+				if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) { return; }
+				var names = el.name.match(/\[([^\]]*)\]/g);
+				if (!names || names.length < 2) { return; }
+				var path = names.map(function (n) { return n.slice(1, -1); }).slice(0);
+				setPath(data, path, el.value);
+			});
+			var json = form.querySelector('[data-units-json]');
+			if (!json) {
+				json = document.createElement('input');
+				json.type = 'hidden';
+				json.setAttribute('data-units-json', '1');
+				form.appendChild(json);
+			}
+			json.name = form.querySelector('input[name$="[__saved]"]').name.replace('[__saved]', '[__json]');
+			json.value = JSON.stringify(data);
+			// Stop the individual fields from also being posted.
+			Array.prototype.forEach.call(fields, function (el) { el.disabled = true; });
+		});
+	}
 })();

@@ -82,6 +82,11 @@ final class Bday_Ads_Store {
 			if ( empty( $merged['categories'] ) || ! is_array( $merged['categories'] ) ) {
 				$merged['categories'] = bday_ads_default_categories();
 			}
+			// An "array | Array" entry is debris from a first-save double-sanitize bug (the category
+			// list got stringified); it was never something an editor typed. Drop it on read.
+			if ( isset( $merged['categories']['array'] ) && 'Array' === $merged['categories']['array'] ) {
+				unset( $merged['categories']['array'] );
+			}
 			self::$settings = $merged;
 		}
 		return self::$settings;
@@ -157,6 +162,7 @@ final class Bday_Ads_Store {
 			'units'              => array(),
 			'post_types'         => array(), // empty = every post type
 			'exclude_categories' => array(), // category slugs
+			'after_section'      => '',      // section kind only: homepage section slug this slot follows
 			'paragraph'          => 0,       // content kind only; 0 = catalog default
 			'min_paragraphs'     => 0,       // content kind only; 0 = paragraph + 2
 		);
