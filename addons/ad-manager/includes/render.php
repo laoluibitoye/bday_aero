@@ -88,30 +88,51 @@ final class Bday_Ads_Render {
 	/** @var array<string, bool> content placements already output this request */
 	private static array $injected = array();
 
+	/** @var array<string, bool> placements a template actually asked for on this page */
+	private static array $called = array();
+
+	/** @var array<string, string[]> why each placement did or didn't render on this page (shown to admins as an HTML comment) */
+	private static array $trace = array();
+
+	private static function trace( string $placement, string $message ): void {
+		self::$trace[ $placement ][] = $message;
+	}
+
 	/* ── Eligibility ──────────────────────────────────────────────── */
 
 	/** Whether a placement may render here (page type, enabled flag, post type, excluded categories). */
 	public static function placement_applies( string $placement, ?WP_Post $post ): bool {
 		if ( ! bday_page_allows_ads() ) {
+			self::trace( $placement, 'not rendered: this page does not allow ads (404, feed, a Page other than the homepage, or ads are switched off)' );
 			return false;
 		}
 		$catalog = bday_ads_placement_catalog();
 		if ( ! isset( $catalog[ $placement ] ) ) {
+			self::trace( $placement, 'not rendered: unknown placement' );
 			return false;
 		}
 		$conf = Bday_Ads_Store::placement( $placement );
-		if ( empty( $conf['enabled'] ) || empty( $conf['units'] ) ) {
+		if ( empty( $conf['enabled'] ) ) {
+			self::trace( $placement, 'not rendered: switched off in Ad Placements' );
+			return false;
+		}
+		if ( empty( $conf['units'] ) ) {
+			self::trace( $placement, 'not rendered: no units are assigned to it' );
 			return false;
 		}
 
-		$post = $post ?: ( is_singular() ? get_post() : null );
+		// Post-type and category rules describe *articles*. The homepage is a WordPress Page, so
+		// applying "Only on: Posts" there would silently hide every homepage placement.
+		$post = $post ?: ( is_singular() && ! is_front_page() ? get_post() : null );
 		if ( $post ) {
 			if ( ! empty( $conf['post_types'] ) && ! in_array( $post->post_type, (array) $conf['post_types'], true ) ) {
+				self::trace( $placement, sprintf( 'not rendered: restricted to %s, this is a "%s"', implode( '/', (array) $conf['post_types'] ), $post->post_type ) );
 				return false;
 			}
 			if ( ! empty( $conf['exclude_categories'] ) ) {
 				$slugs = wp_get_post_categories( $post->ID, array( 'fields' => 'slugs' ) );
 				if ( array_intersect( (array) $slugs, (array) $conf['exclude_categories'] ) ) {
+					self::trace( $placement, 'not rendered: this article is in an excluded category' );
 					return false;
 				}
 			}
@@ -142,13 +163,19 @@ final class Bday_Ads_Render {
 	/* ── Placement output ─────────────────────────────────────────── */
 
 	public static function zone( string $placement, ?WP_Post $post = null ): void {
+		self::$called[ $placement ] = true;
 		if ( ! self::placement_applies( $placement, $post ) ) {
 			return;
 		}
 		$conf = Bday_Ads_Store::placement( $placement );
 		foreach ( (array) $conf['units'] as $unit_id ) {
 			$unit = Bday_Ads_Store::unit( (string) $unit_id );
-			if ( ! $unit || 'active' !== $unit['status'] ) {
+			if ( ! $unit ) {
+				self::trace( $placement, sprintf( 'unit "%s" skipped: it no longer exists', $unit_id ) );
+				continue;
+			}
+			if ( 'active' !== $unit['status'] ) {
+				self::trace( $placement, sprintf( 'unit "%s" skipped: paused', $unit['id'] ) );
 				continue;
 			}
 			// Out-of-page GAM formats have no container; the loader
@@ -157,10 +184,28 @@ final class Bday_Ads_Render {
 				self::$used[ $unit['id'] ] = self::js_config( $unit );
 				continue;
 			}
-			if ( 'banner' === $unit['partner'] && ( ! self::in_schedule( $unit ) || ! self::banner_creatives( $unit ) ) ) {
+			// A network unit with nothing to ask for can never fill; rendering its container would only
+			// leave an empty gap.
+			if ( 'gam' === $unit['partner'] && '' === trim( (string) $unit['path'] ) ) {
+				self::trace( $placement, sprintf( 'unit "%s" skipped: it has no valid GAM ad unit path', $unit['id'] ) );
 				continue;
 			}
+			if ( 'adsense' === $unit['partner'] && '' === trim( (string) $unit['adsense_slot'] ) ) {
+				self::trace( $placement, sprintf( 'unit "%s" skipped: it has no AdSense slot ID', $unit['id'] ) );
+				continue;
+			}
+			if ( 'banner' === $unit['partner'] ) {
+				if ( ! self::in_schedule( $unit ) ) {
+					self::trace( $placement, sprintf( 'unit "%s" skipped: outside its schedule', $unit['id'] ) );
+					continue;
+				}
+				if ( ! self::banner_creatives( $unit ) ) {
+					self::trace( $placement, sprintf( 'unit "%s" skipped: the banner has no usable image (none chosen, or it was deleted from the media library)', $unit['id'] ) );
+					continue;
+				}
+			}
 			self::render_unit( $unit, $placement );
+			self::trace( $placement, sprintf( 'unit "%s" rendered (%s, %s)', $unit['id'], $unit['partner'], 'all' === $unit['device'] ? 'all devices' : $unit['device'] . ' only' ) );
 		}
 	}
 
@@ -242,10 +287,19 @@ final class Bday_Ads_Render {
 
 	/** @return array<int, array<string, mixed>> creatives that have something to show */
 	private static function banner_creatives( array $unit ): array {
+		// Only creatives whose image actually resolves: an attachment that was deleted from the media
+		// library leaves an id behind, and a unit built from those would print an "Advertisement"
+		// label with nothing under it.
 		return array_values(
 			array_filter(
 				(array) $unit['creatives'],
-				static fn( $c ) => is_array( $c ) && ( ! empty( $c['image'] ) || ! empty( $c['image_url'] ) )
+				static function ( $c ): bool {
+					if ( ! is_array( $c ) ) {
+						return false;
+					}
+					list( $src ) = self::image_src( (int) ( $c['image'] ?? 0 ), (string) ( $c['image_url'] ?? '' ) );
+					return '' !== $src;
+				}
 			)
 		);
 	}
@@ -329,7 +383,11 @@ final class Bday_Ads_Render {
 
 		$wanted = array(); // paragraph index => placement ids
 		foreach ( bday_ads_placement_catalog() as $id => $def ) {
-			if ( 'content' !== $def['kind'] || isset( self::$injected[ $id ] ) || ! self::placement_applies( $id, $post ) ) {
+			if ( 'content' !== $def['kind'] || isset( self::$injected[ $id ] ) ) {
+				continue;
+			}
+			self::$called[ $id ] = true;
+			if ( ! self::placement_applies( $id, $post ) ) {
 				continue;
 			}
 			$conf = Bday_Ads_Store::placement( $id );
@@ -353,6 +411,13 @@ final class Bday_Ads_Render {
 		if ( 0 === $n ) {
 			return $html;
 		}
+		foreach ( $wanted as $list ) {
+			foreach ( $list as list( $id, $min ) ) {
+				if ( $n < $min ) {
+					self::trace( $id, sprintf( 'not rendered: the article has %d paragraphs and this spot needs at least %d', $n, $min ) );
+				}
+			}
+		}
 
 		$out = '';
 		foreach ( $segments as $i => $seg ) {
@@ -361,7 +426,7 @@ final class Bday_Ads_Render {
 			if ( $para && $para < $n && isset( $wanted[ $para ] ) ) {
 				foreach ( $wanted[ $para ] as list( $id, $min ) ) {
 					if ( $n < $min ) {
-						continue;
+						continue; // recorded below, with the short-article reason
 					}
 					self::$injected[ $id ] = true;
 					ob_start();
@@ -373,12 +438,57 @@ final class Bday_Ads_Render {
 		return $out;
 	}
 
+	/* ── Homepage "between sections" slots ────────────────────────── */
+
+	/** Renders every between-sections slot whose chosen section is the one that just rendered. */
+	public static function after_section( string $slug ): void {
+		foreach ( bday_ads_placement_catalog() as $id => $def ) {
+			if ( 'section' !== $def['kind'] ) {
+				continue;
+			}
+			if ( ( Bday_Ads_Store::placement( $id )['after_section'] ?? '' ) === $slug ) {
+				self::zone( $id, null );
+			}
+		}
+	}
+
+	/** One HTML comment, for logged-in admins only, saying what every configured placement did on this page. */
+	private static function print_trace(): void {
+		if ( ! is_user_logged_in() || ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		$catalog = bday_ads_placement_catalog();
+		$lines   = array();
+		foreach ( Bday_Ads_Store::placements() as $id => $conf ) {
+			if ( empty( $conf['units'] ) || ! isset( $catalog[ $id ] ) || 'global' === $catalog[ $id ]['kind'] ) {
+				continue;
+			}
+			$def = $catalog[ $id ];
+			if ( ! empty( self::$called[ $id ] ) ) {
+				$lines[] = $id . ': ' . implode( '; ', self::$trace[ $id ] ?? array( 'asked for on this page, nothing to show' ) );
+				continue;
+			}
+			if ( ! bday_ads_placement_on_live_layout( $def ) ) {
+				$why = sprintf( 'this spot does not exist on the live homepage layout ("%s") — it only exists on: %s', bday_ads_active_layout(), implode( ', ', (array) $def['layouts'] ) );
+			} elseif ( 'section' === $def['kind'] ) {
+				$why = '' === ( $conf['after_section'] ?? '' ) ? 'no section has been chosen for it' : sprintf( 'its section "%s" is not showing on this page', $conf['after_section'] );
+			} else {
+				$why = 'no template renders this spot on this kind of page';
+			}
+			$lines[] = $id . ': NOT ON THIS PAGE — ' . $why;
+		}
+		if ( $lines ) {
+			echo "\n<!-- Ad Manager trace (shown to administrators only)\n" . str_replace( '--', '- -', implode( "\n", $lines ) ) . "\n-->\n"; // phpcs:ignore WordPress.Security.EscapeOutput
+		}
+	}
+
 	/* ── Loader config ────────────────────────────────────────────── */
 
 	public static function print_config(): void {
 		if ( ! bday_page_allows_ads() ) {
 			return;
 		}
+		self::print_trace();
 
 		// Sticky / full-screen formats have no template call; they ride on their own placement.
 		if ( self::placement_applies( 'global_oop', null ) ) {
@@ -456,7 +566,15 @@ function bday_ads_clean_policy( $raw ): array {
 	$raw  = is_array( $raw ) ? $raw : array();
 	$mode = in_array( $raw['mode'] ?? '', array( 'all', 'none', 'limited' ), true ) ? $raw['mode'] : 'all';
 	$hide = array_values( array_filter( array_map( 'sanitize_key', (array) ( $raw['hide'] ?? array() ) ) ) );
-	return array( 'mode' => $mode, 'hide' => $hide, 'max' => max( 0, (int) ( $raw['max'] ?? 0 ) ) );
+	$max  = max( 0, (int) ( $raw['max'] ?? 0 ) );
+	// "Show all" and "Ad-free" mean exactly that. The category list and the cap belong to "Limited"
+	// only; a stale ticked box under "Show all ads" must never remove anything (it once stripped every
+	// Google ad from anonymous readers on the live site).
+	if ( 'limited' !== $mode ) {
+		$hide = array();
+		$max  = 0;
+	}
+	return array( 'mode' => $mode, 'hide' => $hide, 'max' => $max );
 }
 
 /* ── Public template API ────────────────────────────────────────── */
@@ -464,6 +582,11 @@ function bday_ads_clean_policy( $raw ): array {
 /** Renders the units assigned to a placement, if the placement is allowed here. */
 function bday_ad_zone( string $zone, ?WP_Post $post = null ): void {
 	Bday_Ads_Render::zone( $zone, $post );
+}
+
+/** Renders the between-sections slots that follow the homepage section that just rendered. */
+function bday_ads_after_section( string $slug ): void {
+	Bday_Ads_Render::after_section( $slug );
 }
 
 /** Same, for already-rendered article HTML (used by the article template). */
