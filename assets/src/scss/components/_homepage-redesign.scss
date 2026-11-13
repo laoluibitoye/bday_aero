@@ -333,7 +333,7 @@ $rd-invert-ink: var(--rd-invert-ink);
 		// Reader-requested: on the single-column layout the lead story
 		// should read first, above Top News — source order (topnews, lead,
 		// latest) only makes sense in the 3-column desktop grid.
-		@include bd-down($bp-desktop) { order: 2; }
+		@include bd-down($bp-desktop) { order: 3; }
 	}
 
 	&__topnews-head { display: flex; align-items: center; gap: 10px; }
@@ -377,7 +377,19 @@ $rd-invert-ink: var(--rd-invert-ink);
 		display: flex;
 		flex-direction: column;
 		gap: 20px;
-		@include bd-down($bp-desktop) { order: 3; }
+		@include bd-down($bp-desktop) { order: 4; }
+	}
+
+	// Ad Manager slot "Homepage — right under the lead story". A grid child, so on desktop (3
+	// columns) it must not exist; on the single-column layout it sits between the lead (order 1)
+	// and Top News (order 3).
+	&__ad-after-lead {
+		display: none;
+		@include bd-down($bp-desktop) {
+			display: block;
+			order: 2;
+			&:empty { display: none; }
+		}
 	}
 }
 

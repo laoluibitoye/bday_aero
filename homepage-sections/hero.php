@@ -82,6 +82,13 @@ $top_news_archive_url = $bdlead_term && ! is_wp_error( $bdlead_term ) ? get_tag_
 			</article>
 		<?php endif; ?>
 
+		<?php
+		// Ad slot directly under the lead story. Only on the stacked (single-column) layout: on
+		// desktop the lead sits between two columns, so this wrapper is hidden there (see
+		// .bday-rd-hero__ad-after-lead). Printed with no whitespace so :empty can hide an unused slot.
+		?>
+		<div class="bday-rd-hero__ad-after-lead"><?php bday_ad_zone( 'home_after_lead' ); ?></div>
+
 		<div class="bday-rd-hero__latest">
 			<?php do_action( 'bday_hero_before_recent' ); ?>
 			<span class="bday-rd-kicker">Recent</span>

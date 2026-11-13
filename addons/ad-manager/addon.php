@@ -31,5 +31,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/includes/catalog.php';
 require_once __DIR__ . '/includes/class-store.php';
 require_once __DIR__ . '/includes/render.php';
+require_once __DIR__ . '/includes/diagnostics.php';
 require_once __DIR__ . '/includes/admin.php';
 require_once __DIR__ . '/includes/early-gate.php';
