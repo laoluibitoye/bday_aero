@@ -326,12 +326,17 @@ final class Bday_Ads_Render {
 			list( $msrc, $mw, $mh ) = self::image_src( (int) ( $c['image_mobile'] ?? 0 ), '' );
 			$ar_d  = ( $w && $h ) ? sprintf( '%d / %d', $w, $h ) : 'auto';
 			$ar_m  = ( $mw && $mh ) ? sprintf( '%d / %d', $mw, $mh ) : $ar_d;
+			// The creative's own width, so its aspect-ratio box can never be wider than the image it
+			// holds. Without it the box stretched to the full width of the placement: a 300×250 banner
+			// in a 1,533px-wide homepage spot became a 1,278px-tall mostly-empty block.
+			$wd    = $w ? $w . 'px' : '100%';
+			$wm    = $mw ? $mw . 'px' : $wd;
 			$href  = (string) ( $c['url'] ?? '' );
 			$tag   = $href ? 'a' : 'div';
 			$open  = $href
 				? sprintf( '<a class="bday-ad__creative" href="%s" rel="sponsored noopener"%s data-bday-ad-click', esc_url( $href ), $unit['new_tab'] ? ' target="_blank"' : '' )
 				: '<div class="bday-ad__creative"';
-			echo $open . sprintf( ' style="--bday-ad-ar-d:%s;--bday-ad-ar-m:%s;"%s>', esc_attr( $ar_d ), esc_attr( $ar_m ), $i > 0 ? ' hidden' : '' ); // phpcs:ignore WordPress.Security.EscapeOutput
+			echo $open . sprintf( ' style="--bday-ad-ar-d:%s;--bday-ad-ar-m:%s;--bday-ad-w-d:%s;--bday-ad-w-m:%s;"%s>', esc_attr( $ar_d ), esc_attr( $ar_m ), esc_attr( $wd ), esc_attr( $wm ), $i > 0 ? ' hidden' : '' ); // phpcs:ignore WordPress.Security.EscapeOutput
 			echo '<picture>';
 			if ( $msrc ) {
 				printf( '<source media="(max-width: %dpx)" srcset="%s">', max( 0, $bp - 1 ), esc_url( $msrc ) );
