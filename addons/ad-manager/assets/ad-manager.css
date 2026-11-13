@@ -44,8 +44,10 @@
 .bday-ads-off .bday-ad:not(.bday-ad--banner) { display: none !important; }
 
 /* Local banners */
-.bday-ad__banners { width: 100%; text-align: center; }
-.bday-ad__creative { display: block; line-height: 0; aspect-ratio: var(--bday-ad-ar-d, auto); }
+.bday-ad__banners { width: 100%; display: flex; justify-content: center; }
+/* width is capped at the image's own width: an aspect-ratio box with only a ratio stretches to the
+   full width of the placement, turning a small banner into a huge, mostly empty block. */
+.bday-ad__creative { display: block; line-height: 0; max-width: 100%; width: min(100%, var(--bday-ad-w-d, 100%)); aspect-ratio: var(--bday-ad-ar-d, auto); }
 .bday-ad__creative[hidden] { display: none; }
 .bday-ad__creative picture,
 .bday-ad__creative img { display: inline-block; max-width: 100%; height: auto; }
@@ -54,7 +56,7 @@
 @media (max-width: 767px) {
 	.bday-ad { min-height: var(--bday-ad-min-m, 0); }
 	.bday-ad--desktop-only { display: none !important; }
-	.bday-ad__creative { aspect-ratio: var(--bday-ad-ar-m, var(--bday-ad-ar-d, auto)); }
+	.bday-ad__creative { width: min(100%, var(--bday-ad-w-m, var(--bday-ad-w-d, 100%))); aspect-ratio: var(--bday-ad-ar-m, var(--bday-ad-ar-d, auto)); }
 }
 @media (min-width: 768px) {
 	.bday-ad--mobile-only { display: none !important; }
@@ -77,6 +79,6 @@ html[data-bday-ad-device="mobile"] .bday-ad--desktop-only,
 html[data-bday-ad-device="desktop"] .bday-ad--mobile-only { display: none !important; }
 html[data-bday-ad-device="mobile"] .bday-ad { min-height: var(--bday-ad-min-m, 0); }
 html[data-bday-ad-device="desktop"] .bday-ad { min-height: var(--bday-ad-min-d, 0); }
-html[data-bday-ad-device="mobile"] .bday-ad__creative { aspect-ratio: var(--bday-ad-ar-m, var(--bday-ad-ar-d, auto)); }
-html[data-bday-ad-device="desktop"] .bday-ad__creative { aspect-ratio: var(--bday-ad-ar-d, auto); }
+html[data-bday-ad-device="mobile"] .bday-ad__creative { width: min(100%, var(--bday-ad-w-m, var(--bday-ad-w-d, 100%))); aspect-ratio: var(--bday-ad-ar-m, var(--bday-ad-ar-d, auto)); }
+html[data-bday-ad-device="desktop"] .bday-ad__creative { width: min(100%, var(--bday-ad-w-d, 100%)); aspect-ratio: var(--bday-ad-ar-d, auto); }
 html[data-bday-ad-device] .bday-ad.is-collapsed { min-height: 0; }
