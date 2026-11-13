@@ -89,10 +89,14 @@
 
   function cleanPolicy(p) {
     p = p || {};
+    var mode = p.mode === 'none' || p.mode === 'limited' ? p.mode : 'all';
+    // The category list and the cap belong to "limited" only. "Show all" must show all, whatever
+    // stale values were saved alongside it (a ticked box under "Show all ads" once removed every
+    // Google ad for anonymous readers).
     return {
-      mode: p.mode === 'none' || p.mode === 'limited' ? p.mode : 'all',
-      hide: Array.isArray(p.hide) ? p.hide : [],
-      max: parseInt(p.max, 10) > 0 ? parseInt(p.max, 10) : 0
+      mode: mode,
+      hide: mode === 'limited' && Array.isArray(p.hide) ? p.hide : [],
+      max: mode === 'limited' && parseInt(p.max, 10) > 0 ? parseInt(p.max, 10) : 0
     };
   }
 
@@ -193,7 +197,10 @@
     if (gamState !== 'idle') { return; }
     gamState = 'loading';
     window.googletag = window.googletag || { cmd: [] };
-    loadScript('https://securepubads.g.doubleclick.net/tag/js/gpt.js', { crossorigin: 'anonymous' });
+    var gptScript = loadScript('https://securepubads.g.doubleclick.net/tag/js/gpt.js', { crossorigin: 'anonymous' });
+    // Blocked or failed (ad blockers, network): the slots will never fill, so give their space back
+    // instead of leaving permanent blank gaps down the page.
+    gptScript.onerror = function () { log('GPT failed to load — collapsing Google slots'); gamState = 'failed'; collapseAll('gam'); };
 
     googletag.cmd.push(function () {
       var pubads = googletag.pubads();
@@ -249,23 +256,67 @@
   function defineGamSlot(el, unit) {
     var slotEl = el.querySelector('.bday-ad__slot');
     if (!slotEl) { return; }
+    if (!unit.path) { log('no GAM path for', el.getAttribute('data-unit')); collapse(el); return; }
     var desktop = sizeList(unit.sizesD, unit.sizesM, unit.device, 'desktop');
     var mobile = sizeList(unit.sizesM, unit.sizesD, unit.device, 'mobile');
-    var all = desktop.concat(mobile);
-    if (!all.length) { log('no sizes for', unit.path); return; }
+    // Sizes come from the loader's own device decision, not GPT's size mapping: GPT measures the
+    // layout viewport, which one over-wide element can inflate on phones, so a mapping would hand a
+    // phone the desktop sizes. Anything wider than the screen is dropped — an ad that can't fit
+    // would stretch the page.
+    var vw = adViewportWidth();
+    var phone = isMobileViewport();
+    var all = fitSizes(phone ? mobile : desktop, vw);
+    if (!all.length) { all = fitSizes(phone ? desktop : mobile, vw); }
+    if (!all.length) { log('no size fits a ' + vw + 'px screen for', unit.path); collapse(el); return; }
 
     var slot = googletag.defineSlot(unit.path, all, slotEl.id);
-    if (!slot) { log('defineSlot failed', unit.path); return; }
-    slot.defineSizeMapping(
-      googletag.sizeMapping().addSize([C.bp, 0], desktop).addSize([0, 0], mobile).build()
-    );
+    if (!slot) { log('defineSlot failed', unit.path); collapse(el); return; }
     if (unit.refresh) {
       if (typeof slot.setConfig === 'function') { slot.setConfig({ targeting: { refresh: 'true' } }); } else { slot.setTargeting('refresh', 'true'); }
     }
     slot.addService(googletag.pubads());
-    slotInfo[slotEl.id] = { unit: unit, refreshes: 0, timer: null, el: el };
+    slotInfo[slotEl.id] = { unit: unit, refreshes: 0, timer: null, el: el, rendered: false };
     googletag.display(slotEl.id);
-    log('slot defined', slotEl.id, unit.path);
+    armWatchdog(slotEl.id, 0);
+    log('slot defined', slotEl.id, unit.path, JSON.stringify(all));
+  }
+
+  /** Keep only sizes that fit the screen ('fluid' always fits); drop duplicates. */
+  function fitSizes(list, maxWidth) {
+    var out = [];
+    var seen = {};
+    (list || []).forEach(function (s) {
+      var key = s === 'fluid' ? 'fluid' : s[0] + 'x' + s[1];
+      if (seen[key]) { return; }
+      if (s === 'fluid' || s[0] <= maxWidth) { seen[key] = true; out.push(s); }
+    });
+    return out;
+  }
+
+  function collapse(el) {
+    if (!el) { return; }
+    if (el.classList.contains('is-filled')) { return; }
+    el.classList.add('is-collapsed');
+  }
+
+  function collapseAll(partner) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-bday-ad][data-partner="' + partner + '"]'), collapse);
+  }
+
+  /**
+   * A slot that is on (or near) the screen but never reports a result means the ad request was
+   * swallowed (ad blocker, network). Give its reserved space back. Slots far down the page are left
+   * alone: lazy loading hasn't asked for them yet, so silence is normal.
+   */
+  function armWatchdog(id, tries) {
+    setTimeout(function () {
+      var info = slotInfo[id];
+      if (!info || info.rendered) { return; }
+      var r = info.el.getBoundingClientRect();
+      var near = r.bottom > -window.innerHeight && r.top < window.innerHeight * 2.5;
+      if (near) { log('no result for', id, '— collapsing'); collapse(info.el); return; }
+      if (tries < 8) { armWatchdog(id, tries + 1); }
+    }, tries === 0 ? 10000 : 5000);
   }
 
   var OOP_FORMATS = {
@@ -293,6 +344,7 @@
     var info = slotInfo[id];
     if (!info) { return; }
     var el = info.el;
+    info.rendered = true;
     el.classList.toggle('is-filled', !event.isEmpty);
     el.classList.toggle('is-empty', !!event.isEmpty);
     if (event.isEmpty) {
@@ -335,14 +387,27 @@
   /* ── AdSense ─────────────────────────────────────────────────────── */
 
   function startAdsense(el) {
-    if (!C.adsense) { return; }
+    if (!C.adsense) { log('AdSense unit but no publisher ID in Ad Manager settings'); collapse(el); return; }
     if (!adsenseLoaded) {
       adsenseLoaded = true;
-      loadScript('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(C.adsense), { crossorigin: 'anonymous' });
+      var lib = loadScript('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(C.adsense), { crossorigin: 'anonymous' });
+      lib.onerror = function () { log('AdSense failed to load — collapsing AdSense slots'); collapseAll('adsense'); };
     }
+    watchAdsenseFill(el);
     whenNearViewport(el, function () {
       try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { log('adsense push failed', e); }
     });
+  }
+
+  /** AdSense reports its result on the <ins> itself (data-ad-status = filled | unfilled). */
+  function watchAdsenseFill(el) {
+    var ins = el.querySelector('ins.adsbygoogle');
+    if (!ins || !('MutationObserver' in window)) { return; }
+    new MutationObserver(function () {
+      var st = ins.getAttribute('data-ad-status');
+      if (st === 'unfilled') { el.classList.add('is-empty'); collapse(el); }
+      if (st === 'filled') { el.classList.add('is-filled'); }
+    }).observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] });
   }
 
   /**

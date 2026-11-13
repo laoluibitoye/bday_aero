@@ -90,8 +90,11 @@ function bday_ads_select( string $name, array $options, string $value ): string 
 
 function bday_ads_policy_editor( string $name, array $policy ): void {
 	$policy = bday_ads_clean_policy( $policy );
+	echo '<div data-policy>';
 	echo bday_ads_select( $name . '[mode]', array( 'all' => 'Show all ads', 'limited' => 'Limited — hide some categories / cap the count', 'none' => 'Ad-free (no ads at all)' ), $policy['mode'] ); // phpcs:ignore WordPress.Security.EscapeOutput
-	echo '<div class="bday-ads-policy__detail" style="margin-top:8px;"><strong>Hide these ad categories:</strong><br>';
+	// The category list and the cap only mean something under "Limited"; showing them under
+	// "Show all ads" invited a stale ticked box that quietly removed ads.
+	echo '<div class="bday-ads-policy__detail" data-policy-detail style="margin-top:8px;' . ( 'limited' === $policy['mode'] ? '' : 'display:none;' ) . '"><strong>Hide these ad categories:</strong><br>';
 	foreach ( Bday_Ads_Store::categories() as $key => $label ) {
 		printf(
 			'<label style="display:inline-block;margin:2px 14px 2px 0;"><input type="checkbox" name="%s[hide][]" value="%s" %s> %s</label>',
@@ -102,7 +105,7 @@ function bday_ads_policy_editor( string $name, array $policy ): void {
 		);
 	}
 	printf(
-		'<br><label>Max ads per page <input type="number" min="0" class="small-text" name="%s[max]" value="%d"> <span class="description">0 = no cap. Counts in-page ads in page order.</span></label></div>',
+		'<br><label>Max ads per page <input type="number" min="0" class="small-text" name="%s[max]" value="%d"> <span class="description">0 = no cap. Counts in-page ads in page order.</span></label></div></div>',
 		esc_attr( $name ),
 		(int) $policy['max']
 	);
@@ -164,6 +167,7 @@ function bday_ads_render_conflict_notice(): void {
 /* ── Tab 1: settings ────────────────────────────────────────────── */
 
 function bday_ads_render_settings_tab(): void {
+	settings_errors();
 	bday_ads_render_conflict_notice();
 	$s    = Bday_Ads_Store::settings();
 	$name = Bday_Ads_Store::SETTINGS;
@@ -200,7 +204,7 @@ function bday_ads_render_settings_tab(): void {
 }
 
 /** @param mixed $input */
-function bday_ads_sanitize_settings( $input ): array {
+function bday_ads_sanitize_settings_run( $input ): array {
 	$in  = is_array( $input ) ? $input : array(); // options.php has already unslashed it.
 	$def = Bday_Ads_Store::settings_defaults();
 
@@ -289,8 +293,14 @@ function bday_ads_render_unit_card( $i, array $u, bool $is_template = false ): v
 			<span class="bday-ad-chip bday-ad-chip--cat"><?php echo esc_html( $cats[ $u['category'] ] ?? $u['category'] ); ?></span>
 			<?php if ( 'active' !== $u['status'] ) : ?><span class="bday-ad-chip bday-ad-chip--off">paused</span><?php endif; ?>
 			<?php if ( $usage ) : ?><span class="bday-ad-chip bday-ad-chip--use">used in <?php echo (int) count( $usage ); ?></span><?php endif; ?>
+			<?php
+			$unit_notes = $u['id'] ? bday_ads_unit_notes( $u ) : array();
+			if ( $u['id'] && ! $usage ) :
+				?><span class="bday-ad-chip bday-ad-chip--warn">not assigned yet</span><?php endif; ?>
+			<?php if ( array_filter( $unit_notes, static fn( $x ) => 'error' === $x['level'] ) ) : ?><span class="bday-ad-chip bday-ad-chip--off">won't show — see below</span><?php endif; ?>
 		</summary>
 		<div class="bday-ad-unit__body">
+			<?php bday_ads_render_notes( $unit_notes ); ?>
 			<input type="hidden" name="<?php echo esc_attr( $n ); ?>[id]" value="<?php echo esc_attr( $u['id'] ); ?>">
 			<table class="form-table" role="presentation"><tbody>
 				<tr><th>Name</th><td><input type="text" class="regular-text" name="<?php echo esc_attr( $n ); ?>[label]" value="<?php echo esc_attr( $u['label'] ); ?>" placeholder="e.g. Sidebar 300×600"></td></tr>
@@ -456,6 +466,7 @@ function bday_ads_banner_warnings( array $u, array $usage ): array {
 }
 
 function bday_ads_render_units_tab(): void {
+	settings_errors();
 	bday_ads_render_conflict_notice();
 	$units = array_values( Bday_Ads_Store::units() );
 	echo '<div data-bday-units>';
@@ -472,7 +483,7 @@ function bday_ads_render_units_tab(): void {
 }
 
 /** @param mixed $input */
-function bday_ads_sanitize_units( $input ): array {
+function bday_ads_sanitize_units_run( $input ): array {
 	$in       = is_array( $input ) ? $input : array(); // options.php has already unslashed it.
 	$existing = Bday_Ads_Store::units();
 	$cats     = array_keys( Bday_Ads_Store::categories() );
@@ -480,8 +491,24 @@ function bday_ads_sanitize_units( $input ): array {
 	$out      = array();
 	$seen     = array();
 
+	// The screen posts the whole registry as ONE json field (see ad-manager-admin.js). A unit has
+	// ~25 form fields, and PHP silently drops everything past max_input_vars (1000 by default) — at
+	// about 40 units that used to discard the newest units on every save without a word.
+	if ( isset( $in['__json'] ) ) {
+		$decoded = json_decode( (string) $in['__json'], true );
+		if ( ! is_array( $decoded ) ) {
+			add_settings_error( Bday_Ads_Store::UNITS, 'bday_ads_bad_json', 'Nothing was saved: the unit data could not be read. Reload the page and try again.', 'error' );
+			return array_values( $existing );
+		}
+		$in = $decoded;
+	} elseif ( ! isset( $in['__saved'] ) ) {
+		// No JSON and the end-of-form marker never arrived: the browser's form was cut off.
+		add_settings_error( Bday_Ads_Store::UNITS, 'bday_ads_truncated', 'Nothing was saved: the form reached the server incomplete (usually a PHP max_input_vars limit). Turn on JavaScript, or ask your host to raise max_input_vars.', 'error' );
+		return array_values( $existing );
+	}
+
 	foreach ( $in as $key => $row ) {
-		if ( '__saved' === $key || ! is_array( $row ) ) {
+		if ( '__saved' === $key || '__json' === $key || ! is_array( $row ) ) {
 			continue;
 		}
 		$label = sanitize_text_field( (string) ( $row['label'] ?? '' ) );
@@ -506,8 +533,16 @@ function bday_ads_sanitize_units( $input ): array {
 			)
 		);
 
-		$path = trim( (string) ( $row['path'] ?? '' ) );
-		$path = preg_match( '#^/[A-Za-z0-9_\-/.,]+$#', $path ) ? $path : '';
+		$path_in = trim( (string) ( $row['path'] ?? '' ) );
+		$path    = preg_match( '#^/[A-Za-z0-9_\-/.,]+$#', $path_in ) ? $path_in : '';
+		if ( 'gam' === $partner && '' !== $path_in && '' === $path ) {
+			add_settings_error(
+				Bday_Ads_Store::UNITS,
+				'bday_ads_bad_path_' . sanitize_key( $label ?: $path_in ),
+				sprintf( '"%s": the GAM path "%s" is not valid and was cleared, so that unit will not load. A path starts with "/" and uses only letters, numbers and _ - . , / — copy it exactly from Ad Manager.', $label ?: 'Unnamed unit', $path_in ),
+				'error'
+			);
+		}
 
 		$creatives = array();
 		foreach ( (array) ( $row['creatives'] ?? array() ) as $c ) {
@@ -568,6 +603,7 @@ function bday_ads_sanitize_units( $input ): array {
 /* ── Tab 3: placements ──────────────────────────────────────────── */
 
 function bday_ads_render_placements_tab(): void {
+	settings_errors();
 	$catalog    = bday_ads_placement_catalog();
 	$placements = Bday_Ads_Store::placements();
 	$units      = Bday_Ads_Store::units();
@@ -586,6 +622,7 @@ function bday_ads_render_placements_tab(): void {
 			</h3>
 			<p class="description"><?php echo esc_html( $def['where'] ); ?></p>
 			<p class="bday-ad-rec"><strong>Designed for:</strong> desktop <?php echo esc_html( $def['desktop'] ); ?> · mobile <?php echo esc_html( $def['mobile'] ); ?></p>
+			<?php bday_ads_render_notes( bday_ads_placement_notes( $id ) ); ?>
 			<table class="form-table" role="presentation"><tbody>
 				<tr><th>Enabled</th><td><label><input type="checkbox" name="<?php echo esc_attr( "{$n}[{$id}][enabled]" ); ?>" value="1" <?php checked( ! empty( $conf['enabled'] ) ); ?>> On</label></td></tr>
 				<tr><th>Units shown here</th><td>
@@ -626,6 +663,20 @@ function bday_ads_render_placements_tab(): void {
 					?>
 					<p class="description">Tick several to stack them (e.g. a desktop unit and a mobile unit). An empty placement shows nothing.</p>
 				</td></tr>
+				<?php if ( 'section' === $def['kind'] ) : ?>
+					<tr><th>Show after</th><td>
+						<select name="<?php echo esc_attr( "{$n}[{$id}][after_section]" ); ?>">
+							<option value="">— choose a homepage section —</option>
+							<?php foreach ( bday_ads_homepage_sections() as $sslug => $slabel ) : ?>
+								<option value="<?php echo esc_attr( $sslug ); ?>" <?php selected( (string) ( $conf['after_section'] ?? '' ), $sslug ); ?>><?php echo esc_html( $slabel ); ?></option>
+							<?php endforeach; ?>
+							<?php if ( ! empty( $conf['after_section'] ) && ! isset( bday_ads_homepage_sections()[ $conf['after_section'] ] ) ) : ?>
+								<option value="<?php echo esc_attr( $conf['after_section'] ); ?>" selected><?php echo esc_html( $conf['after_section'] ); ?> (not showing)</option>
+							<?php endif; ?>
+						</select>
+						<p class="description">The ad appears directly under this section on the homepage. Sections are listed in the order they appear.</p>
+					</td></tr>
+				<?php endif; ?>
 				<?php if ( 'content' === $def['kind'] ) : ?>
 					<tr><th>Position</th><td>After paragraph <input type="number" class="small-text" min="1" max="60" name="<?php echo esc_attr( "{$n}[{$id}][paragraph]" ); ?>" value="<?php echo (int) $conf['paragraph']; ?>">
 						· only in articles with at least <input type="number" class="small-text" min="1" max="80" name="<?php echo esc_attr( "{$n}[{$id}][min_paragraphs]" ); ?>" value="<?php echo (int) $conf['min_paragraphs']; ?>"> paragraphs</td></tr>
@@ -641,11 +692,17 @@ function bday_ads_render_placements_tab(): void {
 		</div>
 		<?php
 	}
+	// Last field on the form: if it doesn't arrive, the form was cut off and must not overwrite anything.
+	echo '<input type="hidden" name="' . esc_attr( $n ) . '[__end]" value="1">';
 }
 
 /** @param mixed $input */
-function bday_ads_sanitize_placements( $input ): array {
+function bday_ads_sanitize_placements_run( $input ): array {
 	$in      = is_array( $input ) ? $input : array(); // options.php has already unslashed it.
+	if ( ! isset( $in['__end'] ) ) {
+		add_settings_error( Bday_Ads_Store::PLACEMENTS, 'bday_ads_truncated', 'Nothing was saved: the form reached the server incomplete (usually a PHP max_input_vars limit). Ask your host to raise max_input_vars.', 'error' );
+		return Bday_Ads_Store::placements();
+	}
 	$catalog = bday_ads_placement_catalog();
 	$units   = Bday_Ads_Store::units();
 	$types   = get_post_types( array( 'public' => true ) );
@@ -658,9 +715,46 @@ function bday_ads_sanitize_placements( $input ): array {
 			'units'              => array_values( array_filter( array_map( 'sanitize_key', (array) ( $row['units'] ?? array() ) ), static fn( $u ) => isset( $units[ $u ] ) ) ),
 			'post_types'         => array_values( array_intersect( array_map( 'sanitize_key', (array) ( $row['post_types'] ?? array() ) ), $types ) ),
 			'exclude_categories' => array_values( array_filter( array_map( 'sanitize_title', preg_split( '/[\s,]+/', (string) ( $row['exclude_categories'] ?? '' ) ) ) ) ),
+			'after_section'      => 'section' === $def['kind'] ? sanitize_key( (string) ( $row['after_section'] ?? '' ) ) : '',
 			'paragraph'          => 'content' === $def['kind'] ? max( 1, min( 60, (int) ( $row['paragraph'] ?? $def['paragraph'] ?? 2 ) ) ) : 0,
 			'min_paragraphs'     => 'content' === $def['kind'] ? max( 1, min( 80, (int) ( $row['min_paragraphs'] ?? 0 ) ) ) : 0,
 		);
 	}
 	return $out;
+}
+
+
+/*
+ * WordPress sanitizes an option's value TWICE when the option doesn't exist yet (update_option()
+ * sanitizes, then hands off to add_option(), which sanitizes again). A sanitizer that is not safe to
+ * run on its own output corrupts data on the very first save: it turned the parsed category list
+ * into the text "Array" (the stray "array | Array" category on the live site) and made the
+ * cut-off-form guard reject a perfectly good save. Each wrapper returns its own previous output
+ * unchanged when it is handed that output again.
+ */
+function bday_ads_sanitize_settings( $input ): array {
+	static $last = null;
+	if ( null !== $last && $input === $last ) {
+		return $last;
+	}
+	$last = bday_ads_sanitize_settings_run( $input );
+	return $last;
+}
+
+function bday_ads_sanitize_units( $input ): array {
+	static $last = null;
+	if ( null !== $last && $input === $last ) {
+		return $last;
+	}
+	$last = bday_ads_sanitize_units_run( $input );
+	return $last;
+}
+
+function bday_ads_sanitize_placements( $input ): array {
+	static $last = null;
+	if ( null !== $last && $input === $last ) {
+		return $last;
+	}
+	$last = bday_ads_sanitize_placements_run( $input );
+	return $last;
 }
