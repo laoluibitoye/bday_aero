@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action(
 	'wp_head',
 	static function (): void {
-		if ( ! bday_page_allows_ads() ) {
+		if ( ! bday_page_allows_ads() || bday_ads_is_amp() ) {
 			return;
 		}
 		$default_none = 'none' === ( bday_ads_clean_policy( Bday_Ads_Store::settings()['policy_subscriber'] ?? array() )['mode'] );

@@ -54,6 +54,11 @@ function bday_page_allows_ads(): bool {
 	return true;
 }
 
+/** True while the AMP plugin is rendering the AMP version of a page (no JavaScript runs there). */
+function bday_ads_is_amp(): bool {
+	return function_exists( 'amp_is_request' ) && amp_is_request();
+}
+
 /** "300x250,728x90,fluid" → [[300,250],[728,90],'fluid'] */
 function bday_ads_parse_sizes( string $raw ): array {
 	$out = array();
@@ -210,6 +215,10 @@ final class Bday_Ads_Render {
 	}
 
 	private static function render_unit( array $unit, string $placement ): void {
+		if ( bday_ads_is_amp() ) {
+			self::render_amp_unit( $unit, $placement );
+			return;
+		}
 		++self::$counter;
 		$dom_id  = 'bday-ad-' . self::$counter;
 		$bp      = (int) Bday_Ads_Store::settings()['breakpoint'];
@@ -312,7 +321,38 @@ final class Bday_Ads_Render {
 				return array( (string) $src[0], (int) $src[1], (int) $src[2] );
 			}
 		}
+		if ( '' !== $url ) {
+			$dims = self::url_dims( $url );
+			return array( $url, $dims[0], $dims[1] );
+		}
 		return array( $url, 0, 0 );
+	}
+
+	/**
+	 * Pixel size of a banner that was saved as a plain URL (the migrated sponsor banners are). Without
+	 * a size the browser cannot reserve space for the image, so a 1900×300 top banner pushes the whole
+	 * page down by ~230px when it arrives — the main source of the homepage's layout shift. Read from
+	 * the local uploads folder (no remote fetch) and remembered.
+	 *
+	 * @return array{0:int,1:int}
+	 */
+	private static function url_dims( string $url ): array {
+		$key = 'bday_ad_dim_' . md5( $url );
+		$hit = get_transient( $key );
+		if ( is_array( $hit ) && 2 === count( $hit ) ) {
+			return array( (int) $hit[0], (int) $hit[1] );
+		}
+		$dims = array( 0, 0 );
+		if ( preg_match( '#/wp-content/uploads/([^?\#]+)#', $url, $m ) && false === strpos( $m[1], '..' ) ) {
+			$up   = wp_get_upload_dir();
+			$file = $up['basedir'] . '/' . rawurldecode( $m[1] );
+			$info = is_readable( $file ) ? @getimagesize( $file ) : false; // phpcs:ignore WordPress.PHP.NoSilencedErrors -- a non-image file just means "unknown size".
+			if ( $info && $info[0] > 0 && $info[1] > 0 ) {
+				$dims = array( (int) $info[0], (int) $info[1] );
+			}
+		}
+		set_transient( $key, $dims, $dims[0] ? 30 * DAY_IN_SECONDS : HOUR_IN_SECONDS );
+		return $dims;
 	}
 
 	private static function banner_inner( array $unit, string $placement, int $bp ): void {
@@ -351,6 +391,192 @@ final class Bday_Ads_Render {
 			echo '</picture></' . $tag . '>';
 		}
 		echo '</div>';
+	}
+
+	/* ── AMP ──────────────────────────────────────────────────────── */
+
+	/**
+	 * AMP forbids author JavaScript, so the loader (and with it GPT, AdSense and the gating) cannot run
+	 * there. A page is still monetised the AMP way: <amp-ad> for Google Ad Manager and AdSense, plain
+	 * <amp-img> for local banners. Pasted third-party code can't run in AMP and is skipped. Reader
+	 * policies cannot be applied (the reader's token is not readable on AMP pages), so AMP readers
+	 * always see the network ads; local banners are never gated anyway.
+	 *
+	 * @return array<int, array{0:int,1:int}> phone-fitting sizes of the unit, largest first
+	 */
+	private static function amp_sizes( array $unit ): array {
+		$fit = array();
+		foreach ( array( (string) $unit['sizes_mobile'], (string) $unit['sizes_desktop'] ) as $raw ) {
+			foreach ( bday_ads_parse_sizes( $raw ) as $sz ) {
+				if ( is_array( $sz ) && $sz[0] <= 336 ) {
+					$fit[ $sz[0] . 'x' . $sz[1] ] = $sz;
+				}
+			}
+			if ( $fit ) {
+				break; // the mobile list wins when it has anything usable
+			}
+		}
+		$fit = array_values( $fit );
+		usort( $fit, static fn( $a, $b ) => ( $b[0] * $b[1] ) <=> ( $a[0] * $a[1] ) );
+		return $fit;
+	}
+
+	/** The <amp-ad> element for a network unit, or '' if this unit cannot run on AMP. */
+	private static function amp_network_tag( array $unit, string $placement ): string {
+		$sizes = self::amp_sizes( $unit );
+		if ( 'gam' === $unit['partner'] ) {
+			if ( ! $sizes ) {
+				self::trace( $placement, sprintf( 'unit "%s" not shown on AMP: it has no size 336px wide or narrower', $unit['id'] ) );
+				return '';
+			}
+			$primary = array_shift( $sizes );
+			$json    = array();
+			if ( ! empty( Bday_Ads_Store::settings()['targeting'] ) ) {
+				foreach ( self::page_targeting() as $k => $v ) {
+					$json['targeting'][ $k ] = array( (string) $v );
+				}
+			}
+			$json['targeting']['reader'] = array( 'amp' );
+			$multi = array_map( static fn( $z ) => $z[0] . 'x' . $z[1], $sizes );
+			return sprintf(
+				'<amp-ad width="%d" height="%d" type="doubleclick" data-slot="%s"%s data-lazy-fetch="true" data-loading-strategy="prefer-viewability-over-views" json="%s"></amp-ad>',
+				$primary[0],
+				$primary[1],
+				esc_attr( (string) $unit['path'] ),
+				$multi ? ' data-multi-size="' . esc_attr( implode( ',', $multi ) ) . '" data-multi-size-validation="false"' : '',
+				esc_attr( (string) wp_json_encode( $json ) )
+			);
+		}
+		// AdSense.
+		$client = (string) Bday_Ads_Store::settings()['adsense_client'];
+		if ( '' === $client ) {
+			self::trace( $placement, sprintf( 'unit "%s" not shown on AMP: the AdSense publisher ID is not set under Settings', $unit['id'] ) );
+			return '';
+		}
+		if ( $sizes ) {
+			return sprintf(
+				'<amp-ad width="%d" height="%d" type="adsense" data-ad-client="%s" data-ad-slot="%s" data-loading-strategy="prefer-viewability-over-views"></amp-ad>',
+				$sizes[0][0],
+				$sizes[0][1],
+				esc_attr( $client ),
+				esc_attr( (string) $unit['adsense_slot'] )
+			);
+		}
+		return sprintf(
+			'<amp-ad width="100vw" height="320" type="adsense" data-ad-client="%s" data-ad-slot="%s" data-auto-format="rspv" data-full-width data-loading-strategy="prefer-viewability-over-views"><div overflow></div></amp-ad>',
+			esc_attr( $client ),
+			esc_attr( (string) $unit['adsense_slot'] )
+		);
+	}
+
+	/** First usable creative of a local banner as AMP-safe markup (one image per screen size, no rotation). */
+	private static function amp_banner_tag( array $unit, string $placement ): string {
+		$creatives = self::banner_creatives( $unit );
+		$c         = $creatives[0] ?? null;
+		if ( ! $c ) {
+			return '';
+		}
+		list( $src, $w, $h )   = self::image_src( (int) ( $c['image'] ?? 0 ), (string) ( $c['image_url'] ?? '' ) );
+		list( $msrc, $mw, $mh ) = self::image_src( (int) ( $c['image_mobile'] ?? 0 ), '' );
+		if ( '' === $src || ! $w || ! $h ) {
+			self::trace( $placement, sprintf( 'unit "%s" not shown on AMP: AMP needs the banner image\'s width and height', $unit['id'] ) );
+			return '';
+		}
+		$alt  = esc_attr( (string) ( $c['alt'] ?? '' ) );
+		$has_m = false;
+		$imgs  = sprintf( '<img class="bday-ad__img-d" src="%s" width="%d" height="%d" alt="%s">', esc_url( $src ), $w, $h, $alt );
+		if ( $msrc && $mw && $mh ) {
+			$has_m = true;
+			$imgs .= sprintf( '<img class="bday-ad__img-m" src="%s" width="%d" height="%d" alt="%s">', esc_url( $msrc ), $mw, $mh, $alt );
+		}
+		$href = (string) ( $c['url'] ?? '' );
+		if ( '' === $href ) {
+			return '<div class="bday-ad__creative' . ( $has_m ? ' has-m' : '' ) . '">' . $imgs . '</div>';
+		}
+		return sprintf(
+			'<a class="bday-ad__creative%s" href="%s" rel="sponsored noopener"%s>%s</a>',
+			$has_m ? ' has-m' : '',
+			esc_url( $href ),
+			$unit['new_tab'] ? ' target="_blank"' : '',
+			$imgs
+		);
+	}
+
+	private static function render_amp_unit( array $unit, string $placement ): void {
+		if ( 'desktop' === $unit['device'] ) {
+			self::trace( $placement, sprintf( 'unit "%s" not shown on AMP: it is desktop-only', $unit['id'] ) );
+			return;
+		}
+		switch ( $unit['partner'] ) {
+			case 'banner':
+				$tag = self::amp_banner_tag( $unit, $placement );
+				break;
+			case 'gam':
+			case 'adsense':
+				$tag = self::amp_network_tag( $unit, $placement );
+				break;
+			default:
+				self::trace( $placement, sprintf( 'unit "%s" not shown on AMP: pasted code cannot run on AMP pages', $unit['id'] ) );
+				return;
+		}
+		if ( '' === $tag ) {
+			return;
+		}
+		$label = 'banner' === $unit['partner'] ? '<span class="bday-ad__label">' . esc_html( '' !== (string) $unit['sponsor_label'] ? $unit['sponsor_label'] : 'Advertisement' ) . '</span>' : '';
+		printf(
+			'<div class="bday-ad bday-ad--amp bday-ad--%s" data-placement="%s">%s%s</div>',
+			esc_attr( $unit['partner'] ),
+			esc_attr( $placement ),
+			$label, // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped parts above.
+			$tag // phpcs:ignore WordPress.Security.EscapeOutput -- built from escaped parts above.
+		);
+	}
+
+	/** Bottom-anchor GAM format on AMP: one <amp-sticky-ad>, phones only. */
+	public static function print_amp_anchor(): void {
+		if ( ! bday_ads_is_amp() || ! bday_page_allows_ads() || ! self::placement_applies( 'global_oop', null ) ) {
+			return;
+		}
+		foreach ( (array) Bday_Ads_Store::placement( 'global_oop' )['units'] as $unit_id ) {
+			$unit = Bday_Ads_Store::unit( (string) $unit_id );
+			if ( ! $unit || 'active' !== $unit['status'] || 'gam' !== $unit['partner'] || 'bottom_anchor' !== $unit['format'] || 'desktop' === $unit['device'] || '' === trim( (string) $unit['path'] ) ) {
+				continue;
+			}
+			printf(
+				'<amp-sticky-ad layout="nodisplay"><amp-ad width="320" height="50" type="doubleclick" data-slot="%s"></amp-ad></amp-sticky-ad>' . "\n",
+				esc_attr( (string) $unit['path'] )
+			);
+			return; // AMP allows a single sticky ad per page
+		}
+	}
+
+	/**
+	 * Ad tags pasted into old article bodies (AdSense <ins>, GPT <div class="bd-admanager">) are dead
+	 * on AMP: the script that fills them is stripped, so they leave blank gaps. Turn an AdSense tag
+	 * into an <amp-ad> (unless the editor already added one right after it) and drop the empty GPT div.
+	 */
+	public static function amp_clean_legacy_content( string $html ): string {
+		if ( ! bday_ads_is_amp() || ( false === stripos( $html, 'adsbygoogle' ) && false === stripos( $html, 'bd-admanager' ) ) ) {
+			return $html;
+		}
+		$html = preg_replace( '#<div\b[^>]*\bclass="[^"]*\bbd-admanager\b[^"]*"[^>]*>\s*</div>#i', '', $html ) ?? $html;
+		return preg_replace_callback(
+			'#<ins\b[^>]*\bclass="[^"]*\badsbygoogle\b[^"]*"[^>]*>\s*</ins>(\s*<amp-ad\b)?#i',
+			static function ( array $m ): string {
+				if ( ! empty( $m[1] ) ) {
+					return ltrim( $m[1] ); // already has its AMP twin: keep that one only
+				}
+				if ( ! preg_match( '/data-ad-client="([^"]+)"/i', $m[0], $c ) || ! preg_match( '/data-ad-slot="([^"]+)"/i', $m[0], $sl ) ) {
+					return '';
+				}
+				return sprintf(
+					'<amp-ad width="100vw" height="320" type="adsense" data-ad-client="%s" data-ad-slot="%s" data-auto-format="rspv" data-full-width data-loading-strategy="prefer-viewability-over-views"><div overflow></div></amp-ad>',
+					esc_attr( $c[1] ),
+					esc_attr( $sl[1] )
+				);
+			},
+			$html
+		) ?? $html;
 	}
 
 	/** Per-unit data the loader needs. */
@@ -490,7 +716,7 @@ final class Bday_Ads_Render {
 	/* ── Loader config ────────────────────────────────────────────── */
 
 	public static function print_config(): void {
-		if ( ! bday_page_allows_ads() ) {
+		if ( ! bday_page_allows_ads() || bday_ads_is_amp() ) {
 			return;
 		}
 		self::print_trace();
@@ -600,6 +826,8 @@ function bday_ads_inject_in_content( string $html, ?WP_Post $post = null ): stri
 }
 
 add_action( 'wp_footer', array( 'Bday_Ads_Render', 'print_config' ), 5 );
+add_action( 'wp_footer', array( 'Bday_Ads_Render', 'print_amp_anchor' ), 6 );
+add_filter( 'the_content', array( 'Bday_Ads_Render', 'amp_clean_legacy_content' ), 99 );
 
 add_action(
 	'wp_enqueue_scripts',
