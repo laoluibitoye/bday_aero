@@ -54,6 +54,35 @@ function bday_page_allows_ads(): bool {
 	return true;
 }
 
+/**
+ * The Taboola publisher account, or '' when Taboola is switched off. One source of truth for both
+ * the Ad Manager's Taboola units and the loader: Integrations → Taboola ("Enable Taboola" + account).
+ */
+function bday_ads_taboola_account(): string {
+	static $account = null;
+	if ( null !== $account ) {
+		return $account;
+	}
+	$all     = get_option( 'bday_addon_vendors', array() );
+	$opt     = is_array( $all ) && is_array( $all['taboola'] ?? null ) ? $all['taboola'] : array();
+	$account = ! empty( $opt['enabled'] ) && ! empty( $opt['account'] ) ? preg_replace( '/[^A-Za-z0-9_\-]/', '', (string) $opt['account'] ) : '';
+	return (string) $account;
+}
+
+/** Taboola's page-type call for this request: article / home / category / other. */
+function bday_ads_taboola_page_type(): string {
+	if ( is_singular() && ! is_front_page() ) {
+		return 'article';
+	}
+	if ( is_front_page() || is_home() ) {
+		return 'home';
+	}
+	if ( is_category() || is_tag() || is_tax() || is_post_type_archive() ) {
+		return 'category';
+	}
+	return 'other';
+}
+
 /** True while the AMP plugin is rendering the AMP version of a page (no JavaScript runs there). */
 function bday_ads_is_amp(): bool {
 	return function_exists( 'amp_is_request' ) && amp_is_request();
@@ -195,6 +224,10 @@ final class Bday_Ads_Render {
 				self::trace( $placement, sprintf( 'unit "%s" skipped: it has no valid GAM ad unit path', $unit['id'] ) );
 				continue;
 			}
+			if ( 'taboola' === $unit['partner'] && '' === bday_ads_taboola_account() ) {
+				self::trace( $placement, sprintf( 'unit "%s" skipped: Taboola is switched off or has no account name under Integrations → Taboola', $unit['id'] ) );
+				continue;
+			}
 			if ( 'adsense' === $unit['partner'] && '' === trim( (string) $unit['adsense_slot'] ) ) {
 				self::trace( $placement, sprintf( 'unit "%s" skipped: it has no AdSense slot ID', $unit['id'] ) );
 				continue;
@@ -279,7 +312,7 @@ final class Bday_Ads_Render {
 				echo '<div class="bday-ad__slot" data-bday-html></div>';
 				echo '<template class="bday-ad__html">' . $unit['body_code'] . '</template>'; // phpcs:ignore WordPress.Security.EscapeOutput -- admin-authored tag, by design.
 				break;
-			default: // gam
+			default: // gam, taboola
 				echo '<div class="bday-ad__slot" id="' . esc_attr( $dom_id ) . '-slot"></div>';
 		}
 
@@ -469,6 +502,22 @@ final class Bday_Ads_Render {
 		);
 	}
 
+	/** Taboola on AMP is <amp-embed type="taboola">; its height follows the screen width. */
+	private static function amp_taboola_tag( array $unit, string $placement ): string {
+		$account = bday_ads_taboola_account();
+		if ( '' === $account ) {
+			self::trace( $placement, sprintf( 'unit "%s" not shown on AMP: Taboola is switched off or has no account name', $unit['id'] ) );
+			return '';
+		}
+		return sprintf(
+			'<amp-embed width="100" height="100" type="taboola" layout="responsive" heights="(min-width:1907px) 39%%, (min-width:1200px) 47%%, (min-width:780px) 60%%, (min-width:480px) 70%%, 220%%" data-publisher="%s" data-mode="%s" data-placement="%s" data-target_type="%s" data-article="auto" data-url=""></amp-embed>',
+			esc_attr( $account ),
+			esc_attr( (string) $unit['taboola_mode'] ),
+			esc_attr( (string) $unit['taboola_placement'] ),
+			esc_attr( (string) $unit['taboola_target'] )
+		);
+	}
+
 	/** First usable creative of a local banner as AMP-safe markup (one image per screen size, no rotation). */
 	private static function amp_banner_tag( array $unit, string $placement ): string {
 		$creatives = self::banner_creatives( $unit );
@@ -514,6 +563,9 @@ final class Bday_Ads_Render {
 			case 'gam':
 			case 'adsense':
 				$tag = self::amp_network_tag( $unit, $placement );
+				break;
+			case 'taboola':
+				$tag = self::amp_taboola_tag( $unit, $placement );
 				break;
 			default:
 				self::trace( $placement, sprintf( 'unit "%s" not shown on AMP: pasted code cannot run on AMP pages', $unit['id'] ) );
@@ -592,6 +644,11 @@ final class Bday_Ads_Render {
 			$cfg['refresh'] = ! empty( $unit['refresh'] );
 			$cfg['sizesD']  = bday_ads_parse_sizes( (string) $unit['sizes_desktop'] );
 			$cfg['sizesM']  = bday_ads_parse_sizes( (string) $unit['sizes_mobile'] );
+		}
+		if ( 'taboola' === $unit['partner'] ) {
+			$cfg['mode']      = $unit['taboola_mode'];
+			$cfg['placement'] = $unit['taboola_placement'];
+			$cfg['target']    = $unit['taboola_target'];
 		}
 		if ( 'html' === $unit['partner'] && '' !== trim( (string) $unit['head_code'] ) ) {
 			$cfg['head'] = $unit['head_code'];
@@ -730,7 +787,8 @@ final class Bday_Ads_Render {
 				}
 			}
 		}
-		if ( ! self::$used ) {
+		$taboola = bday_ads_taboola_account();
+		if ( ! self::$used && '' === $taboola ) {
 			return;
 		}
 
@@ -747,6 +805,7 @@ final class Bday_Ads_Render {
 			'collapse'   => ! empty( $s['collapse_empty'] ),
 			'debug'      => ! empty( $s['debug'] ),
 			'adsense'    => (string) $s['adsense_client'],
+			'taboola'    => '' !== $taboola ? array( 'account' => $taboola ) : null,
 			'targeting'  => ! empty( $s['targeting'] ) ? self::page_targeting() : null,
 			'policies'   => $policies,
 			'categories' => array_keys( (array) $s['categories'] ),
@@ -826,6 +885,16 @@ function bday_ads_inject_in_content( string $html, ?WP_Post $post = null ): stri
 }
 
 add_action( 'wp_footer', array( 'Bday_Ads_Render', 'print_config' ), 5 );
+// Front-end only: on admin requests the Ad Manager's form sanitizers are registered and would treat a programmatic save as a cut-off form.
+add_action(
+	'init',
+	static function (): void {
+		if ( ! is_admin() && ! wp_doing_cron() ) {
+			Bday_Ads_Store::migrate_taboola();
+		}
+	},
+	30
+);
 add_action( 'wp_footer', array( 'Bday_Ads_Render', 'print_amp_anchor' ), 6 );
 add_filter( 'the_content', array( 'Bday_Ads_Render', 'amp_clean_legacy_content' ), 99 );
 

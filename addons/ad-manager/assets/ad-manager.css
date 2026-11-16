@@ -92,6 +92,11 @@ html[data-bday-ad-device="mobile"] .bday-ad__creative { width: min(100%, var(--b
 html[data-bday-ad-device="desktop"] .bday-ad__creative { width: min(100%, var(--bday-ad-w-d, 100%)); aspect-ratio: var(--bday-ad-ar-d, auto); }
 html[data-bday-ad-device] .bday-ad.is-collapsed { min-height: 0; }
 
+/* Taboola: a full-width native widget (it brings its own "Sponsored" labelling), not a centred box. */
+.bday-ad--taboola { align-self: stretch; width: 100%; text-align: left; margin: 2rem 0; }
+.bday-ad--taboola .bday-ad__label { display: none !important; }
+.bday-ad--taboola .bday-ad__slot { display: block; width: 100%; }
+
 /* AMP: banners get one <amp-img> per screen size; the label and creative are centred like elsewhere. */
 .bday-ad--amp amp-ad { margin: 0 auto; max-width: 100%; }
 .bday-ad--amp .bday-ad__creative { display: flex; justify-content: center; margin: 0 auto; }

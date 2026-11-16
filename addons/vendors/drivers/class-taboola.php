@@ -22,6 +22,19 @@ class Bday_Vendor_Taboola extends Bday_Vendor_Driver {
 	}
 
 	public function print_footer(): void {
+		// The Ad Manager owns Taboola delivery now: it loads the library only for readers who may see ads,
+		// so a paying subscriber never loads Taboola at all. All that stays in the page is the inert
+		// page-type call below (a queue entry that does nothing until a loader reads it), which keeps the
+		// page identifiable to Taboola's crawler.
+		if ( function_exists( 'bday_ads_taboola_account' ) ) {
+			if ( '' === bday_ads_taboola_account() || ! function_exists( 'bday_page_allows_ads' ) ) {
+				return;
+			}
+			?>
+			<script type="text/javascript">window._taboola = window._taboola || []; _taboola.push({<?php echo esc_js( bday_ads_taboola_page_type() ); ?>: 'auto'});</script>
+			<?php
+			return;
+		}
 		$account = $this->option()['account'];
 		?>
 		<script type="text/javascript">
