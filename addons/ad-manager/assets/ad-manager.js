@@ -482,6 +482,52 @@
     });
   }
 
+  /* ── Taboola ─────────────────────────────────────────────────────── */
+
+  var taboolaState = 'idle';
+
+  /**
+   * Taboola's library, loaded once and only for a reader whose policy allows ads — a subscriber on an
+   * ad-free plan never downloads it. The page's own inline page-type call is already waiting in
+   * window._taboola, so the library picks it up on load.
+   */
+  function loadTaboola() {
+    if (taboolaState !== 'idle' || !C.taboola || !C.taboola.account) { return; }
+    taboolaState = 'loading';
+    window._taboola = window._taboola || [];
+    var existing = document.getElementById('tb_loader_script');
+    var s = existing || loadScript('https://cdn.taboola.com/libtrc/' + encodeURIComponent(C.taboola.account) + '/loader.js', { id: 'tb_loader_script' });
+    s.addEventListener('error', function () { log('Taboola failed to load — collapsing its slots'); taboolaState = 'failed'; collapseAll('taboola'); });
+    try { if (window.performance && performance.mark) { performance.mark('tbl_ic'); } } catch (e) { /* no marks */ }
+  }
+
+  function startTaboola(el, unit) {
+    var slotEl = el.querySelector('.bday-ad__slot');
+    if (!slotEl || !C.taboola) { collapse(el); return; }
+    loadTaboola();
+    // Taboola's widgets are heavy: draw each one only when it is about to be seen.
+    whenWithinScreens(el, 100, function () {
+      window._taboola = window._taboola || [];
+      window._taboola.push({ mode: unit.mode, container: slotEl.id, placement: unit.placement, target_type: unit.target });
+      window._taboola.push({ flush: true });
+      log('taboola requested', slotEl.id, unit.placement);
+      watchFill(el, slotEl);
+    });
+  }
+
+  /** Marks a slot filled once something was drawn into it; gives the space back if nothing ever is. */
+  function watchFill(el, slotEl) {
+    var done = false;
+    function check() {
+      if (done) { return; }
+      if (slotEl.children.length) { done = true; el.classList.add('is-filled'); if (mo) { mo.disconnect(); } }
+    }
+    var mo = 'MutationObserver' in window ? new MutationObserver(check) : null;
+    if (mo) { mo.observe(slotEl, { childList: true }); }
+    check();
+    setTimeout(function () { check(); if (!done) { if (mo) { mo.disconnect(); } log('no Taboola widget for', slotEl.id, '— collapsing'); collapse(el); } }, 12000);
+  }
+
   /* ── Local banners ───────────────────────────────────────────────── */
 
   function initBanner(el) {
@@ -569,6 +615,7 @@
       case 'gam': gamRun(function () { defineGamSlot(el, unit); }); break;
       case 'adsense': startAdsense(el); break;
       case 'html': startHtml(el, unitId, unit); break;
+      case 'taboola': startTaboola(el, unit); break;
     }
   }
 
@@ -601,6 +648,12 @@
     }
     scan(document);
     startOutOfPage();
+    // Taboola has always run on every page (its page-view data feeds the recommendations), so keep
+    // doing that for readers who may see ads — and only them.
+    if (C.taboola && categoryAllowed('sponsored')) {
+      var tb = function () { loadTaboola(); };
+      if (window.requestIdleCallback) { requestIdleCallback(tb, { timeout: 4000 }); } else { setTimeout(tb, 2000); }
+    }
   }
 
   window.bdayAds = { scan: scan };

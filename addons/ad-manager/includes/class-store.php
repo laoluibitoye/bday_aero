@@ -104,7 +104,7 @@ final class Bday_Ads_Store {
 		return array(
 			'id'             => '',
 			'label'          => '',
-			'partner'        => 'gam', // gam | adsense | html | banner
+			'partner'        => 'gam', // gam | adsense | html | banner | taboola
 			'status'         => 'active', // active | paused
 			'device'         => 'all', // all | desktop | mobile
 			'category'       => 'display',
@@ -120,6 +120,10 @@ final class Bday_Ads_Store {
 			// html (third-party tag)
 			'head_code'      => '',
 			'body_code'      => '',
+			// taboola (native recommendations; the account comes from Integrations → Taboola)
+			'taboola_mode'      => 'alternating-thumbnails-a',
+			'taboola_placement' => 'Below Article Thumbnails',
+			'taboola_target'    => 'mix',
 			// banner (local, editor-managed)
 			'creatives'      => array(),
 			'sponsor_label'  => '',
@@ -196,6 +200,51 @@ final class Bday_Ads_Store {
 		return self::placements()[ $id ] ?? self::placement_defaults();
 	}
 
+	/* ── Taboola ──────────────────────────────────────────────────── */
+
+	/** @return array<int, array<string, mixed>> the two Taboola widgets every article gets */
+	public static function taboola_units(): array {
+		return array(
+			array_merge( self::unit_defaults(), array( 'id' => 'taboola-below-article', 'label' => 'Taboola — below article', 'partner' => 'taboola', 'category' => 'sponsored', 'taboola_placement' => 'Below Article Thumbnails' ) ),
+			array_merge( self::unit_defaults(), array( 'id' => 'taboola-mid-article', 'label' => 'Taboola — mid article', 'partner' => 'taboola', 'category' => 'sponsored', 'taboola_placement' => 'Mid Article Thumbnails' ) ),
+		);
+	}
+
+	/**
+	 * Taboola used to be a bare loader script in the footer with no widget anywhere on the page, so
+	 * nothing ever showed. Once, on a site that already has saved Ad Manager options, add the two
+	 * Taboola units and give them their places: last in the article, and mid-article. Existing
+	 * units and placements are never touched; an admin can edit or remove these afterwards and they
+	 * stay removed (the flag is set).
+	 */
+	public static function migrate_taboola(): void {
+		if ( get_option( 'bday_ad_taboola_seeded' ) || '' === bday_ads_taboola_account() ) {
+			return;
+		}
+		$units = get_option( self::UNITS, null );
+		if ( is_array( $units ) ) {
+			$have = array_column( array_filter( $units, 'is_array' ), 'id' );
+			foreach ( self::taboola_units() as $u ) {
+				if ( ! in_array( $u['id'], $have, true ) ) {
+					$units[] = $u;
+				}
+			}
+			update_option( self::UNITS, $units );
+		}
+		$pl = get_option( self::PLACEMENTS, null );
+		if ( is_array( $pl ) ) {
+			if ( ! isset( $pl['below_article_end'] ) ) {
+				$pl['below_article_end'] = array( 'units' => array( 'taboola-below-article' ) );
+			}
+			if ( ! isset( $pl['in_article_native'] ) ) {
+				$pl['in_article_native'] = array( 'units' => array( 'taboola-mid-article' ) );
+			}
+			update_option( self::PLACEMENTS, $pl );
+		}
+		self::flush();
+		update_option( 'bday_ad_taboola_seeded', 1, false );
+	}
+
 	/* ── Seeds ────────────────────────────────────────────────────── */
 
 	/**
@@ -252,7 +301,7 @@ final class Bday_Ads_Store {
 			$gam( 'bd-right-rail', 'Right side rail', '/21781351181/bd_right_rail', '', '', array( 'format' => 'right_rail', 'category' => 'sticky', 'refresh' => false ) ),
 		);
 
-		return array_merge( $units, self::legacy_banner_units() );
+		return array_merge( $units, self::taboola_units(), self::legacy_banner_units() );
 	}
 
 	/**
@@ -339,6 +388,8 @@ final class Bday_Ads_Store {
 			'in_article_late'             => array( 'units' => array( 'bd-desktop-4', 'bd-mobile-4' ) ),
 			'below_share_buttons'         => array( 'units' => array( 'bd-body-2' ) ),
 			'below_article_recirculation' => array( 'units' => array( 'bd-body-3' ) ),
+			'in_article_native'           => array( 'units' => array( 'taboola-mid-article' ) ),
+			'below_article_end'           => array( 'units' => array( 'taboola-below-article' ) ),
 			'listing_inline'              => array( 'units' => array( 'bd-desktop-2', 'bd-mobile-2' ) ),
 			'global_oop'                  => array( 'units' => array( 'bd-anchor', 'bd-interstitial', 'bd-left-rail', 'bd-right-rail' ) ),
 		);

@@ -253,6 +253,7 @@ function bday_ads_partner_labels(): array {
 		'adsense' => 'Google AdSense',
 		'html'    => 'Third-party ad tag (paste code)',
 		'banner'  => 'Local banner (upload image)',
+		'taboola' => 'Taboola (native recommendations)',
 	);
 }
 
@@ -336,6 +337,15 @@ function bday_ads_render_unit_card( $i, array $u, bool $is_template = false ): v
 					<?php endif; ?>
 					<tr><th>Head code</th><td><textarea class="large-text code" rows="4" name="<?php echo esc_attr( $n ); ?>[head_code]" <?php disabled( ! current_user_can( 'unfiltered_html' ) ); ?> placeholder="Library <script> the partner needs loaded once"><?php echo esc_textarea( $u['head_code'] ); ?></textarea><p class="description">Loaded once per page, only when this unit is going to be shown.</p></td></tr>
 					<tr><th>Body code</th><td><textarea class="large-text code" rows="6" name="<?php echo esc_attr( $n ); ?>[body_code]" <?php disabled( ! current_user_can( 'unfiltered_html' ) ); ?> placeholder="The tag that goes where the ad shows"><?php echo esc_textarea( $u['body_code'] ); ?></textarea><p class="description">Runs when the spot nears the screen, and never for readers whose plan hides this category.</p></td></tr>
+				</tbody></table>
+			</div>
+
+			<div data-partner-section="taboola">
+				<table class="form-table" role="presentation"><tbody>
+					<tr><th></th><td><?php echo esc_html( '' !== bday_ads_taboola_account() ? 'Taboola account: ' . bday_ads_taboola_account() . ' (set under Integrations → Taboola).' : 'Taboola is switched off or has no account name under Integrations → Taboola, so this unit will not show.' ); ?><p class="description">Sizes above are not used: the widget fills the column. Subscribers whose plan hides this unit's ad category never load Taboola.</p></td></tr>
+					<tr><th>Mode</th><td><input type="text" class="regular-text code" name="<?php echo esc_attr( $n ); ?>[taboola_mode]" value="<?php echo esc_attr( $u['taboola_mode'] ); ?>" placeholder="alternating-thumbnails-a"></td></tr>
+					<tr><th>Placement name</th><td><input type="text" class="regular-text" name="<?php echo esc_attr( $n ); ?>[taboola_placement]" value="<?php echo esc_attr( $u['taboola_placement'] ); ?>" placeholder="Below Article Thumbnails"></td></tr>
+					<tr><th>Target type</th><td><input type="text" class="regular-text code" name="<?php echo esc_attr( $n ); ?>[taboola_target]" value="<?php echo esc_attr( $u['taboola_target'] ); ?>" placeholder="mix"><p class="description"><strong>Mode and placement name must match what Taboola set up for your account</strong> (ask your Taboola contact or check Backstage). If they differ, Taboola shows nothing.</p></td></tr>
 				</tbody></table>
 			</div>
 
@@ -585,6 +595,9 @@ function bday_ads_sanitize_units_run( $input ): array {
 			'format'         => in_array( $row['format'] ?? '', array( 'interstitial', 'top_anchor', 'bottom_anchor', 'left_rail', 'right_rail' ), true ) ? $row['format'] : 'standard',
 			'refresh'        => ! empty( $row['refresh'] ),
 			'adsense_slot'   => preg_replace( '/[^0-9]/', '', (string) ( $row['adsense_slot'] ?? '' ) ),
+			'taboola_mode'      => preg_replace( '/[^A-Za-z0-9_\-]/', '', (string) ( $row['taboola_mode'] ?? '' ) ) ?: 'alternating-thumbnails-a',
+			'taboola_placement' => sanitize_text_field( (string) ( $row['taboola_placement'] ?? '' ) ) ?: 'Below Article Thumbnails',
+			'taboola_target'    => preg_replace( '/[^A-Za-z0-9_\-]/', '', (string) ( $row['taboola_target'] ?? '' ) ) ?: 'mix',
 			'head_code'      => $can_html ? (string) ( $row['head_code'] ?? '' ) : (string) $prev['head_code'],
 			'body_code'      => $can_html ? (string) ( $row['body_code'] ?? '' ) : (string) $prev['body_code'],
 			'creatives'      => $creatives,

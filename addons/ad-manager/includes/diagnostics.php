@@ -75,6 +75,13 @@ function bday_ads_unit_notes( array $u ): array {
 			}
 			break;
 
+		case 'taboola':
+			if ( '' === bday_ads_taboola_account() ) {
+				$add( 'error', 'Taboola is switched off or has no account name under Integrations → Taboola. Nothing will load.' );
+			}
+			$add( 'info', 'The mode and placement name must match what Taboola configured for your account, otherwise Taboola draws nothing.' );
+			break;
+
 		case 'html':
 			if ( '' === trim( (string) $u['body_code'] ) ) {
 				$add( 'warn', 'The body code is empty, so there is nothing to show.' );
