@@ -197,10 +197,13 @@
     if (gamState !== 'idle') { return; }
     gamState = 'loading';
     window.googletag = window.googletag || { cmd: [] };
-    var gptScript = loadScript('https://securepubads.g.doubleclick.net/tag/js/gpt.js', { crossorigin: 'anonymous' });
+    // Reuse a gpt.js the page already loads (the header Custom Code does) instead of fetching the
+    // library twice; the shared googletag.cmd queue means both callers still run in order.
+    var gptScript = document.querySelector('script[src*="securepubads.g.doubleclick.net/tag/js/gpt.js"]')
+      || loadScript('https://securepubads.g.doubleclick.net/tag/js/gpt.js', { crossorigin: 'anonymous' });
     // Blocked or failed (ad blockers, network): the slots will never fill, so give their space back
     // instead of leaving permanent blank gaps down the page.
-    gptScript.onerror = function () { log('GPT failed to load — collapsing Google slots'); gamState = 'failed'; collapseAll('gam'); };
+    gptScript.addEventListener('error', function () { log('GPT failed to load — collapsing Google slots'); gamState = 'failed'; collapseAll('gam'); });
 
     googletag.cmd.push(function () {
       var pubads = googletag.pubads();
@@ -215,7 +218,7 @@
       // ignored — say so in debug mode instead of silently running without them.
       var servicesAlreadyOn = !!googletag.pubadsReady;
       if (servicesAlreadyOn) {
-        log('GPT services were already enabled by other page code — lazy loading / single request cannot be configured. Move that code into Ad Units.');
+        log('GPT services were already enabled by other page code — GPT lazy loading cannot be configured, so slots are fetched on approach by this loader instead. Better: move that code into Ad Units.');
       }
 
       var lazy = C.lazy && C.lazy.fetch > 0
@@ -238,10 +241,27 @@
       pubads.addEventListener('impressionViewable', onImpressionViewable);
 
       if (!servicesAlreadyOn) { googletag.enableServices(); }
+      // GPT's own lazy loading only works if it is configured before enableServices(). When other
+      // code got there first, every slot would be requested at page load — including ones three
+      // screens down that nobody scrolls to, which drags the site's viewability (and so CPMs) down.
+      // Do the same job here: define and request a slot only when it is about to be seen.
+      manualLazy = servicesAlreadyOn && !!lazy;
       gamState = 'ready';
       log('GPT ready');
       gamQueue.splice(0).forEach(function (fn) { fn(); });
     });
+  }
+
+  var manualLazy = false;
+
+  /** Runs fn once el is within `pct` percent of a screen of being visible (immediately if it already is). */
+  function whenWithinScreens(el, pct, fn) {
+    if (!('IntersectionObserver' in window)) { fn(); return; }
+    var margin = Math.max(100, Math.round(window.innerHeight * pct / 100));
+    var io = new IntersectionObserver(function (entries) {
+      if (entries.some(function (e) { return e.isIntersecting; })) { io.disconnect(); fn(); }
+    }, { rootMargin: margin + 'px 0px', threshold: 0 });
+    io.observe(el);
   }
 
   function gamRun(fn) {
@@ -269,6 +289,12 @@
     if (!all.length) { all = fitSizes(phone ? desktop : mobile, vw); }
     if (!all.length) { log('no size fits a ' + vw + 'px screen for', unit.path); collapse(el); return; }
 
+    var queued = slotInfo[slotEl.id];
+    if (manualLazy && !(queued && queued.go)) {
+      slotInfo[slotEl.id] = { unit: unit, refreshes: 0, timer: null, el: el, rendered: false, go: false };
+      whenWithinScreens(el, C.lazy.fetch, function () { slotInfo[slotEl.id].go = true; defineGamSlot(el, unit); });
+      return;
+    }
     var slot = googletag.defineSlot(unit.path, all, slotEl.id);
     if (!slot) { log('defineSlot failed', unit.path); collapse(el); return; }
     if (unit.refresh) {

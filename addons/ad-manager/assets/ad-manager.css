@@ -17,6 +17,15 @@
 	transition: min-height 0.2s ease;
 }
 
+/* Centre everything an ad network puts in a slot. GPT wraps a creative in a fixed-width <div> and
+   AdSense uses an inline-block <ins>; both sit at the left of a wider box unless told otherwise.
+   Also holds when the placement sits in a flex/grid parent that aligns its children to the start. */
+.bday-ad { align-self: center; justify-self: center; text-align: center; }
+.bday-ad__slot { display: flex; justify-content: center; width: 100%; }
+.bday-ad__slot > div,
+.bday-ad__slot > iframe,
+.bday-ad ins.adsbygoogle { margin-left: auto; margin-right: auto; max-width: 100%; }
+
 .bday-ad__label {
 	display: none;
 	font: 600 10px/1 monospace;
@@ -82,3 +91,12 @@ html[data-bday-ad-device="desktop"] .bday-ad { min-height: var(--bday-ad-min-d, 
 html[data-bday-ad-device="mobile"] .bday-ad__creative { width: min(100%, var(--bday-ad-w-m, var(--bday-ad-w-d, 100%))); aspect-ratio: var(--bday-ad-ar-m, var(--bday-ad-ar-d, auto)); }
 html[data-bday-ad-device="desktop"] .bday-ad__creative { width: min(100%, var(--bday-ad-w-d, 100%)); aspect-ratio: var(--bday-ad-ar-d, auto); }
 html[data-bday-ad-device] .bday-ad.is-collapsed { min-height: 0; }
+
+/* AMP: banners get one <amp-img> per screen size; the label and creative are centred like elsewhere. */
+.bday-ad--amp amp-ad { margin: 0 auto; max-width: 100%; }
+.bday-ad--amp .bday-ad__creative { display: flex; justify-content: center; margin: 0 auto; }
+.bday-ad--amp .bday-ad__img-m { display: none; }
+@media (max-width: 767px) {
+	.bday-ad--amp .has-m .bday-ad__img-d { display: none; }
+	.bday-ad--amp .has-m .bday-ad__img-m { display: block; }
+}
