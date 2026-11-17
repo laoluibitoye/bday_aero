@@ -504,6 +504,15 @@ final class Bday_Ads_Render {
 
 	/** Taboola on AMP is <amp-embed type="taboola">; its height follows the screen width. */
 	private static function amp_taboola_tag( array $unit, string $placement ): string {
+		// AMP cannot collapse a Taboola widget that comes back empty: it stays a blank box about 2x as tall
+		// as the screen is wide. On the normal page the loader gives that space back, so a mid-article
+		// unit whose placement name Taboola has not set up is harmless there, but would be a huge gap on
+		// AMP. Only fixed end-of-article spots (verified live) are shown on AMP.
+		$kind = (string) ( bday_ads_placement_catalog()[ $placement ]['kind'] ?? '' );
+		if ( 'content' === $kind ) {
+			self::trace( $placement, sprintf( 'unit "%s" not shown on AMP: Taboola on AMP is limited to the end-of-article spot, because AMP cannot collapse an empty in-article widget', $unit['id'] ) );
+			return '';
+		}
 		$account = bday_ads_taboola_account();
 		if ( '' === $account ) {
 			self::trace( $placement, sprintf( 'unit "%s" not shown on AMP: Taboola is switched off or has no account name', $unit['id'] ) );
