@@ -207,6 +207,23 @@ function bday_ads_placement_catalog(): array {
 			'mobile'   => '300×250 or 320×100',
 			'category' => 'display',
 		),
+		'in_article_native'           => array(
+			'label'      => 'In-article — native recommendations (Taboola)',
+			'where'      => 'Inside the article text, after the paragraph set below (only on long articles). Meant for a Taboola mid-article widget.',
+			'kind'       => 'content',
+			'paragraph'  => 8,
+			'desktop'    => 'full column width',
+			'mobile'     => 'full width',
+			'category'   => 'sponsored',
+		),
+		'below_article_end'           => array(
+			'label'    => 'Article — very end (Taboola)',
+			'where'    => 'The very last thing in the article column: below the author block, comments, "You might also like" and every other ad.',
+			'kind'     => 'slot',
+			'desktop'  => 'full column width (native widget)',
+			'mobile'   => 'full width (native widget)',
+			'category' => 'sponsored',
+		),
 		'listing_inline'              => array(
 			'label'    => 'Archive / search — inline',
 			'where'    => 'Between story cards on category, tag, author and search pages (after every 6th card).',
