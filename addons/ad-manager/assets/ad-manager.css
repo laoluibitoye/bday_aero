@@ -96,6 +96,10 @@ html[data-bday-ad-device] .bday-ad.is-collapsed { min-height: 0; }
 .bday-ad--taboola { align-self: stretch; width: 100%; text-align: left; margin: 2rem 0; }
 .bday-ad--taboola .bday-ad__label { display: none !important; }
 .bday-ad--taboola .bday-ad__slot { display: block; width: 100%; }
+/* AMP: .bday-ad centres its children, and a responsive <amp-embed> has no width of its own there, so it
+   collapsed to 0x0 and Taboola never appeared. Give it the full width of the column. */
+.bday-ad--taboola { align-items: stretch; }
+.bday-ad--taboola amp-embed { width: 100%; }
 
 /* AMP: banners get one <amp-img> per screen size; the label and creative are centred like elsewhere. */
 .bday-ad--amp amp-ad { margin: 0 auto; max-width: 100%; }
