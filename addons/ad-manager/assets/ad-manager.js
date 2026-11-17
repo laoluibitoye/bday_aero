@@ -237,6 +237,16 @@
         if (lazy) { pubads.enableLazyLoad(lazy); }
       }
 
+      // Other scripts on the page (Admixer's loader, a pasted prebid wrapper) turn off GPT's automatic
+      // first request and replace pubads().refresh() with their own version, which only knows their
+      // slots. A slot we define after that point is then never requested and sits blank, reserving
+      // its space for good. Keep GPT's own refresh from before they install theirs, and ask for any
+      // slot GPT has not requested by itself (see requestIfIdle).
+      nativeRefresh = typeof pubads.refresh === 'function' ? pubads.refresh.bind(pubads) : null;
+      pubads.addEventListener('slotRequested', function (event) {
+        var info = slotInfo[event.slot.getSlotElementId()];
+        if (info) { info.requested = true; }
+      });
       pubads.addEventListener('slotRenderEnded', onSlotRendered);
       pubads.addEventListener('impressionViewable', onImpressionViewable);
 
@@ -253,6 +263,26 @@
   }
 
   var manualLazy = false;
+  var nativeRefresh = null;
+
+  function refreshSlot(slot) {
+    if (nativeRefresh) { nativeRefresh([slot]); } else { googletag.pubads().refresh([slot]); }
+  }
+
+  /**
+   * display() alone is enough while GPT's automatic first request is on. If something turned it off
+   * (or the slot came after the first batch), GPT never asks for it: do it explicitly, once, unless
+   * GPT already did.
+   */
+  function requestIfIdle(slot, id) {
+    setTimeout(function () {
+      var info = slotInfo[id];
+      if (!info || info.requested || info.rendered) { return; }
+      log('slot', id, 'was not requested by GPT — requesting it');
+      info.requested = true;
+      try { refreshSlot(slot); } catch (e) { log('refresh failed', e); }
+    }, 900);
+  }
 
   /** Runs fn once el is within `pct` percent of a screen of being visible (immediately if it already is). */
   function whenWithinScreens(el, pct, fn) {
@@ -303,6 +333,7 @@
     slot.addService(googletag.pubads());
     slotInfo[slotEl.id] = { unit: unit, refreshes: 0, timer: null, el: el, rendered: false };
     googletag.display(slotEl.id);
+    requestIfIdle(slot, slotEl.id);
     armWatchdog(slotEl.id, 0);
     log('slot defined', slotEl.id, unit.path, JSON.stringify(all));
   }
@@ -406,7 +437,7 @@
       return;
     }
     info.refreshes++;
-    googletag.pubads().refresh([slot]);
+    refreshSlot(slot);
     log('refreshed', slot.getSlotElementId(), info.refreshes);
   }
 
