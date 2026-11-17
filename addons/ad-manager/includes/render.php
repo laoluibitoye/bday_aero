@@ -685,18 +685,10 @@ final class Bday_Ads_Render {
 			return $html;
 		}
 
-		$segments = preg_split( '/(?<=<\/p>)/i', $html );
-		$depth    = 0;
-		$top      = array(); // segment index => top-level paragraph number ending there
-		$n        = 0;
-		foreach ( $segments as $i => $seg ) {
-			$depth += preg_match_all( '/<(blockquote|figure|ul|ol|table|aside|details)\b[^>]*>/i', $seg ) - preg_match_all( '/<\/(blockquote|figure|ul|ol|table|aside|details)>/i', $seg );
-			if ( $depth <= 0 && preg_match( '/<\/p>\s*$/i', $seg ) ) {
-				$depth      = 0;
-				$top[ $i ]  = ++$n;
-			}
-		}
+		$ends = self::paragraph_ends( $html );
+		$n    = count( $ends );
 		if ( 0 === $n ) {
+			self::trace_all( array_merge( ...array_values( array_map( static fn( $l ) => array_column( $l, 0 ), $wanted ) ) ), 'not rendered: no paragraphs were found in the article text' );
 			return $html;
 		}
 		foreach ( $wanted as $list ) {
@@ -707,23 +699,123 @@ final class Bday_Ads_Render {
 			}
 		}
 
-		$out = '';
-		foreach ( $segments as $i => $seg ) {
-			$out .= $seg;
-			$para = $top[ $i ] ?? 0;
-			if ( $para && $para < $n && isset( $wanted[ $para ] ) ) {
-				foreach ( $wanted[ $para ] as list( $id, $min ) ) {
-					if ( $n < $min ) {
-						continue; // recorded below, with the short-article reason
-					}
-					self::$injected[ $id ] = true;
-					ob_start();
-					self::zone( $id, $post );
-					$out .= ob_get_clean();
+		// Insertion offset => placements that go there (after paragraph N, never after the last one).
+		$at = array();
+		foreach ( $wanted as $para => $list ) {
+			if ( $para >= $n ) {
+				continue;
+			}
+			foreach ( $list as list( $id, $min ) ) {
+				if ( $n >= $min ) {
+					$at[ $ends[ $para - 1 ] ][] = $id;
 				}
 			}
 		}
-		return $out;
+		ksort( $at );
+
+		$out  = '';
+		$from = 0;
+		foreach ( $at as $offset => $ids ) {
+			$out .= substr( $html, $from, $offset - $from );
+			$from = $offset;
+			foreach ( $ids as $id ) {
+				self::$injected[ $id ] = true;
+				ob_start();
+				self::zone( $id, $post );
+				$out .= ob_get_clean();
+			}
+		}
+		return $out . substr( $html, $from );
+	}
+
+	/** @param string[] $ids */
+	private static function trace_all( array $ids, string $message ): void {
+		foreach ( $ids as $id ) {
+			self::trace( (string) $id, $message );
+		}
+	}
+
+	/**
+	 * Where each top-level paragraph of an article ends: a list of byte offsets, one per paragraph, in order.
+	 *
+	 * Real article text is not tidy HTML. A lot of it was written as <p>…<p>…<p>… with no closing tags
+	 * (HTML allows that: a new block simply ends the open paragraph), and splitting on "</p>" found no
+	 * paragraphs in it at all, so no in-article ad ever rendered on those articles. Here a paragraph also
+	 * ends where the next paragraph, division, heading or other block starts. Paragraphs inside quotes,
+	 * lists, figures and tables are skipped (an ad must never land mid-quote) and empty ones
+	 * ("<p>&nbsp;</p>", used as spacers) are not counted.
+	 *
+	 * @return int[]
+	 */
+	public static function paragraph_ends( string $html ): array {
+		// Blank out scripts, styles and comments (same length, so offsets stay valid): a "<p" inside a
+		// string in a pasted <script> must not be mistaken for a paragraph.
+		$scan = preg_replace_callback(
+			'#<(script|style)\b.*?</\1\s*>|<!--.*?-->#is',
+			static fn( array $m ): string => str_repeat( ' ', strlen( $m[0] ) ),
+			$html
+		);
+		if ( ! is_string( $scan ) || ! preg_match_all( '/<(\/?)([a-z][a-z0-9]*)\b[^>]*>/i', $scan, $tags, PREG_SET_ORDER | PREG_OFFSET_CAPTURE ) ) {
+			return array();
+		}
+
+		$containers = array( 'blockquote', 'figure', 'ul', 'ol', 'table', 'aside', 'details' );
+		$breakers   = array( 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'pre', 'hr', 'section', 'header', 'footer', 'form', 'nav' );
+		$ends       = array();
+		$depth      = 0;
+		$open       = false;
+		$start      = 0;
+
+		$close = static function ( int $to ) use ( &$ends, &$start, $scan ): void {
+			$text = html_entity_decode( strip_tags( substr( $scan, $start, $to - $start ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+			if ( '' !== trim( (string) preg_replace( '/[\s\x{00A0}]+/u', ' ', $text ) ) ) {
+				$ends[] = $to;
+			}
+		};
+
+		foreach ( $tags as $tag ) {
+			$pos     = $tag[0][1];
+			$after   = $pos + strlen( $tag[0][0] );
+			$closing = '/' === $tag[1][0];
+			$name    = strtolower( $tag[2][0] );
+
+			if ( in_array( $name, $containers, true ) ) {
+				if ( $closing ) {
+					$depth = max( 0, $depth - 1 );
+				} else {
+					if ( $open && 0 === $depth ) {
+						$close( $pos );
+						$open = false;
+					}
+					++$depth;
+				}
+				continue;
+			}
+			if ( $depth > 0 ) {
+				continue;
+			}
+			if ( 'p' === $name ) {
+				if ( $closing ) {
+					if ( $open ) {
+						$close( $after );
+						$open = false;
+					}
+				} else {
+					if ( $open ) {
+						$close( $pos );
+					}
+					$open  = true;
+					$start = $pos;
+				}
+			} elseif ( $open && in_array( $name, $breakers, true ) ) {
+				$close( $pos );
+				$open = false;
+			}
+		}
+		if ( $open ) {
+			$close( strlen( $html ) );
+		}
+		return $ends;
 	}
 
 	/* ── Homepage "between sections" slots ────────────────────────── */
