@@ -317,9 +317,18 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 			endif;
 			?>
 
-			<?php bday_ad_zone( 'below_article_recirculation', get_post() ); ?>
-			<?php bday_ad_zone( 'below_article_end', get_post() ); ?>
 		</article>
+		<?php
+		/*
+		 * The two end-of-article slots sit AFTER the article element, not inside it. The paywall script
+		 * replaces everything inside <article data-bd-article-body> with its "Subscribe to keep reading"
+		 * wall when it blocks a reader, which used to delete these ad slots with it. Out here they
+		 * survive, so the Google slot and the Taboola feed below the article still show to a
+		 * non-subscriber who hits the wall. Taboola stays last.
+		 */
+		bday_ad_zone( 'below_article_recirculation', get_post() );
+		bday_ad_zone( 'below_article_end', get_post() );
+		?>
 	</main>
 
 	<aside class="bday-sidebar desktop-only">
