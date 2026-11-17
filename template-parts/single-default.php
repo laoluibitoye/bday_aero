@@ -318,6 +318,7 @@ $gated_content = bday_aero_gate_content( $post_id, $rendered_content );
 			?>
 
 			<?php bday_ad_zone( 'below_article_recirculation', get_post() ); ?>
+			<?php bday_ad_zone( 'below_article_end', get_post() ); ?>
 		</article>
 	</main>
 
