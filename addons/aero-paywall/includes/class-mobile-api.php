@@ -359,7 +359,12 @@ final class Bday_Aero_Mobile_Api {
 		// same defense-in-depth as every other gating decision in this codebase).
 		$is_exempt = ! $is_premium && 'hybrid' === $scope_mode && Bday_Aero_Registration_Exemptions::matches( $post_id );
 
-		$meter = Bday_Aero_Meter_Client::check( $device_id, $post_id, $is_exempt );
+		$meter = Bday_Aero_Meter_Client::check(
+			$device_id,
+			$post_id,
+			$is_exempt,
+			Bday_Aero_Meter_Client::traffic_context_from_request( $request )
+		);
 		if ( null === $meter ) {
 			// Unreachable subscription-service: fail closed, unlike the cosmetic clients.
 			return array( 'open' => false, 'stage' => 'paid_lock', 'remaining' => 0, 'remainingToRegister' => 0, 'isSubscriber' => false );
@@ -447,6 +452,13 @@ final class Bday_Aero_Mobile_Api {
 			&& ! empty( Bday_Aero_Paywall_Config_Client::get()['hybrid_guest_free_articles_enabled'] )
 		) {
 			$stage = 'open';
+		}
+
+		// The adjustments above change what this reader sees, but subscription-service recorded
+		// the meter's own answer. Report the stage actually shown, so the admin console's funnel
+		// counts prompts readers saw, not ones they were let past.
+		if ( null !== $meter['eventId'] && $stage !== $meter['stage'] ) {
+			Bday_Aero_Meter_Client::record_shown_async( $meter['eventId'], $stage );
 		}
 
 		$open = ! in_array( $stage, array( 'paid_lock', 'register_prompt', 'profile_prompt' ), true );
