@@ -39,9 +39,13 @@ final class Bday_Aero_Meter_Client {
 	 *   forwarded as-is; subscription-service is the one place that also knows whether
 	 *   this post is premium, so it (not this call site) makes the final "does exempt
 	 *   actually apply here" call — see MeterController.check()'s own `isExempt` guard.
-	 * @return array{stage: string, remaining: int|null, remainingToRegister: int|null}|null
+	 * @param array<string, string>|null $traffic Referrer/UTM for this view, from
+	 *   traffic_context_from_request() — the page the reader is on, as reported by the SDK. null
+	 *   (an app request, or an older SDK that sends none) falls back to this request's own
+	 *   Referer/query string.
+	 * @return array{stage: string, remaining: int|null, remainingToRegister: int|null, eventId: string|null}|null
 	 */
-	public static function check( string $device_id, int $post_id, bool $exempt = false ): ?array {
+	public static function check( string $device_id, int $post_id, bool $exempt = false, ?array $traffic = null ): ?array {
 		$base_url = Bday_Aero_Settings::api_base_url();
 		if ( '' === $base_url ) {
 			return null;
@@ -67,7 +71,7 @@ final class Bday_Aero_Meter_Client {
 							'postId'   => (string) $post_id,
 							'exempt'   => $exempt,
 						),
-						self::current_traffic_context()
+						$traffic ?? self::current_traffic_context()
 					)
 				),
 				'headers' => self::forwarded_headers(),
@@ -97,7 +101,84 @@ final class Bday_Aero_Meter_Client {
 			// Floating funnel-countdown widget (funnel-counter.ts): the
 			// pre-registration counterpart to `remaining` above.
 			'remainingToRegister' => $data['remainingToRegister'] ?? null,
+			// The analytics row subscription-service recorded for this view (absent when it
+			// recorded none, or on an older subscription-service) — see record_shown_async().
+			'eventId'             => isset( $data['eventId'] ) && is_string( $data['eventId'] ) ? $data['eventId'] : null,
 		);
+	}
+
+	/**
+	 * Tells subscription-service which stage the reader was actually shown for a view it
+	 * recorded, when that differs from the stage check() returned. resolve_entitlement()
+	 * (class-mobile-api.php) adjusts the meter's answer per reader — signed-in readers skip the
+	 * register prompt, and so on — and without this the admin console's funnel counted the
+	 * meter's answer, not what the reader saw. Analytics only (the meter count is untouched), so
+	 * fire-and-forget like record_async(): never worth a PHP-FPM worker's time, and a lost
+	 * report just leaves the meter's stage on that one row.
+	 */
+	public static function record_shown_async( string $event_id, string $stage ): void {
+		$base_url = Bday_Aero_Settings::api_base_url();
+		if ( '' === $base_url || '' === $event_id ) {
+			return;
+		}
+
+		wp_remote_post(
+			$base_url . '/meter/shown',
+			array(
+				'body'     => wp_json_encode(
+					array(
+						'eventId' => $event_id,
+						'stage'   => $stage,
+					)
+				),
+				'headers'  => self::forwarded_headers(),
+				'timeout'  => 0.01,
+				'blocking' => false,
+			)
+		);
+	}
+
+	/**
+	 * Where the reader came from, as the SDK reports it on the entitlement request
+	 * (sdk/src/entitlement.ts's trafficHeaders()). That request's own Referer is the article page
+	 * itself and its URL has none of the page's query string, so reading them here (what
+	 * current_traffic_context() does) filed every premium view and every paywall block as
+	 * Internal traffic with no campaign. X-Aero-Referrer is always sent by an SDK that knows about
+	 * this ("-" for no referrer), so its absence means an older SDK or the app: null, and check()
+	 * falls back to current_traffic_context().
+	 *
+	 * @return array{referrerHost?: string, utmSource?: string, utmMedium?: string, utmCampaign?: string}|null
+	 */
+	public static function traffic_context_from_request( WP_REST_Request $request ): ?array {
+		$referrer = $request->get_header( 'x_aero_referrer' );
+		if ( null === $referrer ) {
+			return null;
+		}
+
+		$context = array();
+		$host    = strtolower( trim( (string) $referrer ) );
+		// A bare host name only; anything else ("-" for direct, or junk) is sent as no referrer.
+		if ( '' !== $host && '-' !== $host && 1 === preg_match( '/^[a-z0-9.-]{1,253}$/', $host ) ) {
+			$context['referrerHost'] = $host;
+		}
+
+		$utm = array(
+			'utmSource'   => 'x_aero_utm_source',
+			'utmMedium'   => 'x_aero_utm_medium',
+			'utmCampaign' => 'x_aero_utm_campaign',
+		);
+		foreach ( $utm as $field => $header ) {
+			$value = $request->get_header( $header );
+			if ( null === $value ) {
+				continue;
+			}
+			$value = substr( sanitize_text_field( (string) $value ), 0, 200 );
+			if ( '' !== $value ) {
+				$context[ $field ] = $value;
+			}
+		}
+
+		return $context;
 	}
 
 	/**
@@ -175,7 +256,13 @@ final class Bday_Aero_Meter_Client {
 						self::current_traffic_context()
 					)
 				),
-				'headers'  => self::forwarded_headers(),
+				// Counts toward the reader's meter but records no analytics row: the SDK's
+				// entitlement call (class-mobile-api.php) records this same page view moments
+				// later, with the page's real referrer and the stage the reader was shown.
+				// Recording both counted every free article view twice. A reader whose browser
+				// never runs the SDK (no JavaScript, link-preview fetchers such as WhatsApp's)
+				// is still metered, just not reported as a view.
+				'headers'  => array_merge( self::forwarded_headers(), array( 'X-Aero-Analytics' => 'skip' ) ),
 				'timeout'  => 0.01,
 				'blocking' => false,
 			)
@@ -247,6 +334,15 @@ final class Bday_Aero_Meter_Client {
 
 		if ( ! empty( $_SERVER['HTTP_USER_AGENT'] ) ) {
 			$headers['User-Agent'] = sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) );
+		}
+
+		// The BusinessDay app marks its entitlement requests with X-App-Channel: mobile (see
+		// resolve_entitlement() in class-mobile-api.php). Passed on so subscription-service
+		// records the view as an app view: the app's User-Agent ("okhttp/…" on Android) names
+		// no device and looks like a script, so without this Android app views were dropped
+		// from analytics as automated traffic and iPhone app views were filed as desktop.
+		if ( isset( $_SERVER['HTTP_X_APP_CHANNEL'] ) && 'mobile' === $_SERVER['HTTP_X_APP_CHANNEL'] ) {
+			$headers['X-App-Channel'] = 'mobile';
 		}
 
 		return $headers;
