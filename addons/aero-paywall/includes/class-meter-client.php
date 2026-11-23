@@ -256,12 +256,12 @@ final class Bday_Aero_Meter_Client {
 						self::current_traffic_context()
 					)
 				),
-				// Counts toward the reader's meter but records no analytics row: the SDK's
-				// entitlement call (class-mobile-api.php) records this same page view moments
-				// later, with the page's real referrer and the stage the reader was shown.
-				// Recording both counted every free article view twice. A reader whose browser
-				// never runs the SDK (no JavaScript, link-preview fetchers such as WhatsApp's)
-				// is still metered, just not reported as a view.
+				// Marks this as WordPress's render-time report of the page load. subscription-service
+				// records it and keeps the SDK's later report of the same page load (with the
+				// stage the reader was shown) to the same row, so a view is counted once. This is
+				// the only record of page loads where the SDK never runs: AMP pages, no JavaScript,
+				// a blocked SDK. (The header's name is historical: it once meant "don't record";
+				// subscription-service has read it as "render-time report" since aero-paywall #51.)
 				'headers'  => array_merge( self::forwarded_headers(), array( 'X-Aero-Analytics' => 'skip' ) ),
 				'timeout'  => 0.01,
 				'blocking' => false,

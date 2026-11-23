@@ -82,7 +82,7 @@ export function DashboardTab({ settings, requiredPages, setRequiredPages, onToas
             <div className="aero-stat">
               <span className="aero-stat__icon"><CheckCircleIcon size={20} /></span>
               <span className="aero-stat__value">{stats.activeSubscribers.toLocaleString()}</span>
-              <span className="aero-stat__label">Active subscribers</span>
+              <span className="aero-stat__label" title="Readers who can read premium content right now: their own subscription (bought or created by staff) is live, or they belong to an organisation whose subscription is.">Readers with access</span>
             </div>
             <div className="aero-stat">
               <span className="aero-stat__icon"><TagIcon /></span>
