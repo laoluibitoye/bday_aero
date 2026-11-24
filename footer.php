@@ -16,11 +16,8 @@
  */
 $bday_footer_columns = array(
 	'The Company'    => array(
-		'About Us'            => 'https://about.businessday.ng/index.php',
-		'BusinessDay Pro'     => 'https://pro.businessday.ng/',
-		'Research & Insight'  => 'https://businessdayintelligence.ng/',
-		'Conferences'         => 'https://conferences.businessday.ng/',
-		'BD Fx'               => 'https://currency.businessday.ng/',
+		'BusinessDay TV' => 'https://bdtv.businessday.ng/',
+		'Conferences'    => 'https://conferences.businessday.ng/',
 	),
 	'Legal & Privacy' => array(
 		'Privacy Policy' => home_url( '/app-privacy-policy/' ),
